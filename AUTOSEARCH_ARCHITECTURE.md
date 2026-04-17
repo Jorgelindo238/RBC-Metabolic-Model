@@ -4,6 +4,22 @@ This document defines the architectural boundaries, structure, and implementatio
 
 This design draws inspiration from `Hermes-Agent` (structured decomposition, memory, tool-driven orchestration) and `ShinkaEvolve` (bounded evolutionary search, keep/discard logic), while remaining strictly within the existing scientific benchmarks of the RBC Metabolic Model.
 
+## Current Status Note
+
+As of `2026-04-17`, this document still describes the Bordbar-focused bounded autosearch runner accurately, but it is no longer the whole orchestration story.
+
+The repo now also contains a product-plane custom-data orchestration layer with:
+
+- dataset-aware planning
+- calibration-report triage
+- pure-ODE triage
+- combined verdict logic
+- worker-side `strategy_race`
+- dataset fingerprint memory
+- bounded teacher-flux rescue for supported reactions
+
+Those newer product-plane components live under `services/robocop/` and `apps/api/services/`, while this document remains the reference for the original bounded autosearch runner around policy and manifest mutation.
+
 ## Motivation
 The RBC calibration process relies on manually defined policies and manifests. The bounded autosearch runner iteratively mutates calibration strategies (policies/manifests), executes the existing benchmark harness, and promotes or discards the results based on rigorous evaluation logic.
 

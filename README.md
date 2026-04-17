@@ -1,4 +1,4 @@
-# 🩸 airbc — AI-Powered Blood Bag Conservation Platform
+# airbc - AI-Powered Blood Bag Conservation Platform
 
 <p align="center">
   <img src="apps/web/public/favicon.svg" alt="airbc Logo" width="80" height="80" />
@@ -21,7 +21,7 @@
 
 ---
 
-airbc is a research platform for studying **red blood cell metabolism during storage**. It helps researchers and blood banking teams track glucose depletion, ATP decline, and metabolic drift throughout the storage period — and detect quality changes before they become critical.
+airbc is a research platform for studying **red blood cell metabolism during storage**. It helps researchers and blood banking teams track glucose depletion, ATP decline, and metabolic drift throughout the storage period, then compare simulated trajectories against experimental data and calibration outcomes.
 
 Built on the **Bordbar et al. (2015)** whole-cell kinetic reconstruction of RBC metabolism.
 
@@ -33,73 +33,109 @@ Built on the **Bordbar et al. (2015)** whole-cell kinetic reconstruction of RBC 
 
 ---
 
+## Current Platform Status
+
+- `marketing` is live at [airbc.org](https://airbc.org)
+- `web` is live at [app.airbc.org](https://app.airbc.org)
+- the calibration UI now includes:
+  - dataset-aware planning
+  - calibration-report triage
+  - pure-ODE triage
+  - combined triage wiring
+  - `single_run` and `strategy_race` modes
+  - dataset fingerprint memory
+  - bounded teacher-flux rescue for supported reactions
+- the production calibration proxy is **not fully active yet**
+  - `web` still needs a live worker behind `CALIBRATION_API_BASE_URL`
+  - `web` still needs `CALIBRATION_API_SHARED_SECRET`
+
+The next infrastructure milestone is to connect the future Hetzner calibration worker to those two environment variables.
+
+---
+
 ## What airbc Does
 
-- **Simulate** dynamic RBC metabolic behavior over configurable storage horizons (up to 42 days)
-- **Monitor** glucose, ATP, lactate, 2,3-BPG, glutathione, and 113 total metabolites
-- **Alert** on meaningful metabolic shifts with RoBoCop AI-assisted summaries
-- **Compare** model predictions against your own experimental storage data
-- **Calibrate** enzyme kinetic parameters (Vmax, Km) against observed trajectories
+- **Simulate** dynamic RBC metabolic behavior over configurable storage horizons
+- **Monitor** glucose, ATP, lactate, 2,3-BPG, glutathione, and the broader metabolite panel
+- **Alert** on meaningful metabolic shifts with RoBoCop-assisted summaries
+- **Compare** model predictions against custom experimental storage data
+- **Calibrate** enzyme kinetic parameters against observed trajectories
+- **Plan** custom-data calibration campaigns with dataset-aware stage planning
+- **Triage** calibration results with report-level and pure-ODE physiological checks
+- **Orchestrate** best-of-N custom-data strategy racing with bounded worker-side logic
 - **Visualize** pathway-level metabolic network structure and flux distributions
-- **Follow up** through RoBoCop research chat and planned secure messaging workflows
 
 ---
 
 ## Platform Architecture
 
-```
+```text
 apps/
-├── web/            → Next.js 15 authenticated research platform (app.airbc.org)
-├── api/            → FastAPI scientific backend (7 routers, ~200 reactions)
-└── marketing/      → Marketing homepage (airbc.org)
+|-- web/                 -> Next.js 15 authenticated research platform (app.airbc.org)
+|-- api/                 -> FastAPI scientific backend and orchestration adapter
+|-- calibration-worker/  -> worker process for long-running calibration jobs
+`-- marketing/           -> marketing homepage (airbc.org)
 
-src/                → Mechanistic ODE model (equadiff_brodbar.py, 113 metabolites)
-streamlit_app/core/ → Python scientific modules (imported by FastAPI via sys.path)
-services/robocop/   → RoBoCop runtime, tracing, and bounded mutation orchestration
+src/                     -> mechanistic ODE model and calibration engine
+streamlit_app/core/      -> shared Python scientific modules imported by the API
+services/robocop/        -> RoBoCop runtime, triage logic, and orchestration policy
 ```
 
 | Layer | Technology | Purpose |
 |---|---|---|
-| **Frontend** | Next.js 15, React 19, shadcn/ui, Tailwind CSS v4 | Authenticated researcher platform |
-| **Backend** | FastAPI, Python, scipy | Scientific ODE simulation and analysis |
-| **Auth** | Supabase (Google OAuth + email/password) | User profiles, admin roles, workspaces |
-| **AI** | RoBoCop (LangGraph + LangChain) | Grounded research interpretation, chat, and monitoring support |
-| **Marketing** | Next.js 15 | Product homepage at airbc.org |
+| Frontend | Next.js 15, React 19, shadcn/ui, Tailwind CSS v4 | Authenticated researcher platform |
+| API | FastAPI, Python, scipy | Scientific simulation, upload handling, and calibration adapter |
+| Worker | Python, uvicorn | Long-running calibration orchestration outside the web request path |
+| Auth | Supabase | User profiles, roles, and workspace context |
+| AI | RoBoCop / Hermes-assisted orchestration | Interpretation, triage, and bounded campaign planning |
+| Marketing | Next.js 15 | Product homepage at airbc.org |
 
 ---
 
 ## Features
 
 ### Research Platform (`apps/web`)
-- 🧪 **Simulation Workspace** — run storage-condition ODE simulations with pH perturbations
-- 📊 **Flux Analysis** — Michaelis-Menten flux estimation across 7 metabolic pathway groups
-- 🗺️ **Pathway Visualization** — KEGG-style SVG network graph (30 metabolites, 20 reactions)
-- 📈 **Sensitivity Analysis** — compare datasets, per-metabolite R²/RMSE/MAE validation
-- 🎯 **Parameter Calibration** — optimize Vmax/Km with differential evolution, L-BFGS-B, or least squares
-- 📤 **Data Upload** — upload CSV/Excel experimental data with auto metabolite mapping
-- 🤖 **RoBoCop Assistant** — grounded Simulation interpretation plus research-page chat with OpenAI-backed responses and fallback
-- 📋 **Calibration Registry** — browse persisted calibration runs and benchmark outcomes
-- 🛡️ **Admin Dashboard** — user management, role control, platform statistics
+
+- **Simulation Workspace** - run storage-condition ODE simulations with pH perturbations
+- **Flux Analysis** - Michaelis-Menten flux estimation across pathway groups
+- **Pathway Visualization** - KEGG-style SVG network graph and state overlays
+- **Sensitivity Analysis** - compare datasets with per-metabolite validation metrics
+- **Parameter Calibration** - run `single_run` or `strategy_race` calibration flows
+- **Data Upload** - upload CSV or Excel experimental data with metabolite mapping
+- **RoBoCop Assistant** - grounded simulation interpretation and research chat
+- **Calibration Registry** - browse stored calibration runs and benchmark outcomes
+- **Admin Dashboard** - user management, role control, and platform statistics
+
+### Calibration Orchestration
+
+- **Dataset-aware planner** - builds custom-data stage guidance before calibration
+- **Curve triage** - classifies fit gains as keep, caveat, discard, or review
+- **Pure-ODE replay** - reruns a physiological replay after fitting
+- **Combined triage** - merges calibration and pure-ODE verdicts
+- **Strategy racing** - compares bounded strategies on the same dataset
+- **Fingerprint memory** - warm-starts similar panels from prior successful runs
+- **Teacher-flux rescue** - bounded rescue path for supported reactions
 
 ### Authentication
+
 - Google OAuth sign-in
 - Email/password sign-in and sign-up
-- Detailed researcher profiles (name, institution, function, department)
-- Admin role system with Supabase RPC functions
-- Session middleware with route protection
+- Researcher profiles
+- Admin role system with Supabase-backed permissions
+- Session middleware and protected routes
 
 ### Marketing Site (`apps/marketing`)
-- Premium dark homepage with product mockup
-- 4-step workflow (Quantify → Store & Simulate → Monitor & Alert → Act & Follow Up)
-- AI + Remote supervision section with messaging preview
-- RoBoCop research chat and simulation interpretation are live in the authenticated platform
-- CTAs: Create account, Schedule a demo, Sign in
+
+- Homepage and product narrative for airbc
+- Direct sign-in/sign-up links to `app.airbc.org`
+- Product positioning for simulation, monitoring, and AI-assisted review
 
 ---
 
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js 22+
 - Python 3.12+
 - npm
@@ -108,14 +144,18 @@ services/robocop/   → RoBoCop runtime, tracing, and bounded mutation orchestra
 
 ```bash
 # Web app
-cd apps/web && npm install
+cd apps/web
+npm install
 
 # Marketing site
-cd apps/marketing && npm install
+cd ../marketing
+npm install
 
-# Python backend
+# Python dependencies
+cd ../../
 pip install -r requirements.txt
-pip install python-multipart
+pip install -r api/requirements.txt
+pip install -r apps/calibration-worker/requirements.txt
 ```
 
 ### 2. Set up Supabase
@@ -128,22 +168,38 @@ SELECT id, email, raw_user_meta_data->>'full_name', raw_user_meta_data->>'instit
 FROM auth.users WHERE email = 'your@email.com';
 ```
 
-### 3. Run the platform
+### 3. Run the platform locally
 
 ```bash
-# FastAPI backend (port 8000)
-cd apps/api && python -m uvicorn main:app --host 0.0.0.0 --port 8000
+# API
+cd apps/api
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
 
-# Next.js app (port 3000)
-cd apps/web && npm run dev
+# Calibration worker
+cd ../calibration-worker
+python -m uvicorn main:app --host 127.0.0.1 --port 8010
 
-# Marketing site (port 3001)
-cd apps/marketing && npm run dev
+# Web
+cd ../web
+npm run dev
+
+# Marketing
+cd ../marketing
+npm run dev
 ```
+
+### 4. Worker wiring
+
+For the full calibration surface, the web deployment expects:
+
+- `CALIBRATION_API_BASE_URL`
+- `CALIBRATION_API_SHARED_SECRET`
+
+Without those, `/api/calibration/*` on the web app will intentionally return a guarded `503`.
 
 ---
 
-## FastAPI Endpoints
+## API Surfaces
 
 | Router | Prefix | Key Endpoints |
 |---|---|---|
@@ -151,7 +207,7 @@ cd apps/marketing && npm run dev
 | Flux | `/flux` | `POST /estimate`, `POST /timeseries`, `GET /kinetic-params` |
 | Pathway | `/pathway` | `GET /network`, `POST /network-state` |
 | Sensitivity | `/sensitivity` | `POST /compare` |
-| Calibration | `/calibration` | `POST /run`, `GET /available-parameters` |
+| Calibration | `/calibration` | `POST /run`, `POST /jobs`, `GET /jobs/{id}`, `GET /available-parameters` |
 | Data | `/data` | `GET /experimental`, `GET /reactions`, `POST /upload`, `POST /map-metabolites` |
 | RoBoCop | `/robocop` | `POST /research/chat` |
 
@@ -159,21 +215,23 @@ cd apps/marketing && npm run dev
 
 ## Scientific Basis
 
-- **113 metabolites** tracked across the full storage window
-- **~200 enzyme-catalyzed reactions** spanning 8 metabolic pathways
-- **42-day storage horizon** with configurable duration
-- **pH perturbation scenarios** — acidosis, alkalosis, step, ramp
-- **Bohr effect tracking** — P50, O₂ saturation, oxygen extraction
-- Based on: **Bordbar, A., et al. (2015)** — *Personalized Whole-Cell Kinetic Models of Metabolism* — Cell Systems, 1(4), 283–292 — [DOI](https://www.cell.com/cell-systems/fulltext/S2405-4712(15)00149-0)
+- **113 metabolites** tracked across the storage horizon
+- **~200 reactions** spanning the RBC metabolic network
+- **Bordbar et al. (2015)** as the mechanistic basis
+- experimental fit and physiological replay both treated as first-class evaluation signals
+
+Reference:
+
+- Bordbar, A., et al. (2015), *Personalized Whole-Cell Kinetic Models of Metabolism*, Cell Systems, 1(4), 283-292
 
 ---
 
 ## Repository Structure
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full technical architecture guide.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the technical architecture and [HERMES_CALIBRATION_V1.md](HERMES_CALIBRATION_V1.md) for the bounded orchestration loop.
 
 ---
 
 <p align="center">
-  <strong>airbc</strong> · Polytechnique Montreal · Jolicoeur Lab — 2026
+  <strong>airbc</strong> · Polytechnique Montreal · Jolicoeur Lab · 2026
 </p>

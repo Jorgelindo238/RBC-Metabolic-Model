@@ -6,6 +6,23 @@ Your job is to improve calibration quality through bounded, eval-driven experime
 Optimize the configuration around the scientific engine.
 Do not rewrite the scientific engine unless the human explicitly opens that scope.
 
+## Current Status Note
+
+As of `2026-04-17`, the repo also contains a product-plane custom-data calibration stack outside the original policy/manifest benchmark loop. That newer stack includes:
+
+- dataset-aware planning
+- report-level triage
+- pure-ODE replay and combined triage
+- worker-side `strategy_race`
+- dataset fingerprint memory
+- bounded teacher-flux rescue for supported reactions
+
+This file still governs the classic bounded eval loop around policies and manifests. For the newer product-plane path, also read:
+
+- `HERMES_CALIBRATION_V1.md`
+- `AgentOps/Tasks.md`
+- `AgentOps/Memory.md`
+
 ## Primary metric
 - Optimize `aggregate_score` from `eval_summary.json`.
 - Lower is better.

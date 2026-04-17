@@ -4,6 +4,32 @@ Scientific progress notes for the bloodai / RoBoCop platform.
 
 ---
 
+## 2026-04-17
+
+Delivered the custom-data calibration orchestration stack from P3a through P7 and deployed the new calibration surface to production `web`.
+
+What improved:
+- custom-data calibration can now run a true pure-ODE replay after fitting and derive a real `combined_triage`
+- the worker path now supports `strategy_race` orchestration, dataset fingerprint memory, and bounded teacher-flux rescue for supported reactions
+- the Calibration page now exposes single-run vs worker-race execution, pure-ODE replay, teacher-flux rescue, orchestration summaries, and richer planner/triage evidence
+- a minimal RL triage environment now exists so future policy learning can reuse the same verdict contracts
+
+What was validated:
+- `qa/robocop` passes with 90 tests after adding orchestration, teacher-flux, and RL-env coverage
+- local `apps/web` production build passes
+- the updated Calibration page is deployed on `app.airbc.org`
+
+What remains open:
+- the production `web` proxy still returns `503` for `/api/calibration/*` because `CALIBRATION_API_BASE_URL` and `CALIBRATION_API_SHARED_SECRET` are not yet configured against a live worker
+- the next step is therefore infra, not product-surface code: wire the future Hetzner worker into production and rerun end-to-end smoke tests
+
+Why it matters:
+- the custom-data calibration system now selects and remembers candidates using full physiological evidence instead of fit-only wins
+- the product plane is ready for long-running orchestration without another UI rewrite
+- the remaining production blocker is narrow and explicit
+
+---
+
 ## 2026-03-21
 
 Completed a cross-module provenance pass for Research calibration and registry flows.

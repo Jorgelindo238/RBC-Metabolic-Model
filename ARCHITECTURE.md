@@ -8,12 +8,13 @@
 
 ## Overview
 
-This repository combines four closely related systems:
+This repository combines five closely related systems:
 
 1. A **mechanistic ODE model** for RBC metabolism in `src/`
 2. A **calibration and benchmark workflow** centered on `src/MM_calibration.py`
 3. A **bounded autoresearch orchestration layer** for calibration campaigns
-4. A **Next.js + FastAPI research platform** (ClawBlood) in `apps/web/`, `apps/api/`, and `apps/marketing/`
+4. A **Next.js + FastAPI research platform** (airbc) in `apps/web/`, `apps/api/`, and `apps/marketing/`
+5. A **dedicated calibration worker surface** in `apps/calibration-worker/` for long-running orchestration
 
 > **Note:** `streamlit_app/` is a legacy interface. Its `core/` modules are still imported by the FastAPI backend via `sys.path`, but the Streamlit UI itself is superseded by the Next.js platform. Streamlit-only files (`app.py`, `pages/`, `.streamlit/`) are gitignored.
 
@@ -26,6 +27,27 @@ The current architecture is optimized for:
 - interactive inspection of concentrations, fluxes, uploads, and pathway views
 - Supabase-backed authentication, admin roles, and workspace context for the web platform
 - a FastAPI backend that exposes the Python scientific logic to the Next.js frontend without duplicating or patching scientific source files
+- a separate worker boundary for calibration jobs that should not live on the synchronous web path
+
+## Current Status Note
+
+As of `2026-04-17`:
+
+- `marketing` is live at `airbc.org`
+- `web` is live at `app.airbc.org`
+- the calibration UI already exposes:
+  - dataset-aware planning
+  - calibration-report triage
+  - pure-ODE triage
+  - combined triage wiring
+  - `single_run` and `strategy_race` modes
+  - dataset fingerprint memory
+  - bounded teacher-flux rescue for supported reactions
+- the production worker hookup is still pending:
+  - `CALIBRATION_API_BASE_URL`
+  - `CALIBRATION_API_SHARED_SECRET`
+
+The next deployment step is to point the web proxy at the future Hetzner calibration worker.
 
 ---
 
@@ -227,7 +249,7 @@ The FastAPI backend exposes the Python scientific logic from `streamlit_app/core
 - A lightweight **streamlit shim** (`st_shim.py`) is registered in `sys.modules['streamlit']` before any core import, mocking `st.session_state`, `st.cache_data`, `st.error/info/warning` with harmless no-ops
 - numpy arrays are recursively serialized to native Python types for JSON responses
 
-**Routers (6 total):**
+**Routers (current core surfaces):**
 
 | Router | Prefix | Core Module(s) | Key Endpoints |
 |---|---|---|---|
@@ -235,7 +257,7 @@ The FastAPI backend exposes the Python scientific logic from `streamlit_app/core
 | `flux.py` | `/flux` | `core.flux_estimator` | `POST /estimate`, `POST /timeseries`, `GET /kinetic-params` |
 | `pathway.py` | `/pathway` | `core.pathway_visualization` | `GET /network`, `POST /network-state` |
 | `sensitivity.py` | `/sensitivity` | `core.sensitivity_engine` | `POST /compare` |
-| `calibration.py` | `/calibration` | `core.parameter_calibration` | `POST /run`, `GET /available-parameters` |
+| `calibration.py` | `/calibration` | calibration adapter + scientific calibration runtime | `POST /run`, `POST /jobs`, `GET /jobs/{id}`, `GET /available-parameters` |
 | `data.py` | `/data` | `core.data_loader`, `core.data_preprocessor`, `core.metabolite_mapper`, `core.reaction_info_complete`, `core.flux_estimator` | `GET /experimental`, `GET /initial-conditions`, `GET /reactions`, `POST /upload`, `POST /map-metabolites`, `POST /compare-fluxes`, `POST /export-csv` |
 
 **This backend must not:**
@@ -243,6 +265,20 @@ The FastAPI backend exposes the Python scientific logic from `streamlit_app/core
 - copy or patch files from `streamlit_app/core/` or `src/`
 - redefine ODE logic, calibration scopes, or scientific parameters
 - bypass the existing calibration pipeline for benchmark-driven work
+
+### 3c. Calibration Worker (`apps/calibration-worker`)
+
+The calibration worker is the long-running execution boundary for custom-data calibration orchestration.
+
+It is responsible for:
+
+- async calibration job execution
+- `strategy_race` orchestration
+- dataset fingerprint memory
+- bounded teacher-flux rescue for supported reactions
+- shared-secret protected execution outside the public web request path
+
+As of `2026-04-17`, this worker is implemented in the repo but not yet connected to production through `CALIBRATION_API_BASE_URL` and `CALIBRATION_API_SHARED_SECRET`.
 
 ### 4. Autoresearch Orchestration Layer
 
@@ -254,6 +290,20 @@ The current implementation uses a LangGraph `StateGraph` in `scripts/run_bounded
 
 See `AUTOSEARCH_ARCHITECTURE.md` for the full state schema, node descriptions, and boundary definitions.
 
+### 4b. Product-Plane Custom Calibration Orchestration
+
+Alongside the Bordbar-focused bounded autosearch runner, the product plane now includes a custom-data orchestration layer composed of:
+
+- dataset-aware planning in `services/robocop/custom_dataset_planner.py`
+- calibration-report triage in `services/robocop/curve_triage.py`
+- pure-ODE triage in `services/robocop/pure_ode_triage.py`
+- combined verdict logic in `services/robocop/pure_ode_triage.py`
+- runtime orchestration in `apps/api/services/custom_calibration_orchestrator.py`
+- pure replay runtime in `apps/api/services/pure_ode_runtime.py`
+- bounded teacher-flux rescue in `apps/api/services/teacher_flux_generic.py`
+
+This orchestration is already implemented in code and surfaced in the web UI, but still awaits the production worker hookup.
+
 ### 5. Product / Interface Plane
 
 The product plane lives in Next.js (`apps/web`) backed by FastAPI (`apps/api`) and remains downstream of the existing scientific and orchestration boundaries.
@@ -263,7 +313,8 @@ Its current and planned responsibilities are:
 - **Live:** interactive simulation, flux analysis, pathway visualization, sensitivity analysis, parameter calibration, and data upload via FastAPI-backed Next.js feature components
 - **Live:** authenticated product UX with Supabase SSR, workspace-aware access, and durable workspace preferences
 - **Live:** calibration registry browsing via Supabase-backed reads
-- **Planned:** a separate marketing surface in `apps/marketing`
+- **Live:** planner, triage, pure-ODE replay controls, and orchestration-aware calibration result surfaces
+- **Live:** a separate marketing surface in `apps/marketing`
 - **Planned:** future RoBoCop prompt-driven actions and explanations inside the main app
 - **Planned:** optional secondary chat shells such as Telegram/OpenClaw that reuse the same bounded backend interfaces
 

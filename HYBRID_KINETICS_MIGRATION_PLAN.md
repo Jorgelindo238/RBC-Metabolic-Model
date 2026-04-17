@@ -15,6 +15,21 @@ The key idea is:
 - allow selected reactions to gain complementary kinetic terms
 - calibrate those complementary terms gradually instead of rewriting the whole model at once
 
+## Current Status Note
+
+As of `2026-04-17`, the surrounding orchestration layer has advanced faster than the hybrid kinetics migration itself.
+
+What is now in place around the model:
+
+- dataset-aware custom-data planning
+- executable curve triage
+- pure-ODE replay triage
+- worker-side strategy racing
+- dataset fingerprint memory
+- bounded teacher-flux rescue for supported reactions
+
+This means the next bottleneck is often infrastructure and orchestration quality rather than only kinetic-family migration. The hybrid kinetics plan remains important, but it now sits inside a stronger calibration and triage framework.
+
 ## Why This Needs a Structural Plan
 
 Today the calibration and ODE layers are tightly coupled:

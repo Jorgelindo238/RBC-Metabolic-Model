@@ -4,6 +4,15 @@
 
 This document is a working technical note for curve triage in the RBC metabolic calibration project.
 
+## Current Status Note
+
+As of `2026-04-17`, curve triage is no longer only a manual note. Its core rules are now implemented in code through:
+
+- `services/robocop/curve_triage.py` for calibration-report triage
+- `services/robocop/pure_ode_triage.py` for physiological replay triage
+
+The document remains the policy and rationale reference, while the executable logic is used by the calibration adapter, worker orchestration, and Phase B decision support.
+
 Its purpose is not only to reduce aggregate loss, but to classify the type of mismatch behind each metabolite curve before opening more parameters. In this project, a lower score is useful only if it corresponds to a better physiological explanation of the observed storage-lesion trajectories.
 
 The central triage question is:

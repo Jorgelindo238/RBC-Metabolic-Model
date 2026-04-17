@@ -11,6 +11,25 @@ For the follow-on policy governing bounded source edits inside the calibration
 orchestrator, see
 [`AGENT_EDITABLE_CALIBRATION_POLICY.md`](C:/Users/Jorgelindo/Desktop/Mario_RBC_up/AGENT_EDITABLE_CALIBRATION_POLICY.md).
 
+## Current Implementation Status
+
+As of `2026-04-17`, the repo now contains a practical product-plane calibration stack that extends this original V1 framing:
+
+- dataset-aware planning in `services/robocop/custom_dataset_planner.py`
+- calibration-report triage in `services/robocop/curve_triage.py`
+- pure-ODE triage and combined verdict logic in `services/robocop/pure_ode_triage.py`
+- true pure replay runtime in `apps/api/services/pure_ode_runtime.py`
+- worker-side multi-strategy orchestration in `apps/api/services/custom_calibration_orchestrator.py`
+- dataset fingerprint memory and bounded teacher-flux rescue for supported reactions
+- async worker execution in `apps/calibration-worker/main.py`
+
+The main remaining infrastructure step is not additional calibration logic; it is connecting the production web deployment to the calibration worker through:
+
+- `CALIBRATION_API_BASE_URL`
+- `CALIBRATION_API_SHARED_SECRET`
+
+So this document should now be read as the scientific and orchestration rationale, while the live implementation has already moved beyond a purely conceptual V1.
+
 ## Purpose
 
 Hermes should help us choose better bounded calibration experiments by:
@@ -22,12 +41,14 @@ Hermes should help us choose better bounded calibration experiments by:
 - launching the existing calibration runner
 - comparing the result against the seed
 - preserving memory about saturated seams and useful seams
+- enforcing that score gains still pass physiological replay checks
 
 Hermes should not replace:
 
 - the RHS in [`src/equadiff_brodbar.py`](C:/Users/Jorgelindo/Desktop/Mario_RBC_up/src/equadiff_brodbar.py)
 - the benchmark logic in [`src/MM_calibration.py`](C:/Users/Jorgelindo/Desktop/Mario_RBC_up/src/MM_calibration.py)
 - the promotion gate enforced by the real ODE in [`src/main.py`](C:/Users/Jorgelindo/Desktop/Mario_RBC_up/src/main.py)
+- the worker boundary used for long-running orchestration outside the synchronous web path
 
 ## Core Principle
 

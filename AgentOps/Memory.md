@@ -259,6 +259,47 @@ This file stores what the coding agent should remember across sessions:
   - filter custom calibration inputs to the `[1, t_max]` window before building the objective
   - keep the Bordbar/reference flow unchanged for the default case
 
+### 25b. Strategy racing should learn only from full physiological verdicts
+- Symptom:
+  - a candidate can win on calibration fit or report-level triage while still failing the true pure-ODE replay
+- Rule:
+  - do not warm-start strategy memory or select a race winner from partial evidence alone
+- Prevention:
+  - run the pure ODE replay before scoring strategy-race winners
+  - compute `combined_triage` before persisting memory hits
+  - treat report-only wins as incomplete evidence
+
+### 25c. Pure-ODE reruns need isolated artifacts
+- Symptom:
+  - direct reuse of `src/main.py` global output folders creates collisions between web runs, worker jobs, and historical artifacts
+- Rule:
+  - every web/worker rerun must write isolated `all_metabolites.csv` and `reaction_fluxes.csv` artifacts
+- Prevention:
+  - use a temp or run-scoped output folder for replay artifacts
+  - never let product-plane calibration runs overwrite canonical simulation folders
+
+### 25d. Production UI and production worker are separate milestones
+- Symptom:
+  - the calibration surface can be visibly deployed in `web` while the worker-backed orchestration is still unavailable behind the proxy
+- Rule:
+  - distinguish:
+    - UI deployed
+    - proxy configured
+    - worker reachable
+    - end-to-end orchestration live
+- Prevention:
+  - verify `/api/calibration/*` from the production web domain after every deploy
+  - do not claim worker-backed calibration is live until `CALIBRATION_API_BASE_URL` and `CALIBRATION_API_SHARED_SECRET` are set and the worker responds
+
+### 25e. Teacher-flux rescue should stay bounded to supported reactions
+- Symptom:
+  - a generic rescue loop can overpromise universality while only a subset of reactions have explicit reconstruction logic
+- Rule:
+  - expose teacher-flux rescue only for reactions with a clear teacher curve / balance contract
+- Prevention:
+  - keep the supported set explicit (`VEGLC`, `VELAC`, `VLDH`)
+  - return structured `skipped` results rather than inventing pseudo-teacher targets
+
 ### 26. Registry pages must surface active dataset state
 - Symptom:
   - the user uploads custom data, navigates to Calibration Registry, and assumes the upload was lost because the registry page only shows historical records

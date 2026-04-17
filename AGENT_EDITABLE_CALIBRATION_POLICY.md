@@ -13,6 +13,16 @@ The current scope is intentionally simple:
 This policy is designed to improve experimental curve fit and real pure-ODE
 behavior without letting agents rewrite the scientific model itself.
 
+## Current Status Note
+
+As of `2026-04-17`, the practical editable orchestration surface extends beyond `src/MM_calibration.py` alone. The live repo also relies on bounded edits in:
+
+- `services/robocop/` for planner and triage logic
+- `apps/api/services/` for orchestration adapters and pure replay runtime
+- `apps/calibration-worker/` for long-running worker execution
+
+The scientific boundary itself is unchanged: the ODE truth source remains frozen, and agent logic should continue to operate around the model rather than inside it.
+
 ## 1. Purpose
 
 The goal is to let bounded agents improve calibration behavior in places where

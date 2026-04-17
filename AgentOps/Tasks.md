@@ -3,11 +3,20 @@
 Current active work, execution state, blockers, and immediate next actions.
 
 ## Current Objective
-Keep the ClawBlood / RoBoCop platform moving forward with:
+Keep the airbc / RoBoCop platform moving forward with:
 - a stable product shell
 - a stable scientific backend
 - explicit research vs monitoring structure
 - reliable calibration/autoresearch workflows
+
+### Immediate Next Action
+- Branch the future Hetzner calibration worker into production `web` by setting:
+  - `CALIBRATION_API_BASE_URL`
+  - `CALIBRATION_API_SHARED_SECRET`
+- Then rerun a full production smoke test on:
+  - `/api/calibration/available-parameters`
+  - `/research/parameter-calibration`
+  - worker job creation / polling
 
 ### Active Workstreams
 
@@ -205,6 +214,29 @@ Keep the ClawBlood / RoBoCop platform moving forward with:
     - writes session summaries and seam-memory ledgers under `Simulations/brodbar/hermes/phase_d/`
 - Next step:
   - exercise the new Phase D session loop on a real calibration seed and inspect whether the seam-memory policy avoids redundant local retries
+
+#### Custom-data calibration orchestration roadmap (P1-P7)
+- Status: P1-P7 code path implemented; production worker hookup remains open
+- Goal:
+  - turn custom-data calibration into a dataset-aware, worker-backed orchestration flow rather than a single fixed strategy call
+- What is now implemented:
+  - P1 dataset-aware planner in `services/robocop/custom_dataset_planner.py`
+  - P2 programmatic curve triage in `services/robocop/curve_triage.py`
+  - P3 pure-ODE triage in `services/robocop/pure_ode_triage.py`
+  - P3a true pure-ODE replay + `combined_triage` in `apps/api/services/mm_calibration_adapter.py` and `apps/api/services/pure_ode_runtime.py`
+  - strategy racing + fingerprint memory in `apps/api/services/custom_calibration_orchestrator.py`
+  - generic teacher-flux rescue for supported reactions in `apps/api/services/teacher_flux_generic.py`
+  - worker job execution path in `apps/calibration-worker/main.py`
+  - async orchestration UI in `apps/web/components/features/ParameterCalibration.tsx`
+  - minimal RL triage environment in `services/robocop/calibration_triage_env.py`
+- Validation:
+  - `qa/robocop` now passes with 90 tests
+  - local `apps/web` production build passes
+  - the new calibration UI is deployed on `app.airbc.org`
+- Remaining blocker:
+  - production calibration proxy still returns `503` because the worker is not yet configured on the web deployment
+- Next step:
+  - connect the future Hetzner worker to production `web`
 
 #### Agent-editable calibration policy
 - Status: Full-file autonomy enabled for `src/MM_calibration.py`; guarded write path and Phase E patch loop implemented
