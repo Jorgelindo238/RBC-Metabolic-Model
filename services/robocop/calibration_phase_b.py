@@ -9,6 +9,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from services.robocop.pure_ode_triage import (
+    triage_pure_ode_csv,
+)
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MM_CALIBRATION_PATH = REPO_ROOT / "src" / "MM_calibration.py"
@@ -483,11 +487,17 @@ def _compare_pure_ode(seed_ode: dict[str, Any], candidate_ode: dict[str, Any]) -
     return result
 
 
-def _classify_decision(fit_summary: dict[str, Any], pure_ode_delta: dict[str, Any], protected_metabolites: list[str]) -> tuple[str, str]:
+def _classify_decision(
+    fit_summary: dict[str, Any],
+    pure_ode_delta: dict[str, Any],
+    protected_metabolites: list[str],
+    candidate_pure_ode_triage: dict[str, Any] | None = None,
+) -> tuple[str, str]:
     meaningful_fit_gain = bool(fit_summary.get("meaningful_improvement"))
     pure_worse = any(item.get("status") == "worse" for item in pure_ode_delta.values())
     pure_better = any(item.get("status") == "better" for item in pure_ode_delta.values())
     still_weak = any(item.get("status") == "still_weak" for item in pure_ode_delta.values())
+    candidate_pure_ode_overall = str((candidate_pure_ode_triage or {}).get("overall", "")).strip().lower()
     protected_fit_worse = any(
         item.get("status") == "worse"
         for name, item in fit_summary.get("protected_fit_status", {}).items()
@@ -497,6 +507,11 @@ def _classify_decision(fit_summary: dict[str, Any], pure_ode_delta: dict[str, An
     adp_ok = pure_ode_delta.get("ADP", {}).get("status") not in {"worse", "still_weak"}
     eglc_ok = pure_ode_delta.get("EGLC", {}).get("status") not in {"worse", "still_weak"}
 
+    if candidate_pure_ode_overall == "collapsed":
+        return (
+            "discard",
+            "Candidate pure ODE collapsed below protected physiological floors, so the run cannot be promoted despite calibration-fit gains.",
+        )
     if meaningful_fit_gain and not pure_worse and not protected_fit_worse and atp_ok and adp_ok and eglc_ok:
         return "promote", "Candidate improved fit materially and preserved the protected pure-ODE checks."
     if (meaningful_fit_gain and not pure_worse) or pure_better:
@@ -569,14 +584,21 @@ def execute_phase_b(args: dict[str, Any]) -> dict[str, Any]:
     candidate_report = _read_json(candidate_report_path)
     seed_ode_summary = _read_ode_summary(seed_ode_csv_path)
     candidate_ode_summary = _read_ode_summary(candidate_ode_csv_path)
+    seed_pure_ode_triage = triage_pure_ode_csv(seed_ode_csv_path).to_dict()
+    candidate_pure_ode_triage = triage_pure_ode_csv(candidate_ode_csv_path).to_dict()
     candidate_results_summary = _read_results_tsv_summary(paths["calibration_dir"] / "results.tsv")
     fit_summary = _compare_fit(seed_report, candidate_report, protected_metabolites, candidate_results_summary)
     pure_ode_delta = _compare_pure_ode(seed_ode_summary, candidate_ode_summary)
-    decision, reason = _classify_decision(fit_summary, pure_ode_delta, protected_metabolites)
+    decision, reason = _classify_decision(
+        fit_summary,
+        pure_ode_delta,
+        protected_metabolites,
+        candidate_pure_ode_triage,
+    )
 
     decision_record = {
         "contract_type": "hermes_calibration_phase_b_decision",
-        "contract_version": 1,
+        "contract_version": 2,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "decision": decision,
         "reason": reason,
@@ -589,6 +611,8 @@ def execute_phase_b(args: dict[str, Any]) -> dict[str, Any]:
         "candidate_ode_csv_path": _repo_relative_str(candidate_ode_csv_path),
         "fit_summary": fit_summary,
         "pure_ode_delta": pure_ode_delta,
+        "seed_pure_ode_triage": seed_pure_ode_triage,
+        "candidate_pure_ode_triage": candidate_pure_ode_triage,
         "protected_metabolites": protected_metabolites,
         "calibration_command": calibration_command,
         "seed_main_command": _build_main_command(seed_params_path, args) if run_seed_main else None,
@@ -616,6 +640,8 @@ def execute_phase_b(args: dict[str, Any]) -> dict[str, Any]:
         },
         "fitSummary": fit_summary,
         "pureOdeDelta": pure_ode_delta,
+        "seedPureOdeTriage": seed_pure_ode_triage,
+        "candidatePureOdeTriage": candidate_pure_ode_triage,
         "calibrationExecution": {
             "command": calibration_command,
             "returncode": calibration_result["returncode"],

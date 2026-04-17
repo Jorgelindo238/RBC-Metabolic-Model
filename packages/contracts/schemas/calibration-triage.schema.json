@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rbc-metabolic-model.local/packages/contracts/schemas/calibration-triage.schema.json",
+  "title": "Calibration Triage Verdict",
+  "description": "Programmatic curve-triage verdict emitted by services.robocop.curve_triage and attached to /calibration/run responses under `triage`.",
+  "type": "object",
+  "properties": {
+    "overall": {
+      "$ref": "#/$defs/overallVerdict"
+    },
+    "reason": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "improvement_pct": {
+      "type": ["number", "null"]
+    },
+    "baseline_loss": {
+      "type": ["number", "null"]
+    },
+    "final_loss": {
+      "type": ["number", "null"]
+    },
+    "priority_breakdown": {
+      "type": "object",
+      "description": "Per-priority count of verdicts. Keys are priority tiers (0..4) serialised as strings; values are verdict-count objects.",
+      "patternProperties": {
+        "^[0-4]$": {
+          "$ref": "#/$defs/verdictCounts"
+        }
+      },
+      "additionalProperties": false
+    },
+    "per_metabolite": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/metaboliteTriage" }
+    },
+    "protected_metric_status": {
+      "$ref": "#/$defs/protectedMetricStatus"
+    },
+    "discard_triggers": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "keep_signals": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "caveats": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "dangerous_compensators_active": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "next_best_experiment": {
+      "type": ["string", "null"]
+    },
+    "measured_but_missing_from_report": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "unmeasured_in_report": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "skipped": {
+      "type": "boolean"
+    },
+    "skip_reason": {
+      "type": ["string", "null"]
+    }
+  },
+  "required": [
+    "overall",
+    "reason",
+    "priority_breakdown",
+    "per_metabolite",
+    "protected_metric_status",
+    "discard_triggers",
+    "keep_signals",
+    "caveats",
+    "dangerous_compensators_active",
+    "measured_but_missing_from_report",
+    "unmeasured_in_report",
+    "skipped"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "overallVerdict": {
+      "type": "string",
+      "enum": ["keep", "keep_with_caveats", "discard", "needs_review"]
+    },
+    "metaboliteVerdict": {
+      "type": "string",
+      "enum": ["good", "acceptable", "concern", "critical"]
+    },
+    "metaboliteCategory": {
+      "type": "string",
+      "enum": [
+        "physiological_anchor",
+        "likely_parametric",
+        "likely_transport",
+        "likely_structural",
+        "uncategorised"
+      ]
+    },
+    "protectedMetricState": {
+      "type": "string",
+      "enum": ["good", "acceptable", "concern", "critical", "missing"]
+    },
+    "verdictCounts": {
+      "type": "object",
+      "properties": {
+        "good": { "type": "integer", "minimum": 0 },
+        "acceptable": { "type": "integer", "minimum": 0 },
+        "concern": { "type": "integer", "minimum": 0 },
+        "critical": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["good", "acceptable", "concern", "critical"],
+      "additionalProperties": false
+    },
+    "metaboliteTriage": {
+      "type": "object",
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "category": { "$ref": "#/$defs/metaboliteCategory" },
+        "nrmse": { "type": "number" },
+        "rmse": { "type": ["number", "null"] },
+        "sim_final": { "type": ["number", "null"] },
+        "exp_final": { "type": ["number", "null"] },
+        "norm_factor": { "type": ["number", "null"] },
+        "verdict": { "$ref": "#/$defs/metaboliteVerdict" },
+        "reason": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "required": [
+        "name",
+        "priority",
+        "category",
+        "nrmse",
+        "verdict",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "protectedMetricStatus": {
+      "type": "object",
+      "properties": {
+        "atp_nrmse": { "type": ["number", "null"] },
+        "adp_nrmse": { "type": ["number", "null"] },
+        "amp_nrmse": { "type": ["number", "null"] },
+        "b23pg_nrmse": { "type": ["number", "null"] },
+        "atp_status": { "$ref": "#/$defs/protectedMetricState" },
+        "adp_status": { "$ref": "#/$defs/protectedMetricState" },
+        "amp_status": { "$ref": "#/$defs/protectedMetricState" },
+        "b23pg_status": { "$ref": "#/$defs/protectedMetricState" },
+        "adenylate_coherent": { "type": "boolean" },
+        "adenylate_spread": { "type": ["number", "null"] }
+      },
+      "required": [
+        "atp_status",
+        "adp_status",
+        "amp_status",
+        "b23pg_status",
+        "adenylate_coherent"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

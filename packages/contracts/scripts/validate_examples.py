@@ -21,6 +21,9 @@ PAIRS = [
     ('calibration_runs_row', SCHEMAS / 'calibration-runs-row.schema.json', EXAMPLES / 'calibration_runs_row.example.json'),
     ('completed_run_manifest', SCHEMAS / 'completed-run-manifest.schema.json', EXAMPLES / 'completed_run_manifest.example.json'),
     ('run_registry_record', SCHEMAS / 'run-registry-record.schema.json', EXAMPLES / 'run_registry_record.example.json'),
+    ('custom_data_plan', SCHEMAS / 'custom-data-plan.schema.json', EXAMPLES / 'custom_data_plan.example.json'),
+    ('calibration_triage', SCHEMAS / 'calibration-triage.schema.json', EXAMPLES / 'calibration_triage.example.json'),
+    ('pure_ode_triage', SCHEMAS / 'pure-ode-triage.schema.json', EXAMPLES / 'pure_ode_triage.example.json'),
 ]
 
 

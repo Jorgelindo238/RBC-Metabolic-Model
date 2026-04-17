@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rbc-metabolic-model.local/packages/contracts/schemas/pure-ode-triage.schema.json",
+  "title": "Pure-ODE Triage Verdict",
+  "description": "Absolute physiological-health verdict emitted by services.robocop.pure_ode_triage from a Brodbar main.py all_metabolites.csv. Complements calibration-triage.schema.json — where the calibration verdict scores fit quality, this verdict scores whether the pure ODE stayed physiologically credible across the horizon. Attached to Hermes Phase B decision records as `seed_pure_ode_triage` / `candidate_pure_ode_triage`.",
+  "type": "object",
+  "properties": {
+    "overall": { "$ref": "#/$defs/overallVerdict" },
+    "reason": { "$ref": "#/$defs/nonEmptyString" },
+    "csv_path": { "type": ["string", "null"] },
+    "timepoint_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "horizon_days": { "type": ["number", "null"] },
+    "protected_floor_status": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/protectedFloorStatus" }
+    },
+    "adenylate_pool": {
+      "anyOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/adenylatePoolHealth" }
+      ]
+    },
+    "extracellular_anchor_status": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/extracellularAnchorStatus" }
+    },
+    "per_metabolite": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/trajectoryStats" }
+    },
+    "collapse_signals": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "concern_signals": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "healthy_signals": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "caveats": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "recommendation": { "type": "string" },
+    "unavailable_metabolites": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "skipped": { "type": "boolean" },
+    "skip_reason": { "type": ["string", "null"] }
+  },
+  "required": [
+    "overall",
+    "reason",
+    "timepoint_count",
+    "protected_floor_status",
+    "extracellular_anchor_status",
+    "per_metabolite",
+    "collapse_signals",
+    "concern_signals",
+    "healthy_signals",
+    "caveats",
+    "recommendation",
+    "unavailable_metabolites",
+    "skipped"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "overallVerdict": {
+      "type": "string",
+      "enum": ["healthy", "compromised", "collapsed", "needs_review"]
+    },
+    "floorState": {
+      "type": "string",
+      "enum": ["good", "concern", "critical", "missing"]
+    },
+    "trajectoryShape": {
+      "type": "string",
+      "enum": ["flat", "rising", "falling", "collapse"]
+    },
+    "trajectoryStats": {
+      "type": "object",
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "available": { "type": "boolean" },
+        "start": { "type": ["number", "null"] },
+        "end": { "type": ["number", "null"] },
+        "min_value": { "type": ["number", "null"] },
+        "max_value": { "type": ["number", "null"] },
+        "delta": { "type": ["number", "null"] },
+        "pct_delta": { "type": ["number", "null"] },
+        "shape": { "$ref": "#/$defs/trajectoryShape" }
+      },
+      "required": ["name", "available", "shape"],
+      "additionalProperties": false
+    },
+    "protectedFloorStatus": {
+      "type": "object",
+      "properties": {
+        "metabolite": { "$ref": "#/$defs/nonEmptyString" },
+        "final_value": { "type": ["number", "null"] },
+        "min_value": { "type": ["number", "null"] },
+        "critical_floor": { "type": "number" },
+        "concern_floor": { "type": "number" },
+        "state": { "$ref": "#/$defs/floorState" },
+        "rationale": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "required": [
+        "metabolite",
+        "final_value",
+        "min_value",
+        "critical_floor",
+        "concern_floor",
+        "state",
+        "rationale"
+      ],
+      "additionalProperties": false
+    },
+    "adenylatePoolHealth": {
+      "type": "object",
+      "properties": {
+        "atp_end": { "type": ["number", "null"] },
+        "adp_end": { "type": ["number", "null"] },
+        "amp_end": { "type": ["number", "null"] },
+        "pool_start": { "type": ["number", "null"] },
+        "pool_end": { "type": ["number", "null"] },
+        "pool_ratio": { "type": ["number", "null"] },
+        "target_ratio": { "type": "number" },
+        "critical_ratio": { "type": "number" },
+        "coherent": { "type": "boolean" },
+        "state": { "$ref": "#/$defs/floorState" }
+      },
+      "required": [
+        "atp_end",
+        "adp_end",
+        "amp_end",
+        "pool_start",
+        "pool_end",
+        "pool_ratio",
+        "target_ratio",
+        "critical_ratio",
+        "coherent",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "extracellularAnchorStatus": {
+      "type": "object",
+      "properties": {
+        "metabolite": { "$ref": "#/$defs/nonEmptyString" },
+        "start": { "type": ["number", "null"] },
+        "end": { "type": ["number", "null"] },
+        "pct_delta": { "type": ["number", "null"] },
+        "expected_direction": {
+          "type": "string",
+          "enum": ["falling", "rising"]
+        },
+        "state": { "$ref": "#/$defs/floorState" },
+        "rationale": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "required": [
+        "metabolite",
+        "start",
+        "end",
+        "pct_delta",
+        "expected_direction",
+        "state",
+        "rationale"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "assessment": {
+    "measured": [
+      "EGLC",
+      "GLC",
+      "ELAC",
+      "LAC",
+      "PYR",
+      "ATP",
+      "ADP",
+      "AMP",
+      "B23PG",
+      "GSH",
+      "GSSG",
+      "G6P",
+      "F6P",
+      "PEP"
+    ],
+    "priority_1_measured": [
+      "ADP",
+      "AMP",
+      "ATP",
+      "B23PG",
+      "EGLC",
+      "ELAC",
+      "GLC",
+      "GSH",
+      "GSSG",
+      "LAC"
+    ],
+    "priority_2_measured": [
+      "F6P",
+      "G6P",
+      "PEP",
+      "PYR"
+    ],
+    "priority_3_measured": [],
+    "priority_4_measured": [],
+    "unknown_metabolites": [],
+    "priority_1_coverage": 1.0,
+    "anchors_present": {
+      "energy": true,
+      "glucose_commitment": true,
+      "lactate_outlet": true,
+      "redox": true
+    },
+    "extracellular_present": true,
+    "energy_core_present": true,
+    "profile_signal": "priority1_extracellular_anchor",
+    "warnings": []
+  },
+  "recommended_strategy": "vmax_then_km",
+  "target_scope": "glycolysis_extracellular",
+  "atp_focus": true,
+  "parameter_additions": [
+    "vmax_VAK",
+    "vmax_VAK_rev",
+    "vmax_VAK2"
+  ],
+  "rejected_parameter_additions": {
+    "vmax_VAMPD1": "vmax_VAMPD1 targets purine turnover but no Priority 3 metabolite is measured. Removing it prevents silent compensatory fits.",
+    "vmax_VAPRT": "vmax_VAPRT targets purine turnover but no Priority 3 metabolite is measured. Removing it prevents silent compensatory fits.",
+    "vmax_VADSL": "vmax_VADSL targets purine turnover but no Priority 3 metabolite is measured. Removing it prevents silent compensatory fits."
+  },
+  "dangerous_compensators_present": {
+    "vmax_VPEP_PASE": "VPEP_PASE provides an ADP-independent escape from PEP to PYR. It can mask a real VENOPGM or VPK bottleneck. Open it only late and under tight bounds."
+  },
+  "dangerous_compensators_guarded": [
+    "vmax_VPEP_PASE"
+  ],
+  "weight_emphasis": {
+    "EGLC": 14.0,
+    "GLC": 7.0,
+    "ELAC": 9.0,
+    "LAC": 12.0,
+    "PYR": 12.0,
+    "ATP": 45.0,
+    "ADP": 45.0,
+    "AMP": 24.0,
+    "B23PG": 8.0,
+    "GSH": 5.0,
+    "GSSG": 5.0,
+    "G6P": 6.0,
+    "F6P": 4.0,
+    "PEP": 10.0
+  },
+  "stage_outline": [
+    {
+      "name": "anchor_priority_1",
+      "purpose": "Stabilise Priority 1 physiological anchors \u2014 energy core, glucose commitment, lactate outlet, redox.",
+      "target_scope": "glycolysis_extracellular",
+      "targets": [
+        "ADP",
+        "AMP",
+        "ATP",
+        "B23PG",
+        "EGLC",
+        "ELAC",
+        "GLC",
+        "GSH",
+        "GSSG",
+        "LAC"
+      ],
+      "param_filter": {
+        "classes": [
+          "vmax",
+          "km"
+        ],
+        "identifiability": [
+          "core"
+        ]
+      },
+      "notes": [
+        "Optimization strategy: vmax_then_km.",
+        "Keep VPEP_PASE and secondary VE* exports closed in this stage."
+      ]
+    },
+    {
+      "name": "glycolysis_priority_2",
+      "purpose": "Refine internal glycolysis intermediates once Priority 1 behaviour is credible.",
+      "target_scope": "glycolysis_extracellular",
+      "targets": [
+        "F6P",
+        "G6P",
+        "PEP",
+        "PYR"
+      ],
+      "param_filter": {
+        "classes": [
+          "vmax",
+          "km"
+        ],
+        "identifiability": [
+          "core",
+          "caution"
+        ]
+      },
+      "notes": [
+        "Expect VPFK, VFDPA, VENOPGM, VPK to dominate this stage."
+      ]
+    }
+  ],
+  "notes": [
+    "Some MM auto-added parameters were dropped because the dataset does not support them: vmax_VADSL, vmax_VAMPD1, vmax_VAPRT.",
+    "Dangerous compensator parameters were selected by the user: vmax_VPEP_PASE. They are still included, but triage will flag any run where they dominate the fit."
+  ],
+  "rationale": "Extracellular anchors are measured alongside Priority 1 metabolites, so we use the full glycolysis_extracellular objective bundle and stage Vmax before Km to stabilise transport + commitment before fine affinity tuning."
+}

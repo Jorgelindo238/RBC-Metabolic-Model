@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rbc-metabolic-model.local/packages/contracts/schemas/custom-data-plan.schema.json",
+  "title": "Custom Data Calibration Plan",
+  "description": "Dataset-aware plan emitted by services.robocop.custom_dataset_planner and attached to /calibration/run responses under `custom_data_plan`.",
+  "type": "object",
+  "properties": {
+    "assessment": {
+      "$ref": "#/$defs/customDataAssessment"
+    },
+    "recommended_strategy": {
+      "$ref": "#/$defs/optimizationStrategy"
+    },
+    "target_scope": {
+      "$ref": "#/$defs/targetScope"
+    },
+    "atp_focus": {
+      "type": "boolean"
+    },
+    "parameter_additions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" }
+    },
+    "rejected_parameter_additions": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Map of MM auto-added parameters the planner removed because the dataset does not support them (key = parameter name, value = human-readable reason)."
+    },
+    "dangerous_compensators_present": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Dangerous-compensator parameters that the user chose to optimise. Key = parameter name, value = short rationale from CURVE_TRIAGE."
+    },
+    "dangerous_compensators_guarded": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" }
+    },
+    "weight_emphasis": {
+      "type": "object",
+      "additionalProperties": { "type": "number" },
+      "description": "Mirror of the MM_calibration weight each measured metabolite receives under the recommended target_scope."
+    },
+    "stage_outline": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/stageOutline" }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "rationale": {
+      "$ref": "#/$defs/nonEmptyString"
+    }
+  },
+  "required": [
+    "assessment",
+    "recommended_strategy",
+    "target_scope",
+    "atp_focus",
+    "parameter_additions",
+    "rejected_parameter_additions",
+    "dangerous_compensators_present",
+    "dangerous_compensators_guarded",
+    "weight_emphasis",
+    "stage_outline",
+    "notes",
+    "rationale"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metaboliteName": {
+      "type": "string",
+      "pattern": "^[A-Z0-9_]{1,16}$"
+    },
+    "optimizationStrategy": {
+      "type": "string",
+      "enum": [
+        "legacy",
+        "vmax_only",
+        "km_only",
+        "joint_vmax_km",
+        "vmax_then_km",
+        "km_then_vmax",
+        "staged_full",
+        "core_km_then_purine_transport",
+        "hybrid_only"
+      ]
+    },
+    "targetScope": {
+      "type": "string",
+      "enum": [
+        "all",
+        "extracellular",
+        "glycolysis",
+        "glycolysis_terminal",
+        "glycolysis_extracellular",
+        "core_glycolysis_energy"
+      ]
+    },
+    "customDataAssessment": {
+      "type": "object",
+      "properties": {
+        "measured": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/metaboliteName" }
+        },
+        "priority_1_measured": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/metaboliteName" }
+        },
+        "priority_2_measured": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/metaboliteName" }
+        },
+        "priority_3_measured": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/metaboliteName" }
+        },
+        "priority_4_measured": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/metaboliteName" }
+        },
+        "unknown_metabolites": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "priority_1_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "anchors_present": {
+          "type": "object",
+          "properties": {
+            "energy": { "type": "boolean" },
+            "glucose_commitment": { "type": "boolean" },
+            "lactate_outlet": { "type": "boolean" },
+            "redox": { "type": "boolean" }
+          },
+          "required": ["energy", "glucose_commitment", "lactate_outlet", "redox"],
+          "additionalProperties": false
+        },
+        "extracellular_present": { "type": "boolean" },
+        "energy_core_present": { "type": "boolean" },
+        "profile_signal": {
+          "type": "string",
+          "enum": [
+            "broad_core_and_purine",
+            "priority1_extracellular_anchor",
+            "priority1_energy_anchor",
+            "priority1_partial",
+            "glycolysis_only",
+            "purine_only",
+            "side_only",
+            "empty"
+          ]
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": [
+        "measured",
+        "priority_1_measured",
+        "priority_2_measured",
+        "priority_3_measured",
+        "priority_4_measured",
+        "unknown_metabolites",
+        "priority_1_coverage",
+        "anchors_present",
+        "extracellular_present",
+        "energy_core_present",
+        "profile_signal",
+        "warnings"
+      ],
+      "additionalProperties": false
+    },
+    "stageOutline": {
+      "type": "object",
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "purpose": { "$ref": "#/$defs/nonEmptyString" },
+        "target_scope": { "$ref": "#/$defs/targetScope" },
+        "targets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/metaboliteName" }
+        },
+        "param_filter": {
+          "type": "object",
+          "properties": {
+            "classes": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "identifiability": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": false
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["name", "purpose", "target_scope", "targets", "param_filter", "notes"],
+      "additionalProperties": false
+    }
+  }
+}

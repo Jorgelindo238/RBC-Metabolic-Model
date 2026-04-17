@@ -4,16 +4,98 @@ from __future__ import annotations
 
 from copy import deepcopy
 import json
+import logging
 from functools import lru_cache
 import tempfile
 import traceback
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from fastapi import HTTPException
 
 import MM_calibration as mm
+
+def _load_robocop_modules():
+    """Load the top-level ``services/robocop`` planner + triage modules.
+
+    The FastAPI app registers ``apps/api/`` on ``sys.path`` before the project
+    root, so the import name ``services`` resolves to ``apps/api/services/``
+    (this file's own package). That shadows the project-root ``services/``
+    namespace where ``robocop/`` actually lives. Rather than mutate
+    ``sys.path`` globally — which would break ``services.openai_service`` used
+    elsewhere in this app — we resolve the two modules by absolute path via
+    ``importlib``. The loaded modules are registered under alternate names in
+    ``sys.modules`` so their ``from services.robocop.custom_dataset_planner``
+    import works inside ``curve_triage.py``.
+    """
+
+    import importlib.util
+    import sys
+
+    project_root = Path(__file__).resolve().parents[3]
+    planner_path = project_root / "services" / "robocop" / "custom_dataset_planner.py"
+    triage_path = project_root / "services" / "robocop" / "curve_triage.py"
+    pure_ode_triage_path = project_root / "services" / "robocop" / "pure_ode_triage.py"
+    if not planner_path.exists() or not triage_path.exists() or not pure_ode_triage_path.exists():
+        return None
+
+    def _load(module_name: str, file_path: Path):
+        spec = importlib.util.spec_from_file_location(module_name, str(file_path))
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Unable to build spec for {file_path}")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        return module
+
+    planner_alias = "robocop_tools.custom_dataset_planner"
+    triage_alias = "robocop_tools.curve_triage"
+
+    # Expose the planner under the name the triage module imports from it.
+    planner_module = _load(planner_alias, planner_path)
+    sys.modules["services.robocop.custom_dataset_planner"] = planner_module
+    triage_module = _load(triage_alias, triage_path)
+    sys.modules["services.robocop.curve_triage"] = triage_module
+
+    pure_ode_triage_alias = "robocop_tools.pure_ode_triage"
+    pure_ode_triage_module = _load(pure_ode_triage_alias, pure_ode_triage_path)
+    sys.modules["services.robocop.pure_ode_triage"] = pure_ode_triage_module
+
+    return planner_module, triage_module, pure_ode_triage_module
+
+
+try:
+    _planner_module, _triage_module, _pure_ode_triage_module = _load_robocop_modules() or (None, None, None)
+    if _planner_module is None or _triage_module is None or _pure_ode_triage_module is None:
+        raise ImportError("robocop planner / triage modules could not be located")
+    CustomDataPlan = getattr(_planner_module, "CustomDataPlan")
+    build_custom_data_plan = getattr(_planner_module, "build_custom_data_plan")
+    TriageVerdict = getattr(_triage_module, "TriageVerdict")
+    skipped_triage = getattr(_triage_module, "skipped_triage")
+    triage_calibration_report = getattr(_triage_module, "triage_calibration_report")
+    skipped_pure_ode_triage = getattr(_pure_ode_triage_module, "skipped_pure_ode_triage")
+    combine_triage_verdicts = getattr(_pure_ode_triage_module, "combine_triage_verdicts")
+    _ROBOCOP_PLANNER_AVAILABLE = True
+    _ROBOCOP_IMPORT_ERROR = ""
+except Exception:  # pragma: no cover - defensive fallback
+    CustomDataPlan = None  # type: ignore[assignment]
+    TriageVerdict = None  # type: ignore[assignment]
+    build_custom_data_plan = None  # type: ignore[assignment]
+    skipped_triage = None  # type: ignore[assignment]
+    triage_calibration_report = None  # type: ignore[assignment]
+    skipped_pure_ode_triage = None  # type: ignore[assignment]
+    combine_triage_verdicts = None  # type: ignore[assignment]
+    _ROBOCOP_PLANNER_AVAILABLE = False
+    _ROBOCOP_IMPORT_ERROR = traceback.format_exc()
+
+_logger = logging.getLogger(__name__)
+if not _ROBOCOP_PLANNER_AVAILABLE:
+    _logger.warning(
+        "RoBoCop calibration planner/triage unavailable; falling back to legacy "
+        "MM profile. Import error:\n%s",
+        _ROBOCOP_IMPORT_ERROR,
+    )
 
 DEFAULT_WEB_OPTIMIZATION_STRATEGY = "vmax_then_km"
 STRATEGY_LABELS = {
@@ -355,8 +437,98 @@ def _compute_r_squared(
     return float(max(-1.0, min(1.0, 1.0 - (ss_res / ss_tot))))
 
 
+def _build_custom_data_plan_safely(
+    *,
+    measured_metabolites: List[str],
+    user_selected_params: List[str],
+    requested_strategy: Optional[str],
+    profile_additions_candidates: List[str],
+):
+    """Run the dataset-aware planner and return ``(plan_dict, plan_obj)``.
+
+    Returns ``(None, None)`` if the planner is unavailable or raises — the
+    legacy ``infer_custom_data_calibration_profile`` flow then takes over.
+    """
+
+    if not _ROBOCOP_PLANNER_AVAILABLE:
+        return None, None
+    try:
+        plan = build_custom_data_plan(
+            measured_metabolites=measured_metabolites,
+            selected_params=user_selected_params,
+            requested_strategy=requested_strategy,
+            mm_inferred_additions=profile_additions_candidates or None,
+        )
+    except Exception:  # pragma: no cover - defensive fallback
+        _logger.exception("custom_dataset_planner.build_custom_data_plan failed")
+        return None, None
+    try:
+        return plan.to_dict(), plan
+    except Exception:  # pragma: no cover - defensive fallback
+        _logger.exception("custom_dataset_planner.to_dict failed")
+        return None, plan
+
+
+def _triage_report_safely(
+    report_payload: Dict[str, Any],
+    *,
+    measured_metabolites: List[str],
+    user_selected_params: List[str],
+):
+    """Run programmatic curve triage. Never raises up the call stack."""
+
+    if not _ROBOCOP_PLANNER_AVAILABLE:
+        return None
+    try:
+        verdict = triage_calibration_report(
+            report_payload,
+            measured_metabolites=measured_metabolites,
+            optimized_params=user_selected_params,
+        )
+        return verdict.to_dict()
+    except Exception:  # pragma: no cover - defensive fallback
+        _logger.exception("curve_triage.triage_calibration_report failed")
+        try:
+            return skipped_triage("triage raised unexpectedly").to_dict()
+        except Exception:
+            return None
+
+
+def _build_pure_ode_triage_safely() -> Optional[Dict[str, Any]]:
+    """Emit a structured placeholder until the web path reruns ``main.py``."""
+
+    if not _ROBOCOP_PLANNER_AVAILABLE:
+        return None
+    try:
+        return skipped_pure_ode_triage(
+            "Pure ODE triage is not available yet for web calibration runs. "
+            "Re-run main.py on the calibrated candidate to score all_metabolites.csv."
+        ).to_dict()
+    except Exception:  # pragma: no cover - defensive fallback
+        _logger.exception("pure_ode_triage.skipped_pure_ode_triage failed")
+        return None
+
+
+def _build_combined_triage_safely(
+    calibration_triage: Optional[Dict[str, Any]],
+    pure_ode_triage: Optional[Dict[str, Any]],
+) -> Optional[Dict[str, Any]]:
+    """Combine curve-triage + pure-ODE triage once a real pure-ODE verdict exists."""
+
+    if not _ROBOCOP_PLANNER_AVAILABLE or calibration_triage is None or pure_ode_triage is None:
+        return None
+    if bool(pure_ode_triage.get("skipped")):
+        return None
+    try:
+        return combine_triage_verdicts(calibration_triage, pure_ode_triage).to_dict()
+    except Exception:  # pragma: no cover - defensive fallback
+        _logger.exception("pure_ode_triage.combine_triage_verdicts failed")
+        return None
+
+
 def run_web_calibration(request) -> dict:
-    selected_params = list(request.params_to_optimize.keys())
+    user_selected_params = list(request.params_to_optimize.keys())
+    selected_params = list(user_selected_params)
     allowed_params = set(mm.build_parameter_taxonomy()["classes"].get(mm.PARAM_CLASS_VMAX, [])) | set(
         mm.build_parameter_taxonomy()["classes"].get(mm.PARAM_CLASS_KM, [])
     )
@@ -374,19 +546,47 @@ def run_web_calibration(request) -> dict:
     experimental_payload = _build_experimental_payload(request)
     initial_params = _build_initial_params(request)
     calibration_profile = mm.infer_custom_data_calibration_profile(target_metabolites)
-    profile_additions = [
+    explicit_strategy = getattr(request, "optimization_strategy", None) or getattr(request, "method", None)
+    profile_addition_candidates = [
         name
         for name in calibration_profile.get("parameter_additions", [])
         if name not in selected_params
     ]
+
+    # Phase 1: dataset-aware plan. Guarded so any planner bug never breaks calibration.
+    custom_data_plan_dict, custom_data_plan_obj = _build_custom_data_plan_safely(
+        measured_metabolites=target_metabolites,
+        user_selected_params=user_selected_params,
+        requested_strategy=explicit_strategy,
+        profile_additions_candidates=profile_addition_candidates,
+    )
+
+    if custom_data_plan_obj is not None:
+        planner_additions = [
+            name
+            for name in custom_data_plan_obj.parameter_additions
+            if name in profile_addition_candidates
+        ]
+        profile_additions = planner_additions
+    else:
+        profile_additions = profile_addition_candidates
+
     if profile_additions:
         selected_params = list(dict.fromkeys(selected_params + profile_additions))
-    explicit_strategy = getattr(request, "optimization_strategy", None) or getattr(request, "method", None)
+
     optimization_strategy = _resolve_requested_strategy(request)
     if explicit_strategy is None:
-        optimization_strategy = calibration_profile["optimization_strategy"]
-    target_scope = calibration_profile["target_scope"]
-    atp_focus = bool(calibration_profile["atp_focus"])
+        if custom_data_plan_obj is not None:
+            optimization_strategy = custom_data_plan_obj.recommended_strategy
+        else:
+            optimization_strategy = calibration_profile["optimization_strategy"]
+
+    if custom_data_plan_obj is not None and explicit_strategy is None:
+        target_scope = custom_data_plan_obj.target_scope
+        atp_focus = bool(custom_data_plan_obj.atp_focus)
+    else:
+        target_scope = calibration_profile["target_scope"]
+        atp_focus = bool(calibration_profile["atp_focus"])
     atp_floor = float(calibration_profile["atp_floor"])
     adp_floor = float(calibration_profile["adp_floor"])
     amp_floor = float(calibration_profile["amp_floor"])
@@ -458,6 +658,19 @@ def run_web_calibration(request) -> dict:
         report_path = out_dir / "calibration_report.json"
         report = json.loads(report_path.read_text(encoding="utf-8"))
 
+        # Phase 2: programmatic curve triage. Guarded so any triage bug never
+        # breaks the happy path of returning the calibration result.
+        triage_verdict = _triage_report_safely(
+            report,
+            measured_metabolites=target_metabolites,
+            user_selected_params=user_selected_params,
+        )
+        pure_ode_triage_verdict = _build_pure_ode_triage_safely()
+        combined_triage_verdict = _build_combined_triage_safely(
+            triage_verdict,
+            pure_ode_triage_verdict,
+        )
+
         phase_elapsed_seconds = []
         for phase in (report.get("phases") or {}).values():
             if isinstance(phase, dict):
@@ -522,5 +735,9 @@ def run_web_calibration(request) -> dict:
                 "calibration_completed": True,
                 "calibration_failed": False,
                 "result_summary": result_summary,
+                "custom_data_plan": custom_data_plan_dict,
+                "triage": triage_verdict,
+                "pure_ode_triage": pure_ode_triage_verdict,
+                "combined_triage": combined_triage_verdict,
             }
         )

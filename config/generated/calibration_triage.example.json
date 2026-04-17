@@ -1,0 +1,238 @@
+{
+  "overall": "keep_with_caveats",
+  "reason": "Dangerous compensator parameters were active during the run: vmax_VPEP_PASE. Rerun with them frozen if the fit depends on them.",
+  "improvement_pct": 66.5,
+  "baseline_loss": 1.85,
+  "final_loss": 0.62,
+  "priority_breakdown": {
+    "1": {
+      "good": 8,
+      "acceptable": 2,
+      "concern": 0,
+      "critical": 0
+    },
+    "2": {
+      "good": 2,
+      "acceptable": 2,
+      "concern": 0,
+      "critical": 0
+    },
+    "3": {
+      "good": 0,
+      "acceptable": 0,
+      "concern": 0,
+      "critical": 0
+    },
+    "4": {
+      "good": 0,
+      "acceptable": 0,
+      "concern": 0,
+      "critical": 0
+    },
+    "0": {
+      "good": 0,
+      "acceptable": 0,
+      "concern": 0,
+      "critical": 0
+    }
+  },
+  "per_metabolite": [
+    {
+      "name": "F6P",
+      "priority": 2,
+      "category": "likely_parametric",
+      "nrmse": 0.41,
+      "rmse": 0.008,
+      "sim_final": 0.02,
+      "exp_final": 0.03,
+      "norm_factor": 0.022,
+      "verdict": "acceptable",
+      "reason": "F6P is close to the experimental trend but has some residual mismatch."
+    },
+    {
+      "name": "PEP",
+      "priority": 2,
+      "category": "likely_parametric",
+      "nrmse": 0.38,
+      "rmse": 0.003,
+      "sim_final": 0.008,
+      "exp_final": 0.012,
+      "norm_factor": 0.01,
+      "verdict": "acceptable",
+      "reason": "PEP is close to the experimental trend but has some residual mismatch."
+    },
+    {
+      "name": "AMP",
+      "priority": 1,
+      "category": "physiological_anchor",
+      "nrmse": 0.32,
+      "rmse": 0.01,
+      "sim_final": 0.04,
+      "exp_final": 0.06,
+      "norm_factor": 0.05,
+      "verdict": "acceptable",
+      "reason": "AMP is close to the experimental trend but has some residual mismatch."
+    },
+    {
+      "name": "PYR",
+      "priority": 2,
+      "category": "likely_parametric",
+      "nrmse": 0.31,
+      "rmse": 0.04,
+      "sim_final": 0.12,
+      "exp_final": 0.15,
+      "norm_factor": 0.13,
+      "verdict": "good",
+      "reason": "PYR tracks the experimental curve."
+    },
+    {
+      "name": "B23PG",
+      "priority": 1,
+      "category": "physiological_anchor",
+      "nrmse": 0.29,
+      "rmse": 1.2,
+      "sim_final": 3.9,
+      "exp_final": 4.2,
+      "norm_factor": 4.1,
+      "verdict": "acceptable",
+      "reason": "B23PG is close to the experimental trend but has some residual mismatch."
+    },
+    {
+      "name": "G6P",
+      "priority": 2,
+      "category": "likely_parametric",
+      "nrmse": 0.26,
+      "rmse": 0.02,
+      "sim_final": 0.08,
+      "exp_final": 0.1,
+      "norm_factor": 0.09,
+      "verdict": "good",
+      "reason": "G6P tracks the experimental curve."
+    },
+    {
+      "name": "ADP",
+      "priority": 1,
+      "category": "physiological_anchor",
+      "nrmse": 0.24,
+      "rmse": 0.04,
+      "sim_final": 0.16,
+      "exp_final": 0.2,
+      "norm_factor": 0.18,
+      "verdict": "good",
+      "reason": "ADP tracks within tolerance and anchors the fit."
+    },
+    {
+      "name": "GLC",
+      "priority": 1,
+      "category": "physiological_anchor",
+      "nrmse": 0.22,
+      "rmse": 0.05,
+      "sim_final": 0.24,
+      "exp_final": 0.28,
+      "norm_factor": 0.22,
+      "verdict": "good",
+      "reason": "GLC tracks within tolerance and anchors the fit."
+    },
+    {
+      "name": "ATP",
+      "priority": 1,
+      "category": "physiological_anchor",
+      "nrmse": 0.21,
+      "rmse": 0.3,
+      "sim_final": 1.35,
+      "exp_final": 1.4,
+      "norm_factor": 1.4,
+      "verdict": "good",
+      "reason": "ATP tracks within tolerance and anchors the fit."
+    },
+    {
+      "name": "GSSG",
+      "priority": 1,
+      "category": "physiological_anchor",
+      "nrmse": 0.2,
+      "rmse": 0.005,
+      "sim_final": 0.03,
+      "exp_final": 0.035,
+      "norm_factor": 0.035,
+      "verdict": "good",
+      "reason": "GSSG tracks within tolerance and anchors the fit."
+    },
+    {
+      "name": "LAC",
+      "priority": 1,
+      "category": "physiological_anchor",
+      "nrmse": 0.19,
+      "rmse": 0.17,
+      "sim_final": 0.88,
+      "exp_final": 0.95,
+      "norm_factor": 0.9,
+      "verdict": "good",
+      "reason": "LAC tracks within tolerance and anchors the fit."
+    },
+    {
+      "name": "EGLC",
+      "priority": 1,
+      "category": "physiological_anchor",
+      "nrmse": 0.18,
+      "rmse": 0.82,
+      "sim_final": 3.1,
+      "exp_final": 3.3,
+      "norm_factor": 4.5,
+      "verdict": "good",
+      "reason": "EGLC tracks within tolerance and anchors the fit."
+    },
+    {
+      "name": "GSH",
+      "priority": 1,
+      "category": "physiological_anchor",
+      "nrmse": 0.17,
+      "rmse": 0.13,
+      "sim_final": 2.05,
+      "exp_final": 2.1,
+      "norm_factor": 2.1,
+      "verdict": "good",
+      "reason": "GSH tracks within tolerance and anchors the fit."
+    },
+    {
+      "name": "ELAC",
+      "priority": 1,
+      "category": "physiological_anchor",
+      "nrmse": 0.15,
+      "rmse": 0.32,
+      "sim_final": 2.1,
+      "exp_final": 2.0,
+      "norm_factor": 2.1,
+      "verdict": "good",
+      "reason": "ELAC tracks within tolerance and anchors the fit."
+    }
+  ],
+  "protected_metric_status": {
+    "atp_nrmse": 0.21,
+    "adp_nrmse": 0.24,
+    "amp_nrmse": 0.32,
+    "b23pg_nrmse": 0.29,
+    "atp_status": "good",
+    "adp_status": "good",
+    "amp_status": "acceptable",
+    "b23pg_status": "acceptable",
+    "adenylate_coherent": true,
+    "adenylate_spread": 0.11000000000000001
+  },
+  "discard_triggers": [],
+  "keep_signals": [
+    "8/10 Priority 1 anchors classified as good.",
+    "Adenylate pool is coherent \u2014 ATP/ADP/AMP move together.",
+    "Aggregate loss improved: 1.8500 \u2192 0.6200."
+  ],
+  "caveats": [
+    "Dangerous compensator parameters were active during the run: vmax_VPEP_PASE. Rerun with them frozen if the fit depends on them."
+  ],
+  "dangerous_compensators_active": {
+    "vmax_VPEP_PASE": "VPEP_PASE provides an ADP-independent escape from PEP to PYR. It can mask a real VENOPGM or VPK bottleneck. Open it only late and under tight bounds."
+  },
+  "next_best_experiment": "Compensator parameters vmax_VPEP_PASE were active. Rerun with them frozen to confirm the fit is not leaning on them.",
+  "measured_but_missing_from_report": [],
+  "unmeasured_in_report": [],
+  "skipped": false,
+  "skip_reason": null
+}

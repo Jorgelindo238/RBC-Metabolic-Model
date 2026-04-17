@@ -46,6 +46,39 @@ interface CalibrationResult {
   calibration_completed?: boolean
   calibration_failed?: boolean
   result_summary?: string
+  pure_ode_triage?: {
+    overall?: string
+    reason?: string
+    recommendation?: string
+    skipped?: boolean
+    skip_reason?: string | null
+    collapse_signals?: string[]
+    concern_signals?: string[]
+    healthy_signals?: string[]
+    caveats?: string[]
+  } | null
+  combined_triage?: {
+    overall?: string
+    reason?: string
+    recommendation?: string
+    discard_triggers?: string[]
+    caveats?: string[]
+  } | null
+}
+
+function triageBadgeVariant(
+  verdict?: string
+): 'default' | 'secondary' | 'destructive' | 'outline' {
+  if (verdict === 'healthy' || verdict === 'keep') {
+    return 'default'
+  }
+  if (verdict === 'compromised' || verdict === 'keep_with_caveats' || verdict === 'needs_review') {
+    return 'secondary'
+  }
+  if (verdict === 'collapsed' || verdict === 'discard') {
+    return 'destructive'
+  }
+  return 'outline'
 }
 
 function ParamToggleGroup({
@@ -731,7 +764,60 @@ export function ParameterCalibration() {
               )}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-5">
+            {result.pure_ode_triage ? (
+              <div className="rounded-2xl border border-border/60 bg-background/40 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={triageBadgeVariant(result.pure_ode_triage.overall)} className="rounded-full">
+                    Pure ODE {result.pure_ode_triage.overall ?? 'pending'}
+                  </Badge>
+                  {result.pure_ode_triage.skipped ? (
+                    <Badge variant="outline" className="rounded-full">
+                      main.py rerun required
+                    </Badge>
+                  ) : null}
+                  {result.combined_triage?.overall ? (
+                    <Badge variant={triageBadgeVariant(result.combined_triage.overall)} className="rounded-full">
+                      Combined {result.combined_triage.overall}
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {result.pure_ode_triage.reason ?? 'Pure ODE triage not available.'}
+                </p>
+                {result.combined_triage?.reason ? (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Combined verdict: {result.combined_triage.reason}
+                  </p>
+                ) : null}
+                {result.pure_ode_triage.recommendation ? (
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                    {result.pure_ode_triage.recommendation}
+                  </p>
+                ) : null}
+                {result.pure_ode_triage.collapse_signals?.length ? (
+                  <div className="mt-3">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-destructive">Collapse signals</p>
+                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      {result.pure_ode_triage.collapse_signals.slice(0, 3).map((signal) => (
+                        <li key={signal}>- {signal}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {result.pure_ode_triage.concern_signals?.length ? (
+                  <div className="mt-3">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Concern signals</p>
+                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      {result.pure_ode_triage.concern_signals.slice(0, 3).map((signal) => (
+                        <li key={signal}>- {signal}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
             <Table>
               <TableHeader>
                 <TableRow>

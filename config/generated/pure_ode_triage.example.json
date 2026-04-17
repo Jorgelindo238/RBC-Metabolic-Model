@@ -1,0 +1,247 @@
+{
+  "overall": "healthy",
+  "reason": "All protected floors, the adenylate pool, and extracellular anchors held within physiological ranges.",
+  "csv_path": null,
+  "timepoint_count": 6,
+  "horizon_days": 42.0,
+  "protected_floor_status": {
+    "ATP": {
+      "metabolite": "ATP",
+      "final_value": 1.4,
+      "min_value": 1.4,
+      "critical_floor": 0.15,
+      "concern_floor": 0.225,
+      "state": "good",
+      "rationale": "ATP stayed above the concern floor (0.225 mM) throughout the horizon (final=1.4 mM, min=1.4 mM)."
+    },
+    "ADP": {
+      "metabolite": "ADP",
+      "final_value": 0.15,
+      "min_value": 0.15,
+      "critical_floor": 0.05,
+      "concern_floor": 0.075,
+      "state": "good",
+      "rationale": "ADP stayed above the concern floor (0.075 mM) throughout the horizon (final=0.15 mM, min=0.15 mM)."
+    },
+    "AMP": {
+      "metabolite": "AMP",
+      "final_value": 0.07,
+      "min_value": 0.07,
+      "critical_floor": 0.04,
+      "concern_floor": 0.06,
+      "state": "good",
+      "rationale": "AMP stayed above the concern floor (0.06 mM) throughout the horizon (final=0.07 mM, min=0.07 mM)."
+    },
+    "IMP": {
+      "metabolite": "IMP",
+      "final_value": 0.038,
+      "min_value": 0.038,
+      "critical_floor": 0.02,
+      "concern_floor": 0.03,
+      "state": "good",
+      "rationale": "IMP stayed above the concern floor (0.03 mM) throughout the horizon (final=0.038 mM, min=0.038 mM)."
+    },
+    "B23PG": {
+      "metabolite": "B23PG",
+      "final_value": 4.3,
+      "min_value": 4.3,
+      "critical_floor": 1.5,
+      "concern_floor": 3.0,
+      "state": "good",
+      "rationale": "B23PG stayed above the concern floor (3 mM) throughout the horizon (final=4.3 mM, min=4.3 mM)."
+    },
+    "GSH": {
+      "metabolite": "GSH",
+      "final_value": 1.85,
+      "min_value": 1.85,
+      "critical_floor": 0.5,
+      "concern_floor": 1.5,
+      "state": "good",
+      "rationale": "GSH stayed above the concern floor (1.5 mM) throughout the horizon (final=1.85 mM, min=1.85 mM)."
+    }
+  },
+  "adenylate_pool": {
+    "atp_end": 1.4,
+    "adp_end": 0.15,
+    "amp_end": 0.07,
+    "pool_start": 1.89,
+    "pool_end": 1.62,
+    "pool_ratio": 0.8571,
+    "target_ratio": 0.65,
+    "critical_ratio": 0.4,
+    "coherent": true,
+    "state": "good"
+  },
+  "extracellular_anchor_status": {
+    "EGLC": {
+      "metabolite": "EGLC",
+      "start": 5.0,
+      "end": 2.8,
+      "pct_delta": -44.0,
+      "expected_direction": "falling",
+      "state": "good",
+      "rationale": "EGLC depleted by 44.0% over the horizon."
+    },
+    "ELAC": {
+      "metabolite": "ELAC",
+      "start": 0.1,
+      "end": 1.75,
+      "pct_delta": 1650.0,
+      "expected_direction": "rising",
+      "state": "good",
+      "rationale": "ELAC accumulated by 1650.0% over the horizon."
+    }
+  },
+  "per_metabolite": [
+    {
+      "name": "ATP",
+      "available": true,
+      "start": 1.6,
+      "end": 1.4,
+      "min_value": 1.4,
+      "max_value": 1.6,
+      "delta": -0.2,
+      "pct_delta": -12.5,
+      "shape": "falling"
+    },
+    {
+      "name": "ADP",
+      "available": true,
+      "start": 0.2,
+      "end": 0.15,
+      "min_value": 0.15,
+      "max_value": 0.2,
+      "delta": -0.05,
+      "pct_delta": -25.0,
+      "shape": "falling"
+    },
+    {
+      "name": "AMP",
+      "available": true,
+      "start": 0.09,
+      "end": 0.07,
+      "min_value": 0.07,
+      "max_value": 0.09,
+      "delta": -0.02,
+      "pct_delta": -22.222,
+      "shape": "flat"
+    },
+    {
+      "name": "IMP",
+      "available": true,
+      "start": 0.05,
+      "end": 0.038,
+      "min_value": 0.038,
+      "max_value": 0.05,
+      "delta": -0.012,
+      "pct_delta": -24.0,
+      "shape": "flat"
+    },
+    {
+      "name": "EGLC",
+      "available": true,
+      "start": 5.0,
+      "end": 2.8,
+      "min_value": 2.8,
+      "max_value": 5.0,
+      "delta": -2.2,
+      "pct_delta": -44.0,
+      "shape": "falling"
+    },
+    {
+      "name": "ELAC",
+      "available": true,
+      "start": 0.1,
+      "end": 1.75,
+      "min_value": 0.1,
+      "max_value": 1.75,
+      "delta": 1.65,
+      "pct_delta": 1650.0,
+      "shape": "rising"
+    },
+    {
+      "name": "LAC",
+      "available": true,
+      "start": 1.0,
+      "end": 2.0,
+      "min_value": 1.0,
+      "max_value": 2.0,
+      "delta": 1.0,
+      "pct_delta": 100.0,
+      "shape": "rising"
+    },
+    {
+      "name": "PYR",
+      "available": true,
+      "start": 0.05,
+      "end": 0.055,
+      "min_value": 0.05,
+      "max_value": 0.07,
+      "delta": 0.005,
+      "pct_delta": 10.0,
+      "shape": "flat"
+    },
+    {
+      "name": "PEP",
+      "available": true,
+      "start": 0.01,
+      "end": 0.01,
+      "min_value": 0.01,
+      "max_value": 0.013,
+      "delta": 0.0,
+      "pct_delta": 0.0,
+      "shape": "flat"
+    },
+    {
+      "name": "B23PG",
+      "available": true,
+      "start": 4.8,
+      "end": 4.3,
+      "min_value": 4.3,
+      "max_value": 4.8,
+      "delta": -0.5,
+      "pct_delta": -10.417,
+      "shape": "falling"
+    },
+    {
+      "name": "GSH",
+      "available": true,
+      "start": 2.1,
+      "end": 1.85,
+      "min_value": 1.85,
+      "max_value": 2.1,
+      "delta": -0.25,
+      "pct_delta": -11.905,
+      "shape": "falling"
+    },
+    {
+      "name": "GSSG",
+      "available": true,
+      "start": 0.03,
+      "end": 0.042,
+      "min_value": 0.03,
+      "max_value": 0.042,
+      "delta": 0.012,
+      "pct_delta": 40.0,
+      "shape": "flat"
+    }
+  ],
+  "collapse_signals": [],
+  "concern_signals": [],
+  "healthy_signals": [
+    "ATP stayed above the concern floor (0.225 mM) throughout the horizon (final=1.4 mM, min=1.4 mM).",
+    "ADP stayed above the concern floor (0.075 mM) throughout the horizon (final=0.15 mM, min=0.15 mM).",
+    "AMP stayed above the concern floor (0.06 mM) throughout the horizon (final=0.07 mM, min=0.07 mM).",
+    "IMP stayed above the concern floor (0.03 mM) throughout the horizon (final=0.038 mM, min=0.038 mM).",
+    "B23PG stayed above the concern floor (3 mM) throughout the horizon (final=4.3 mM, min=4.3 mM).",
+    "GSH stayed above the concern floor (1.5 mM) throughout the horizon (final=1.85 mM, min=1.85 mM).",
+    "Adenylate pool held: ratio 0.8571 \u2265 target 0.65.",
+    "EGLC depleted by 44.0% over the horizon.",
+    "ELAC accumulated by 1650.0% over the horizon."
+  ],
+  "caveats": [],
+  "recommendation": "Pure-ODE health is acceptable. Combine with the calibration-report triage to make the final keep/discard decision.",
+  "unavailable_metabolites": [],
+  "skipped": false,
+  "skip_reason": null
+}
