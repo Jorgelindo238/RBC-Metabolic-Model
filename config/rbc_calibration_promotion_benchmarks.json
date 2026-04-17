@@ -1,0 +1,97 @@
+{
+  "manifest_name": "rbc_outer_loop_promotion_v2",
+  "description": "Full-horizon promotion benchmark suite for RBC calibration autoresearch. Use this slower manifest as a promotion gate after a policy wins on the fast benchmark suite. This version strengthens robustness by including both baseline and ATP-guarded full-horizon cases, and by using more than 2 optimization trials per case.",
+  "results_tsv": "Simulations/brodbar/autoresearch/results_promotion_v2.tsv",
+  "scoring": {
+    "final_loss_weight": 0.3,
+    "robust_target_weight": 0.8,
+    "robust_nrmse_cap": 8.0,
+    "robust_top_k": 18,
+    "scale_weight_rules": [
+      {
+        "max_exp_mean_abs": 0.01,
+        "weight": 0.15
+      },
+      {
+        "max_exp_mean_abs": 0.05,
+        "weight": 0.4
+      },
+      {
+        "max_exp_mean_abs": 0.1,
+        "weight": 0.7
+      },
+      {
+        "weight": 1.0
+      }
+    ],
+    "endpoint_weight": 0.35,
+    "monitor_weights": {
+      "glycolysis_energy": 0.2,
+      "nucleotide_purine": 0.15,
+      "amino_redox_side": 0.1,
+      "extracellular": 0.1,
+      "glycolysis": 0.15
+    },
+    "discard_penalty": 0.25
+  },
+  "cases": [
+    {
+      "name": "full_horizon_baseline_seed29",
+      "description": "Primary full-horizon mechanistic fit check with the baseline seed and no curve forcing.",
+      "weight": 1.0,
+      "run_overrides": {
+        "n_trials": 4,
+        "global_trials": 0,
+        "seed": 29,
+        "t_max": 46.0,
+        "curve_fit_strength": 0.0,
+        "atp_focus": false
+      }
+    },
+    {
+      "name": "full_horizon_baseline_seed42",
+      "description": "Full-horizon robustness check under an alternate search seed, still without curve forcing.",
+      "weight": 0.85,
+      "run_overrides": {
+        "n_trials": 4,
+        "global_trials": 0,
+        "seed": 42,
+        "t_max": 46.0,
+        "curve_fit_strength": 0.0,
+        "atp_focus": false
+      }
+    },
+    {
+      "name": "full_horizon_atp_guarded_seed29",
+      "description": "Promotion case emphasizing adenylate pool retention and ATP stability over the full horizon.",
+      "weight": 1.2,
+      "run_overrides": {
+        "n_trials": 4,
+        "global_trials": 0,
+        "seed": 29,
+        "t_max": 46.0,
+        "curve_fit_strength": 0.0,
+        "atp_focus": true,
+        "adenylate_target": 0.65,
+        "atp_penalty_weight": 8.0,
+        "pool_penalty_weight": 10.0
+      }
+    },
+    {
+      "name": "full_horizon_atp_guarded_seed42",
+      "description": "Full-horizon ATP-guarded robustness check under an alternate seed.",
+      "weight": 0.95,
+      "run_overrides": {
+        "n_trials": 4,
+        "global_trials": 0,
+        "seed": 42,
+        "t_max": 46.0,
+        "curve_fit_strength": 0.0,
+        "atp_focus": true,
+        "adenylate_target": 0.65,
+        "atp_penalty_weight": 8.0,
+        "pool_penalty_weight": 10.0
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "job_name": "bounded_search_1774408083448369500",
+  "hypothesis": "Test autosearch bounded mutation (LangGraph)",
+  "policy_path": "config\\generated\\policy_candidate_1774408083448369500.json",
+  "manifest_path": "config\\generated\\manifest_candidate_1774408083448369500.json",
+  "job_version": 1,
+  "tags": [
+    "autosearch",
+    "bounded_search"
+  ],
+  "metadata": {
+    "orchestrator": "bounded_autosearch_v1",
+    "candidate_id": "1774408083448369500",
+    "base_policy_path": "config\\policy_vmax_then_km.json",
+    "base_manifest_path": "config\\rbc_calibration_benchmarks.json",
+    "mutation_summary": "Mutated 2 fields: atp_focus: False -> True, global_trials: 0 -> 1"
+  },
+  "case_time_budget_seconds": 3600.0,
+  "timeout_policy": "continue"
+}

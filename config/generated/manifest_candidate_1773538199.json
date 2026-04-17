@@ -1,0 +1,104 @@
+{
+  "manifest_name": "rbc_calibration_strategy_benchmarks_v2",
+  "notes": "Fixed benchmark manifest for comparing RBC calibration strategies (vmax_only, km_only, joint_vmax_km, vmax_then_km, staged_full) under the same evaluation harness. Cases vary horizon, ATP protection, and curve-fit strictness without overriding the strategy selected in the policy file.",
+  "results_tsv": "Simulations/brodbar/autoresearch/results_strategy_benchmarks.tsv",
+  "scoring": {
+    "final_loss_weight": 1.0,
+    "robust_target_weight": 0.35,
+    "endpoint_weight": 0.25,
+    "monitor_weights": {
+      "glycolysis_energy": 0.2,
+      "extracellular": 0.15,
+      "glycolysis": 0.15,
+      "nucleotide_purine": 0.08,
+      "amino_redox_side": 0.08
+    },
+    "discard_penalty": 0.2,
+    "robust_nrmse_cap": 8.0,
+    "robust_top_k": 12,
+    "scale_weight_rules": [
+      {
+        "max_exp_mean_abs": 0.02,
+        "weight": 0.35
+      },
+      {
+        "max_exp_mean_abs": 0.1,
+        "weight": 0.6
+      },
+      {
+        "max_exp_mean_abs": 0.5,
+        "weight": 0.85
+      },
+      {
+        "max_exp_mean_abs": 2.0,
+        "weight": 1.0
+      },
+      {
+        "weight": 1.1
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "baseline_mid_horizon",
+      "description": "Reference case aligned with the current policy defaults.",
+      "weight": 1.0,
+      "run_overrides": {
+        "t_max": 28.0,
+        "curve_fit_strength": 0.15,
+        "atp_focus": false,
+        "seed": 29
+      }
+    },
+    {
+      "name": "short_horizon_low_forcing",
+      "description": "Tests whether the strategy can fit early dynamics with weaker experimental forcing.",
+      "weight": 0.9,
+      "run_overrides": {
+        "t_max": 14.0,
+        "curve_fit_strength": 0.05,
+        "atp_focus": false,
+        "seed": 29
+      }
+    },
+    {
+      "name": "mid_horizon_atp_guarded",
+      "description": "Same horizon as baseline but with ATP/adenylate protection enabled.",
+      "weight": 1.15,
+      "run_overrides": {
+        "t_max": 28.0,
+        "curve_fit_strength": 0.15,
+        "atp_focus": true,
+        "adenylate_target": 0.65,
+        "atp_penalty_weight": 8.0,
+        "pool_penalty_weight": 10.0,
+        "seed": 29
+      }
+    },
+    {
+      "name": "long_horizon_atp_guarded",
+      "description": "Longer horizon to penalize strategies that only work over short windows.",
+      "weight": 1.25,
+      "run_overrides": {
+        "t_max": 35.0,
+        "curve_fit_strength": 0.1,
+        "atp_focus": true,
+        "adenylate_target": 0.65,
+        "atp_penalty_weight": 8.0,
+        "pool_penalty_weight": 10.0,
+        "seed": 29
+      }
+    },
+    {
+      "name": "alt_seed_robustness",
+      "description": "Checks optimizer robustness to stochastic search variability without changing the biological target.",
+      "weight": 0.7,
+      "run_overrides": {
+        "t_max": 28.0,
+        "curve_fit_strength": 0.15,
+        "atp_focus": false,
+        "seed": 42
+      }
+    }
+  ]
+}

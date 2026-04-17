@@ -1,0 +1,77 @@
+{
+  "policy_name": "km_only_strategy",
+  "notes": "Focused core-first Km benchmark policy for RBC calibration. Keeps the campaign on glycolysis-energy identifiability before allowing purine or transport compensation, and now holds B13PG-related freedom and km_GLC_HK fixed during the anchor stage.",
+  "base_run": {
+    "load_params": "Simulations/brodbar/calibration/best_params.json",
+    "phases": [1],
+    "target_scope": "core_glycolysis_energy",
+    "param_scope": "core_km",
+    "optimization_strategy": "km_only",
+    "generate_plots": false,
+    "atp_focus": false,
+    "atp_floor": 0.15,
+    "adp_floor": 0.05,
+    "adenylate_target": 0.65,
+    "atp_penalty_weight": 8.0,
+    "pool_penalty_weight": 10.0,
+    "n_trials": 10,
+    "global_trials": 0,
+    "seed": 29,
+    "t_max": 28.0,
+    "curve_fit_strength": 0.15
+  },
+  "stage_plan": [
+    {
+      "name": "core_km_anchor",
+      "phases": [1],
+      "target_scope": "core_glycolysis_energy",
+      "param_scope": "core_km",
+      "parameter_classes": ["km"],
+      "include_params": [
+        "km_EGLC",
+        "km_F16BP",
+        "km_F6P",
+        "km_LAC",
+        "km_PEP",
+        "km_PYR"
+      ],
+      "n_trials": 10,
+      "global_trials": 0,
+      "atp_focus": false
+    },
+    {
+      "name": "core_km_shape_energy",
+      "phases": [1],
+      "target_scope": "core_glycolysis_energy",
+      "param_scope": "core_km",
+      "parameter_classes": ["km"],
+      "include_params": [
+        "km_ADP_ATP",
+        "km_ATP_HK",
+        "km_ATP_PFK",
+        "km_G6P",
+        "km_GLC_transport",
+        "km_NADH_NAD",
+        "km_NAD_NADH",
+        "km_P2G",
+        "km_P3G"
+      ],
+      "n_trials": 10,
+      "global_trials": 0,
+      "atp_focus": false
+    }
+  ],
+  "mutation_space": {
+    "n_trials": [8, 10, 12],
+    "global_trials": [0],
+    "seed": [29, 42],
+    "t_max": [21.0, 28.0, 35.0],
+    "curve_fit_strength": [0.05, 0.1, 0.15]
+  },
+  "guardrails": {
+    "min_t_max": 14.0,
+    "max_t_max": 35.0,
+    "max_curve_fit_strength": 0.2,
+    "allowed_optimization_strategies": ["km_only"]
+  }
+}

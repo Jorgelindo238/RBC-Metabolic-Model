@@ -1,0 +1,146 @@
+version: 1
+mode: config_only_default
+objective: Optimize RBC calibration strategy and benchmark configuration without mutating the scientific source code.
+
+read_before_write:
+  - AGENTS.md
+  - program.md
+  - config/autoresearch_mutation_policy.yaml
+
+write_mode:
+  edit_committed_templates_in_place: false
+  create_candidate_files_only: true
+  candidate_policy_pattern: config/generated/policy_*.json
+  candidate_manifest_pattern: config/generated/manifest_*.json
+
+approved_templates:
+  policy_templates:
+    - config/rbc_autoresearch_policy.json
+    - config/policy_vmax_only.json
+    - config/policy_km_only.json
+    - config/policy_joint_vmax_km.json
+    - config/policy_vmax_then_km.json
+    - config/policy_staged_full.json
+    - config/policy_core_km_then_purine_transport.json
+    - config/policy_core_mixed_probe.json
+    - config/policy_core_upstream_probe.json
+  manifest_templates:
+    - config/rbc_calibration_benchmarks.json
+    - config/rbc_core_km_only_benchmarks.json
+    - config/rbc_core_mixed_probe_benchmarks.json
+    - config/rbc_core_upstream_probe_benchmarks.json
+    - config/rbc_calibration_promotion_benchmarks.json
+
+allowed_fields:
+  policy:
+    - policy_name
+    - notes
+    - base_run.optimization_strategy
+    - base_run.n_trials
+    - base_run.global_trials
+    - base_run.seed
+    - base_run.t_max
+    - base_run.curve_fit_strength
+    - base_run.atp_focus
+    - base_run.adenylate_target
+    - base_run.atp_penalty_weight
+    - base_run.pool_penalty_weight
+    - mutation_space.optimization_strategy
+    - mutation_space.n_trials
+    - mutation_space.global_trials
+    - mutation_space.seed
+    - mutation_space.t_max
+    - mutation_space.curve_fit_strength
+    - mutation_space.atp_focus
+    - mutation_space.adenylate_target
+    - mutation_space.atp_penalty_weight
+    - mutation_space.pool_penalty_weight
+    - guardrails.min_t_max
+    - guardrails.max_t_max
+    - guardrails.max_curve_fit_strength
+    - guardrails.require_generate_plots_false
+    - guardrails.allowed_optimization_strategies
+  manifest:
+    - manifest_name
+    - notes
+    - description
+    - results_tsv
+    - scoring.final_loss_weight
+    - scoring.robust_target_weight
+    - scoring.endpoint_weight
+    - scoring.monitor_weights
+    - scoring.discard_penalty
+    - scoring.robust_nrmse_cap
+    - scoring.robust_top_k
+    - scoring.scale_weight_rules
+    - cases[*].weight
+    - cases[*].run_overrides.n_trials
+    - cases[*].run_overrides.global_trials
+    - cases[*].run_overrides.seed
+    - cases[*].run_overrides.t_max
+    - cases[*].run_overrides.curve_fit_strength
+    - cases[*].run_overrides.atp_focus
+    - cases[*].run_overrides.adenylate_target
+    - cases[*].run_overrides.atp_penalty_weight
+    - cases[*].run_overrides.pool_penalty_weight
+
+human_approval_required:
+  - any edit to committed templates under config/ other than creating candidate copies in config/generated/
+  - base_run.target_scope
+  - base_run.param_scope
+  - base_run.parameter_classes
+  - base_run.load_params
+  - base_run.phases
+  - stage_plan
+  - mutation_space.target_scope
+  - mutation_space.param_scope
+  - mutation_space.parameter_classes
+  - creation of a new benchmark family or scoring objective
+  - any mutation of config/rbc_calibration_promotion_benchmarks.json
+  - any change that adds or removes metabolites, monitor metrics, or scoring directionality
+
+immutable_paths:
+  - AGENTS.md
+  - ARCHITECTURE.md
+  - README.md
+  - requirements.txt
+  - scripts/run_calibration_eval.py
+  - src/MM_calibration.py
+  - src/equadiff_brodbar.py
+  - src/parse.py
+  - src/parse_initial_conditions.py
+  - RBC/Rxn_RBC.txt
+  - streamlit_app/**
+  - src/Data_Brodbar_et_al_exp.xlsx
+  - src/Initial_conditions_JA_Final.xls
+  - Simulations/**
+
+allowed_outputs:
+  - config/generated/*.json
+  - tasks/*.md
+  - tasks/**/*.md
+
+required_run_report_fields:
+  - hypothesis
+  - policy_path
+  - manifest_path
+  - command
+  - target_scope
+  - param_scope
+  - optimization_strategy
+  - aggregate_score
+  - mean_final_loss
+  - mean_improvement_pct
+  - best_case
+  - worst_case
+  - status
+  - protected_metric_notes
+  - recommendation
+
+rejection_triggers:
+  - editing files outside allowed_outputs or candidate config generation paths
+  - mutating committed templates in place
+  - manual edits to results_tsv, eval_summary.json, or calibration_report.json
+  - relying on a single figure instead of benchmark artifacts
+  - broad compensator scope expansion without explicit approval
+  - changing scoring direction so that higher aggregate_score appears better

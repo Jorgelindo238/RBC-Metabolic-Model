@@ -1,0 +1,465 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rbc-metabolic-model.local/packages/contracts/schemas/run-registry-record.schema.json",
+  "title": "Run Registry Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_type",
+    "contract_version",
+    "source_artifact_contract_type",
+    "source_artifact_contract_version",
+    "run_id",
+    "canonical_run_label",
+    "run_timestamp",
+    "run_timestamp_utc",
+    "registry_recorded_at",
+    "status",
+    "job_name",
+    "hypothesis",
+    "job_version",
+    "campaign",
+    "tags",
+    "job_metadata",
+    "workspace_id",
+    "created_by_user_id",
+    "agent_session_id",
+    "visibility",
+    "run_origin",
+    "policy_name",
+    "policy_path",
+    "manifest_name",
+    "manifest_path",
+    "optimization_strategy",
+    "parameter_classes",
+    "target_scope",
+    "target_scopes",
+    "param_scope",
+    "param_scopes",
+    "aggregate_score",
+    "mean_final_loss",
+    "mean_improvement_pct",
+    "best_case",
+    "worst_case",
+    "case_count",
+    "run_dir",
+    "artifact_manifest_path",
+    "artifact_refs",
+    "trace_context",
+    "chat_context",
+    "storage"
+  ],
+  "properties": {
+    "contract_type": {
+      "const": "calibration_run_registry_record"
+    },
+    "contract_version": {
+      "const": 1
+    },
+    "source_artifact_contract_type": {
+      "const": "calibration_run_artifact_manifest"
+    },
+    "source_artifact_contract_version": {
+      "const": 1
+    },
+    "run_id": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "canonical_run_label": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "run_timestamp": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "run_timestamp_utc": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "registry_recorded_at": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "status": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "job_name": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "hypothesis": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "job_version": {
+      "$ref": "#/$defs/integerOrNull"
+    },
+    "campaign": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "tags": {
+      "$ref": "#/$defs/stringArray"
+    },
+    "job_metadata": {
+      "type": "object"
+    },
+    "workspace_id": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "created_by_user_id": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "agent_session_id": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "visibility": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "run_origin": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "policy_name": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "policy_path": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "manifest_name": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "manifest_path": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "optimization_strategy": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "parameter_classes": {
+      "$ref": "#/$defs/stringArrayOrNull"
+    },
+    "target_scope": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "target_scopes": {
+      "$ref": "#/$defs/stringArray"
+    },
+    "param_scope": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "param_scopes": {
+      "$ref": "#/$defs/stringArray"
+    },
+    "aggregate_score": {
+      "$ref": "#/$defs/numberOrNull"
+    },
+    "mean_final_loss": {
+      "$ref": "#/$defs/numberOrNull"
+    },
+    "mean_improvement_pct": {
+      "$ref": "#/$defs/numberOrNull"
+    },
+    "best_case": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "worst_case": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "case_count": {
+      "$ref": "#/$defs/integerOrNull"
+    },
+    "run_dir": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "artifact_manifest_path": {
+      "$ref": "#/$defs/stringOrNull"
+    },
+    "artifact_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "completed_run_manifest_path",
+        "eval_summary_path",
+        "policy_snapshot_path",
+        "manifest_snapshot_path",
+        "best_case_report_path",
+        "worst_case_report_path",
+        "case_refs"
+      ],
+      "properties": {
+        "completed_run_manifest_path": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "eval_summary_path": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "policy_snapshot_path": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "manifest_snapshot_path": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "best_case_report_path": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "worst_case_report_path": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "case_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/caseRef"
+          }
+        }
+      }
+    },
+    "trace_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tags",
+        "metadata"
+      ],
+      "properties": {
+        "tags": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "aggregate_score",
+            "mean_final_loss",
+            "mean_improvement_pct",
+            "best_case",
+            "worst_case",
+            "run_id",
+            "canonical_run_label",
+            "policy_name",
+            "manifest_name",
+            "artifact_manifest_path"
+          ],
+          "properties": {
+            "aggregate_score": {
+              "$ref": "#/$defs/numberOrNull"
+            },
+            "mean_final_loss": {
+              "$ref": "#/$defs/numberOrNull"
+            },
+            "mean_improvement_pct": {
+              "$ref": "#/$defs/numberOrNull"
+            },
+            "best_case": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "worst_case": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "run_id": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "canonical_run_label": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "policy_name": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "manifest_name": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "artifact_manifest_path": {
+              "$ref": "#/$defs/stringOrNull"
+            }
+          }
+        }
+      }
+    },
+    "chat_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assistant",
+        "canonical_run_label",
+        "hypothesis",
+        "scientific_context",
+        "summary_metrics",
+        "figure_context"
+      ],
+      "properties": {
+        "assistant": {
+          "const": "RoBoCop"
+        },
+        "canonical_run_label": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "hypothesis": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "scientific_context": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "target_scope",
+            "param_scope",
+            "optimization_strategy"
+          ],
+          "properties": {
+            "target_scope": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "param_scope": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "optimization_strategy": {
+              "$ref": "#/$defs/stringOrNull"
+            }
+          }
+        },
+        "summary_metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "aggregate_score",
+            "mean_final_loss",
+            "mean_improvement_pct",
+            "best_case",
+            "worst_case"
+          ],
+          "properties": {
+            "aggregate_score": {
+              "$ref": "#/$defs/numberOrNull"
+            },
+            "mean_final_loss": {
+              "$ref": "#/$defs/numberOrNull"
+            },
+            "mean_improvement_pct": {
+              "$ref": "#/$defs/numberOrNull"
+            },
+            "best_case": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "worst_case": {
+              "$ref": "#/$defs/stringOrNull"
+            }
+          }
+        },
+        "figure_context": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "best_case",
+            "worst_case",
+            "best_case_report_path",
+            "worst_case_report_path"
+          ],
+          "properties": {
+            "best_case": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "worst_case": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "best_case_report_path": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "worst_case_report_path": {
+              "$ref": "#/$defs/stringOrNull"
+            }
+          }
+        }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registry_backend",
+        "queryable_fields",
+        "recommended_json_fields",
+        "artifact_source_of_truth",
+        "artifact_fields"
+      ],
+      "properties": {
+        "registry_backend": {
+          "const": "supabase_row"
+        },
+        "queryable_fields": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "recommended_json_fields": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "artifact_source_of_truth": {
+          "const": "completed_run_manifest"
+        },
+        "artifact_fields": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stringOrNull": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "numberOrNull": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "integerOrNull": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "stringArray": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "stringArrayOrNull": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "caseRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "score",
+        "final_loss",
+        "report_path",
+        "best_params_json_path",
+        "results_tsv_path"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "score": {
+          "$ref": "#/$defs/numberOrNull"
+        },
+        "final_loss": {
+          "$ref": "#/$defs/numberOrNull"
+        },
+        "report_path": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "best_params_json_path": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "results_tsv_path": {
+          "$ref": "#/$defs/stringOrNull"
+        }
+      }
+    }
+  }
+}

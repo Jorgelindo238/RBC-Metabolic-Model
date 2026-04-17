@@ -1,0 +1,6 @@
+{
+  "job_name": "bounded_search_1773543572",
+  "hypothesis": "Test autosearch bounded mutation (LangGraph)",
+  "policy_path": "config\\generated\\policy_candidate_1773543572.json",
+  "manifest_path": "config\\generated\\manifest_candidate_1773543572.json"
+}

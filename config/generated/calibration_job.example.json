@@ -1,0 +1,24 @@
+{
+  "job_version": 1,
+  "job_name": "core_upstream_probe_example",
+  "hypothesis": "Validate the bounded calibration job interface against the fixed benchmark harness without changing scientific logic.",
+  "policy_path": "config/policy_core_upstream_probe.json",
+  "manifest_path": "config/rbc_core_upstream_probe_benchmarks.json",
+  "time_budget_seconds": 1800.0,
+  "case_time_budget_seconds": 600.0,
+  "timeout_policy": "stop_after_case",
+  "metadata": {
+    "created_by": "windsurf",
+    "execution_mode": "dry_run_validation",
+    "workspace_id": "00000000-0000-0000-0000-000000000001",
+    "created_by_user_id": "00000000-0000-0000-0000-000000000002",
+    "agent_session_id": "00000000-0000-0000-0000-000000000003",
+    "visibility": "workspace",
+    "run_origin": "scientific_runtime"
+  },
+  "tags": [
+    "orchestration",
+    "adapter",
+    "example"
+  ]
+}

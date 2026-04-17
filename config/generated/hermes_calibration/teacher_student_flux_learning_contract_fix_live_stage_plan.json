@@ -1,0 +1,345 @@
+{
+  "contract_type": "hermes_calibration_stage_plan",
+  "contract_version": 1,
+  "status": "ready_for_manual_run",
+  "generated_at": "2026-03-28T21:38:39.478447+00:00",
+  "generated_by": "hermes_flux_learning_contract_fix_live",
+  "seed_params_path": "Simulations\\brodbar\\calibration\\hybrid_downstream_pk_eno_longrun\\best_params.json",
+  "active_hypothesis": "Teacher-student hybrid proposal from flux learning",
+  "target_scope": "glycolysis_extracellular",
+  "optimization_strategy": "hybrid_only",
+  "protect": [
+    "ATP",
+    "ADP",
+    "EGLC",
+    "ELAC",
+    "PYR",
+    "PEP",
+    "LAC"
+  ],
+  "subsystem_proposals": [
+    {
+      "reaction": "VENOPGM",
+      "priority_score": 1.4754,
+      "teacher_signal": {
+        "dominant_failure_mode": "product_backpressure",
+        "priority_score": 1.4754,
+        "notes": [
+          "PEP retains a delayed hump consistent with product backpressure."
+        ]
+      },
+      "target_metabolites": [
+        "PEP",
+        "P2G",
+        "PYR"
+      ],
+      "required_state_inputs": [
+        "P2G",
+        "PEP"
+      ],
+      "candidate_families": [
+        "substrate_hill_product_backpressure",
+        "product_gate_mm_blend"
+      ],
+      "selected_family": "substrate_hill_product_backpressure",
+      "existing_param_scope": "hybrid_downstream_pk_eno",
+      "available_hybrid_parameters": [
+        "hybrid_blend_VENOPGM",
+        "hybrid_substrate_hill_VENOPGM",
+        "hybrid_backpressure_hill_VENOPGM",
+        "hybrid_backpressure_scale_VENOPGM"
+      ],
+      "rationale": "VENOPGM is prioritized because Hermes sees product_backpressure against target metabolites PEP, P2G, PYR.",
+      "recommended_teacher_objective": {
+        "mode": "pure_flux_curve_teacher",
+        "fit_targets": [
+          "PEP",
+          "P2G",
+          "PYR"
+        ],
+        "fit_flux": "VENOPGM"
+      },
+      "recommended_student_objective": {
+        "mode": "hybrid_mm_student",
+        "reaction": "VENOPGM",
+        "selected_family": "substrate_hill_product_backpressure",
+        "calibration_scope": "hybrid_downstream_pk_eno",
+        "include_params": [
+          "hybrid_blend_VENOPGM",
+          "hybrid_substrate_hill_VENOPGM",
+          "hybrid_backpressure_hill_VENOPGM",
+          "hybrid_backpressure_scale_VENOPGM"
+        ]
+      }
+    },
+    {
+      "reaction": "VPK",
+      "priority_score": 1.0489,
+      "teacher_signal": {
+        "dominant_failure_mode": "energy_coupled_backpressure",
+        "priority_score": 1.0489,
+        "notes": [
+          "ATP still collapses at the end of the horizon.",
+          "ADP still collapses toward zero.",
+          "PEP retains a visible backpressure signature."
+        ]
+      },
+      "target_metabolites": [
+        "ATP",
+        "ADP",
+        "PEP",
+        "PYR"
+      ],
+      "required_state_inputs": [
+        "PEP",
+        "ADP",
+        "ATP",
+        "PYR"
+      ],
+      "candidate_families": [
+        "substrate_hill_energy_backpressure",
+        "energy_gate_mm_blend"
+      ],
+      "selected_family": "substrate_hill_energy_backpressure",
+      "existing_param_scope": "hybrid_downstream_pk_eno",
+      "available_hybrid_parameters": [
+        "hybrid_blend_VPK",
+        "hybrid_pep_hill_VPK",
+        "hybrid_adp_hill_VPK",
+        "hybrid_atp_backpressure_scale_VPK",
+        "hybrid_pyr_backpressure_scale_VPK"
+      ],
+      "rationale": "VPK is prioritized because Hermes sees energy_coupled_backpressure against target metabolites ATP, ADP, PEP, PYR.",
+      "recommended_teacher_objective": {
+        "mode": "pure_flux_curve_teacher",
+        "fit_targets": [
+          "ATP",
+          "ADP",
+          "PEP",
+          "PYR"
+        ],
+        "fit_flux": "VPK"
+      },
+      "recommended_student_objective": {
+        "mode": "hybrid_mm_student",
+        "reaction": "VPK",
+        "selected_family": "substrate_hill_energy_backpressure",
+        "calibration_scope": "hybrid_downstream_pk_eno",
+        "include_params": [
+          "hybrid_blend_VPK",
+          "hybrid_pep_hill_VPK",
+          "hybrid_adp_hill_VPK",
+          "hybrid_atp_backpressure_scale_VPK",
+          "hybrid_pyr_backpressure_scale_VPK"
+        ]
+      }
+    },
+    {
+      "reaction": "VLDH",
+      "priority_score": 1.0442,
+      "teacher_signal": {
+        "dominant_failure_mode": "pyruvate_redox_mismatch",
+        "priority_score": 1.0442,
+        "notes": [
+          "PYR shows a large transient spike relative to its final level.",
+          "LAC final accumulation remains weaker than desired."
+        ]
+      },
+      "target_metabolites": [
+        "PYR",
+        "LAC",
+        "ELAC"
+      ],
+      "required_state_inputs": [
+        "PYR",
+        "LAC",
+        "NADH",
+        "NAD"
+      ],
+      "candidate_families": [
+        "redox_backpressure_hill",
+        "reversible_redox_gate"
+      ],
+      "selected_family": "redox_backpressure_hill",
+      "existing_param_scope": "hybrid_glucose_lactate",
+      "available_hybrid_parameters": [
+        "hybrid_blend_VLDH",
+        "hybrid_forward_hill_VLDH",
+        "hybrid_reverse_hill_VLDH",
+        "hybrid_reverse_scale_VLDH"
+      ],
+      "rationale": "VLDH is prioritized because Hermes sees pyruvate_redox_mismatch against target metabolites PYR, LAC, ELAC.",
+      "recommended_teacher_objective": {
+        "mode": "pure_flux_curve_teacher",
+        "fit_targets": [
+          "PYR",
+          "LAC",
+          "ELAC"
+        ],
+        "fit_flux": "VLDH"
+      },
+      "recommended_student_objective": {
+        "mode": "hybrid_mm_student",
+        "reaction": "VLDH",
+        "selected_family": "redox_backpressure_hill",
+        "calibration_scope": "hybrid_glucose_lactate",
+        "include_params": [
+          "hybrid_blend_VLDH",
+          "hybrid_forward_hill_VLDH",
+          "hybrid_reverse_hill_VLDH",
+          "hybrid_reverse_scale_VLDH"
+        ]
+      }
+    },
+    {
+      "reaction": "VELAC",
+      "priority_score": 0.1627,
+      "teacher_signal": {
+        "dominant_failure_mode": "hybrid_signal_detected",
+        "priority_score": 0.1627,
+        "notes": [
+          "Teacher signal is weakly informative but still usable for hybrid family ranking."
+        ]
+      },
+      "target_metabolites": [
+        "ELAC",
+        "LAC"
+      ],
+      "required_state_inputs": [
+        "ELAC",
+        "LAC"
+      ],
+      "candidate_families": [
+        "hybrid_reversible_transport",
+        "mm_efflux"
+      ],
+      "selected_family": "hybrid_reversible_transport",
+      "existing_param_scope": "hybrid_glucose_lactate",
+      "available_hybrid_parameters": [
+        "hybrid_blend_VELAC",
+        "hybrid_efflux_hill_VELAC",
+        "hybrid_backpressure_hill_VELAC",
+        "hybrid_backpressure_scale_VELAC",
+        "hybrid_km_ELAC"
+      ],
+      "rationale": "VELAC is prioritized because Hermes sees hybrid_signal_detected against target metabolites ELAC, LAC.",
+      "recommended_teacher_objective": {
+        "mode": "pure_flux_curve_teacher",
+        "fit_targets": [
+          "ELAC",
+          "LAC"
+        ],
+        "fit_flux": "VELAC"
+      },
+      "recommended_student_objective": {
+        "mode": "hybrid_mm_student",
+        "reaction": "VELAC",
+        "selected_family": "hybrid_reversible_transport",
+        "calibration_scope": "hybrid_glucose_lactate",
+        "include_params": [
+          "hybrid_blend_VELAC",
+          "hybrid_efflux_hill_VELAC",
+          "hybrid_backpressure_hill_VELAC",
+          "hybrid_backpressure_scale_VELAC",
+          "hybrid_km_ELAC"
+        ]
+      }
+    },
+    {
+      "reaction": "VEGLC",
+      "priority_score": 0.1508,
+      "teacher_signal": {
+        "dominant_failure_mode": "shallow_transport_draw",
+        "priority_score": 0.1508,
+        "notes": [
+          "EGLC remains too shallow over the long horizon.",
+          "EGLC still contributes measurable fit pressure."
+        ]
+      },
+      "target_metabolites": [
+        "EGLC",
+        "GLC"
+      ],
+      "required_state_inputs": [
+        "EGLC",
+        "GLC"
+      ],
+      "candidate_families": [
+        "hybrid_asymmetric_transport",
+        "mm_bidirectional"
+      ],
+      "selected_family": "hybrid_asymmetric_transport",
+      "existing_param_scope": "hybrid_glucose_lactate",
+      "available_hybrid_parameters": [
+        "hybrid_blend_VEGLC",
+        "hybrid_import_hill_VEGLC",
+        "hybrid_export_hill_VEGLC",
+        "hybrid_reverse_scale_VEGLC"
+      ],
+      "rationale": "VEGLC is prioritized because Hermes sees shallow_transport_draw against target metabolites EGLC, GLC.",
+      "recommended_teacher_objective": {
+        "mode": "pure_flux_curve_teacher",
+        "fit_targets": [
+          "EGLC",
+          "GLC"
+        ],
+        "fit_flux": "VEGLC"
+      },
+      "recommended_student_objective": {
+        "mode": "hybrid_mm_student",
+        "reaction": "VEGLC",
+        "selected_family": "hybrid_asymmetric_transport",
+        "calibration_scope": "hybrid_glucose_lactate",
+        "include_params": [
+          "hybrid_blend_VEGLC",
+          "hybrid_import_hill_VEGLC",
+          "hybrid_export_hill_VEGLC",
+          "hybrid_reverse_scale_VEGLC"
+        ]
+      }
+    }
+  ],
+  "stage_plan": [
+    {
+      "name": "teacher_student_hybrid_followup",
+      "phases": [
+        1
+      ],
+      "param_scope": "hybrid_glucose_lactate_plus_downstream",
+      "target_scope": "glycolysis_extracellular",
+      "include_params": [
+        "hybrid_blend_VENOPGM",
+        "hybrid_substrate_hill_VENOPGM",
+        "hybrid_backpressure_hill_VENOPGM",
+        "hybrid_backpressure_scale_VENOPGM",
+        "hybrid_blend_VPK",
+        "hybrid_pep_hill_VPK",
+        "hybrid_adp_hill_VPK",
+        "hybrid_atp_backpressure_scale_VPK",
+        "hybrid_pyr_backpressure_scale_VPK",
+        "hybrid_blend_VLDH",
+        "hybrid_forward_hill_VLDH",
+        "hybrid_reverse_hill_VLDH",
+        "hybrid_reverse_scale_VLDH",
+        "hybrid_blend_VELAC",
+        "hybrid_efflux_hill_VELAC",
+        "hybrid_backpressure_hill_VELAC",
+        "hybrid_backpressure_scale_VELAC",
+        "hybrid_km_ELAC",
+        "hybrid_blend_VEGLC",
+        "hybrid_import_hill_VEGLC",
+        "hybrid_export_hill_VEGLC",
+        "hybrid_reverse_scale_VEGLC"
+      ],
+      "n_trials": 8,
+      "global_trials": 0,
+      "seed": 29,
+      "curve_fit_strength": 0.1,
+      "t_max": 42.0
+    }
+  ],
+  "manual_run_hint": {
+    "command_preview": "python src\\MM_calibration.py --load-params \"Simulations\\brodbar\\calibration\\hybrid_downstream_pk_eno_longrun\\best_params.json\" --stage-plan-file \"config\\generated\\hermes_calibration\\teacher_student_flux_learning_contract_fix_live_stage_plan.json\" --target-scope glycolysis_extracellular --optimization-strategy hybrid_only --seed 29 --t-max 42.0 --curve-fit-strength 0.1",
+    "note": "Generated from refreshed Hermes flux-learning proposal after VEGLC/VELAC contract alignment."
+  }
+}

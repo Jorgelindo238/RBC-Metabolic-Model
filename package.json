@@ -1,0 +1,5 @@
+{
+  "name": "rbc-metabolic-model",
+  "private": true,
+  "description": "Future JS workspace root for the RBC product plane. Scientific authority remains in Python."
+}

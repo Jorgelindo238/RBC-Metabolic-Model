@@ -1,0 +1,56 @@
+# ================================================================
+# RBC Metabolic Model - Python Dependencies
+# ================================================================
+# Compatible with Python 3.11+
+# Supports both Streamlit Web App and CLI usage
+# ================================================================
+
+# Web Framework
+streamlit>=1.28.0
+fastapi>=0.115.0
+python-dotenv>=1.0.1
+python-multipart>=0.0.9
+
+# Core Scientific Computing
+numpy>=1.24.0,<2.0.0
+scipy>=1.10.0
+pandas>=2.0.0
+
+# Visualization
+matplotlib>=3.7.0
+plotly>=5.17.0
+
+# Network Analysis (pathway visualization)
+networkx>=3.1
+
+# Excel File Support
+openpyxl>=3.1.0
+xlrd>=1.2.0
+
+# Parameter Calibration (Bayesian optimization)
+optuna>=3.0.0
+
+# Authentication (Supabase)
+supabase>=2.3.4
+
+pytest>=7.4.0
+
+# ================================================================
+# Installation:
+#   pip install -r requirements.txt
+# ================================================================
+
+# YAML Parsing
+PyYAML>=6.0
+
+# Agent Orchestration
+langgraph>=0.0.26
+langchain-core>=0.1.30
+langsmith>=0.1.0
+
+# API Configuration
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# OpenAI Integration
+openai>=1.0.0

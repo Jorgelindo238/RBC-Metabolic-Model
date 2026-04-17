@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="blood ai favicon">
+  <defs>
+    <style>
+      .navy{fill:#23274d;}
+      .red{fill:#e31c26;}
+      .red-dark{fill:#bf1620;}
+      .white{fill:#ffffff;}
+    </style>
+  </defs>
+
+  <g transform="translate(76 96)">
+    <!-- monitor -->
+    <rect x="30" y="86" width="300" height="210" rx="24" class="navy"/>
+    <rect x="54" y="108" width="252" height="150" rx="16" class="white"/>
+    <rect x="154" y="294" width="48" height="34" rx="6" class="navy"/>
+    <rect x="114" y="322" width="128" height="16" rx="8" class="navy"/>
+    <circle cx="180" cy="272" r="6" class="white"/>
+
+    <!-- blood bag -->
+    <rect x="116" y="132" width="96" height="146" rx="24" fill="#ffffff" stroke="#23274d" stroke-width="10"/>
+    <path d="M130 192
+             C156 186, 178 186, 202 192
+             L202 240
+             C202 248, 196 254, 188 254
+             L144 254
+             C136 254, 130 248, 130 240 Z" class="red"/>
+    <rect x="168" y="204" width="8" height="38" rx="4" class="white"/>
+    <rect x="154" y="218" width="36" height="8" rx="4" class="white"/>
+
+    <!-- hook -->
+    <rect x="168" y="88" width="20" height="34" rx="6" class="navy"/>
+    <rect x="148" y="110" width="60" height="12" rx="6" class="navy"/>
+
+    <!-- claw -->
+    <path d="M168 36
+             C196 8, 246 2, 284 20
+             C268 22, 256 30, 246 42
+             C262 46, 278 58, 288 76
+             C290 100, 283 122, 268 140
+             C268 114, 260 94, 244 80
+             C238 64, 224 56, 208 60
+             C216 50, 218 38, 212 26
+             C196 26, 182 30, 168 36 Z" class="red"/>
+    <path d="M158 46
+             C140 56, 130 72, 126 94
+             C138 84, 152 78, 168 78
+             C162 64, 160 54, 158 46 Z" class="red-dark"/>
+    <path d="M206 26
+             C224 18, 246 16, 266 22
+             C254 26, 244 32, 236 40
+             C228 34, 218 30, 206 26 Z" class="red-dark"/>
+  </g>
+</svg>

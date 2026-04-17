@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rbc-metabolic-model.local/packages/contracts/schemas/calibration-job.schema.json",
+  "title": "Calibration Job",
+  "type": "object",
+  "properties": {
+    "job_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "job_name": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "hypothesis": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "policy_path": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "manifest_path": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "baseline_run_dir": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "promotion_manifest_path": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    }
+  },
+  "required": [
+    "job_name",
+    "hypothesis",
+    "policy_path",
+    "manifest_path"
+  ],
+  "additionalProperties": true,
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

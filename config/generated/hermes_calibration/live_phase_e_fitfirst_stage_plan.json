@@ -1,0 +1,47 @@
+{
+  "contract_type": "hermes_calibration_stage_plan",
+  "contract_version": 1,
+  "status": "manual_review_ready",
+  "seed_params_path": "Simulations/brodbar/calibration/hybrid_long_horizon_phase2_only/best_params.json",
+  "active_hypothesis": "Slightly relax the adenylate pool trajectory penalty so fit-first ranking can test whether a small amount of extra curve freedom helps without changing hard energetic floors.",
+  "target_scope": "core_glycolysis_energy",
+  "optimization_strategy": "vmax_only",
+  "protect": [
+    "ATP",
+    "ADP",
+    "EGLC",
+    "ELAC",
+    "LAC"
+  ],
+  "stage_plan": [
+    {
+      "name": "phase2_adenylate_fitfirst_patch",
+      "phases": [
+        2
+      ],
+      "target_scope": "core_glycolysis_energy",
+      "param_scope": "all",
+      "include_params": [
+        "vmax_VAK",
+        "vmax_VAK2",
+        "vmax_VAMPD1",
+        "vmax_VIMPH"
+      ],
+      "n_trials": 1,
+      "global_trials": 0,
+      "seed": 29,
+      "atp_focus": true,
+      "atp_floor": 0.25,
+      "adp_floor": 0.1,
+      "amp_floor": 0.05,
+      "imp_floor": 0.02,
+      "adenylate_target": 0.9,
+      "atp_penalty_weight": 10.0,
+      "amp_penalty_weight": 6.0,
+      "imp_penalty_weight": 5.0,
+      "pool_penalty_weight": 14.0,
+      "curve_fit_strength": 0.1,
+      "t_max": 42.0
+    }
+  ]
+}

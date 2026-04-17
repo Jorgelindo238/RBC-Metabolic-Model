@@ -1,0 +1,231 @@
+{
+  "contract_type": "calibration_run_registry_record",
+  "contract_version": 2,
+  "source_artifact_contract_type": "calibration_run_artifact_manifest",
+  "source_artifact_contract_version": 2,
+  "run_id": "20260311_234048_core_upstream_probe",
+  "canonical_run_label": "core_upstream_probe_example / core_upstream_probe / 20260311_234048",
+  "run_timestamp": "20260311_234048",
+  "run_timestamp_utc": "2026-03-11T23:40:48Z",
+  "registry_recorded_at": "2026-03-12T00:00:00Z",
+  "status": "baseline",
+  "benchmark_status": "baseline",
+  "completion_status": "completed",
+  "job_name": "core_upstream_probe_example",
+  "hypothesis": "Validate the bounded calibration job interface against the fixed benchmark harness without changing scientific logic.",
+  "job_version": 1,
+  "campaign": null,
+  "tags": [
+    "orchestration",
+    "adapter",
+    "example"
+  ],
+  "job_metadata": {
+    "created_by": "windsurf",
+    "execution_mode": "dry_run_validation",
+    "workspace_id": "00000000-0000-0000-0000-000000000001",
+    "created_by_user_id": "00000000-0000-0000-0000-000000000002",
+    "agent_session_id": "00000000-0000-0000-0000-000000000003",
+    "visibility": "workspace",
+    "run_origin": "scientific_runtime"
+  },
+  "workspace_id": "00000000-0000-0000-0000-000000000001",
+  "created_by_user_id": "00000000-0000-0000-0000-000000000002",
+  "agent_session_id": "00000000-0000-0000-0000-000000000003",
+  "visibility": "workspace",
+  "run_origin": "scientific_runtime",
+  "policy_name": "core_upstream_probe",
+  "policy_path": "config\\policy_core_upstream_probe.json",
+  "manifest_name": "rbc_core_upstream_probe_v1",
+  "manifest_path": "config\\rbc_core_upstream_probe_benchmarks.json",
+  "optimization_strategy": "joint_vmax_km",
+  "parameter_classes": null,
+  "target_scope": "core_glycolysis_energy",
+  "target_scopes": [
+    "core_glycolysis_energy"
+  ],
+  "param_scope": "core_upstream_glycolysis_probe",
+  "param_scopes": [
+    "core_upstream_glycolysis_probe"
+  ],
+  "aggregate_score": 17.529887382701435,
+  "mean_final_loss": 10.99993175849635,
+  "mean_improvement_pct": 12.755603647559655,
+  "best_case": "core_alt_seed",
+  "worst_case": "core_mid_horizon_soft_atp_guard",
+  "time_aware_score": 17.529887382701435,
+  "case_count": 4,
+  "completed_cases": 4,
+  "total_cases": 4,
+  "elapsed_seconds": 1264.52,
+  "time_budget_seconds": 1800.0,
+  "case_time_budget_seconds": 600.0,
+  "timeout_policy": "stop_after_case",
+  "coverage_ratio": 1.0,
+  "coverage_weight_ratio": 1.0,
+  "timed_out": false,
+  "crashed": false,
+  "stop_reason": null,
+  "run_dir": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe",
+  "artifact_manifest_path": "config\\generated\\completed_run_manifest.example.json",
+  "artifact_refs": {
+    "completed_run_manifest_path": "config\\generated\\completed_run_manifest.example.json",
+    "eval_summary_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\eval_summary.json",
+    "policy_snapshot_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\policy_snapshot.json",
+    "manifest_snapshot_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\manifest_snapshot.json",
+    "best_case_report_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_alt_seed\\calibration_report.json",
+    "worst_case_report_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon_soft_atp_guard\\calibration_report.json",
+    "case_refs": [
+      {
+        "name": "core_mid_horizon",
+        "score": 16.64651395702317,
+        "final_loss": 10.22384529532916,
+        "elapsed_seconds": 322.14,
+        "case_completion_status": "completed",
+        "case_time_budget_exceeded": false,
+        "report_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon\\calibration_report.json",
+        "best_params_json_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon\\best_params.json",
+        "results_tsv_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon\\results.tsv"
+      },
+      {
+        "name": "core_short_low_forcing",
+        "score": 17.920720804138316,
+        "final_loss": 10.992317465902644,
+        "elapsed_seconds": 288.41,
+        "case_completion_status": "completed",
+        "case_time_budget_exceeded": false,
+        "report_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_short_low_forcing\\calibration_report.json",
+        "best_params_json_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_short_low_forcing\\best_params.json",
+        "results_tsv_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_short_low_forcing\\results.tsv"
+      },
+      {
+        "name": "core_mid_horizon_soft_atp_guard",
+        "score": 19.1003659370182,
+        "final_loss": 12.67769727532419,
+        "elapsed_seconds": 341.07,
+        "case_completion_status": "completed",
+        "case_time_budget_exceeded": false,
+        "report_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon_soft_atp_guard\\calibration_report.json",
+        "best_params_json_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon_soft_atp_guard\\best_params.json",
+        "results_tsv_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon_soft_atp_guard\\results.tsv"
+      },
+      {
+        "name": "core_alt_seed",
+        "score": 16.47263078371548,
+        "final_loss": 10.105866997429407,
+        "elapsed_seconds": 312.9,
+        "case_completion_status": "completed",
+        "case_time_budget_exceeded": false,
+        "report_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_alt_seed\\calibration_report.json",
+        "best_params_json_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_alt_seed\\best_params.json",
+        "results_tsv_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_alt_seed\\results.tsv"
+      }
+    ]
+  },
+  "trace_context": {
+    "tags": [
+      "orchestration",
+      "adapter",
+      "example",
+      "calibration",
+      "registry_record",
+      "baseline",
+      "core_upstream_probe",
+      "rbc_core_upstream_probe_v1",
+      "completed"
+    ],
+    "metadata": {
+      "aggregate_score": 17.529887382701435,
+      "mean_final_loss": 10.99993175849635,
+      "mean_improvement_pct": 12.755603647559655,
+      "best_case": "core_alt_seed",
+      "worst_case": "core_mid_horizon_soft_atp_guard",
+      "time_aware_score": 17.529887382701435,
+      "run_id": "20260311_234048_core_upstream_probe",
+      "canonical_run_label": "core_upstream_probe_example / core_upstream_probe / 20260311_234048",
+      "policy_name": "core_upstream_probe",
+      "manifest_name": "rbc_core_upstream_probe_v1",
+      "artifact_manifest_path": "config\\generated\\completed_run_manifest.example.json",
+      "benchmark_status": "baseline",
+      "completion_status": "completed"
+    }
+  },
+  "chat_context": {
+    "assistant": "RoBoCop",
+    "canonical_run_label": "core_upstream_probe_example / core_upstream_probe / 20260311_234048",
+    "hypothesis": "Validate the bounded calibration job interface against the fixed benchmark harness without changing scientific logic.",
+    "scientific_context": {
+      "target_scope": "core_glycolysis_energy",
+      "param_scope": "core_upstream_glycolysis_probe",
+      "optimization_strategy": "joint_vmax_km"
+    },
+    "summary_metrics": {
+      "aggregate_score": 17.529887382701435,
+      "mean_final_loss": 10.99993175849635,
+      "mean_improvement_pct": 12.755603647559655,
+      "best_case": "core_alt_seed",
+      "worst_case": "core_mid_horizon_soft_atp_guard",
+      "time_aware_score": 17.529887382701435
+    },
+    "runtime_context": {
+      "elapsed_seconds": 1264.52,
+      "time_budget_seconds": 1800.0,
+      "case_time_budget_seconds": 600.0,
+      "coverage_ratio": 1.0,
+      "coverage_weight_ratio": 1.0,
+      "completion_status": "completed"
+    },
+    "figure_context": {
+      "best_case": "core_alt_seed",
+      "worst_case": "core_mid_horizon_soft_atp_guard",
+      "best_case_report_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_alt_seed\\calibration_report.json",
+      "worst_case_report_path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon_soft_atp_guard\\calibration_report.json"
+    }
+  },
+  "storage": {
+    "registry_backend": "supabase_row",
+    "queryable_fields": [
+      "run_id",
+      "canonical_run_label",
+      "run_timestamp",
+      "status",
+      "job_name",
+      "workspace_id",
+      "created_by_user_id",
+      "agent_session_id",
+      "visibility",
+      "run_origin",
+      "policy_name",
+      "manifest_name",
+      "optimization_strategy",
+      "target_scope",
+      "param_scope",
+      "aggregate_score",
+      "mean_final_loss",
+      "mean_improvement_pct",
+      "best_case",
+      "worst_case",
+      "time_aware_score",
+      "completed_cases",
+      "total_cases",
+      "elapsed_seconds",
+      "time_budget_seconds",
+      "coverage_ratio",
+      "coverage_weight_ratio",
+      "completion_status",
+      "case_count",
+      "run_dir",
+      "artifact_manifest_path"
+    ],
+    "recommended_json_fields": [
+      "tags",
+      "job_metadata",
+      "trace_context",
+      "chat_context"
+    ],
+    "artifact_source_of_truth": "completed_run_manifest",
+    "artifact_fields": [
+      "artifact_refs"
+    ]
+  }
+}

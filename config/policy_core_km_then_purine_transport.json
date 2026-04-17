@@ -1,0 +1,36 @@
+{
+  "policy_name": "core_km_then_purine_transport",
+  "notes": "Optional second-pass policy: first lock in tightened core glycolysis-energy Km behavior with B13PG-related freedom and km_GLC_HK held fixed during the anchor stage, then open a narrow purine/transport Vmax refinement stage without reopening broad compensators.",
+  "base_run": {
+    "load_params": "Simulations/brodbar/calibration/best_params.json",
+    "phases": [1, 2],
+    "target_scope": "core_glycolysis_energy",
+    "param_scope": "core_km",
+    "optimization_strategy": "core_km_then_purine_transport",
+    "generate_plots": false,
+    "atp_focus": false,
+    "atp_floor": 0.15,
+    "adp_floor": 0.05,
+    "adenylate_target": 0.65,
+    "atp_penalty_weight": 8.0,
+    "pool_penalty_weight": 10.0,
+    "n_trials": 10,
+    "global_trials": 0,
+    "seed": 29,
+    "t_max": 28.0,
+    "curve_fit_strength": 0.15
+  },
+  "mutation_space": {
+    "n_trials": [8, 10, 12],
+    "global_trials": [0],
+    "seed": [29, 42],
+    "t_max": [21.0, 28.0, 35.0],
+    "curve_fit_strength": [0.05, 0.1, 0.15]
+  },
+  "guardrails": {
+    "min_t_max": 14.0,
+    "max_t_max": 35.0,
+    "max_curve_fit_strength": 0.2,
+    "allowed_optimization_strategies": ["core_km_then_purine_transport"]
+  }
+}

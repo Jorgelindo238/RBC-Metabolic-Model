@@ -1,0 +1,369 @@
+{
+  "metabolite_synonyms": {
+    "GLC": {
+      "canonical": "GLC",
+      "full_name": "Glucose",
+      "synonyms": ["Glucose", "Glc", "D-Glucose", "Dextrose", "Blood Sugar", "glucose", "glc"],
+      "description": "Intracellular glucose"
+    },
+    "EGLC": {
+      "canonical": "EGLC",
+      "full_name": "Extracellular Glucose",
+      "synonyms": ["E-Glucose", "External Glucose", "Plasma Glucose", "eGlc", "EGLC", "E_GLC"],
+      "description": "Extracellular glucose"
+    },
+    "LAC": {
+      "canonical": "LAC",
+      "full_name": "Lactate",
+      "synonyms": ["Lactate", "Lac", "Lactic Acid", "L-Lactate", "lactate", "lac"],
+      "description": "Intracellular lactate"
+    },
+    "ELAC": {
+      "canonical": "ELAC",
+      "full_name": "Extracellular Lactate",
+      "synonyms": ["E-Lactate", "External Lactate", "Plasma Lactate", "eLac", "ELAC", "E_LAC"],
+      "description": "Extracellular lactate"
+    },
+    "ATP": {
+      "canonical": "ATP",
+      "full_name": "Adenosine Triphosphate",
+      "synonyms": ["ATP", "Adenosine-5'-triphosphate", "atp"],
+      "description": "Adenosine triphosphate"
+    },
+    "ADP": {
+      "canonical": "ADP",
+      "full_name": "Adenosine Diphosphate",
+      "synonyms": ["ADP", "Adenosine-5'-diphosphate", "adp"],
+      "description": "Adenosine diphosphate"
+    },
+    "AMP": {
+      "canonical": "AMP",
+      "full_name": "Adenosine Monophosphate",
+      "synonyms": ["AMP", "Adenosine-5'-monophosphate", "Adenylic Acid", "amp"],
+      "description": "Adenosine monophosphate"
+    },
+    "B23PG": {
+      "canonical": "B23PG",
+      "full_name": "2,3-Bisphosphoglycerate",
+      "synonyms": ["2,3-BPG", "2,3-DPG", "B23PG", "23BPG", "2,3-Bisphosphoglycerate", "2,3-Diphosphoglycerate", "BPG", "DPG"],
+      "description": "2,3-Bisphosphoglycerate"
+    },
+    "G6P": {
+      "canonical": "G6P",
+      "full_name": "Glucose-6-Phosphate",
+      "synonyms": ["G6P", "Glucose-6-P", "Glucose 6-Phosphate", "g6p"],
+      "description": "Glucose-6-phosphate"
+    },
+    "F6P": {
+      "canonical": "F6P",
+      "full_name": "Fructose-6-Phosphate",
+      "synonyms": ["F6P", "Fructose-6-P", "Fructose 6-Phosphate", "f6p"],
+      "description": "Fructose-6-phosphate"
+    },
+    "F16BP": {
+      "canonical": "F16BP",
+      "full_name": "Fructose-1,6-Bisphosphate",
+      "synonyms": ["F16BP", "FBP", "F-1,6-BP", "Fructose-1,6-bisphosphate", "f16bp"],
+      "description": "Fructose-1,6-bisphosphate"
+    },
+    "GA3P": {
+      "canonical": "GA3P",
+      "full_name": "Glyceraldehyde-3-Phosphate",
+      "synonyms": ["GA3P", "G3P", "GAP", "Glyceraldehyde-3-P", "ga3p"],
+      "description": "Glyceraldehyde-3-phosphate"
+    },
+    "PYR": {
+      "canonical": "PYR",
+      "full_name": "Pyruvate",
+      "synonyms": ["Pyruvate", "Pyr", "Pyruvic Acid", "pyr"],
+      "description": "Intracellular pyruvate"
+    },
+    "EPYR": {
+      "canonical": "EPYR",
+      "full_name": "Extracellular Pyruvate",
+      "synonyms": ["E-Pyruvate", "External Pyruvate", "Plasma Pyruvate", "ePyr", "EPYR", "E_PYR"],
+      "description": "Extracellular pyruvate"
+    },
+    "NAD": {
+      "canonical": "NAD",
+      "full_name": "Nicotinamide Adenine Dinucleotide (Oxidized)",
+      "synonyms": ["NAD+", "NAD", "Nicotinamide adenine dinucleotide", "nad"],
+      "description": "NAD+ (oxidized form)"
+    },
+    "NADH": {
+      "canonical": "NADH",
+      "full_name": "Nicotinamide Adenine Dinucleotide (Reduced)",
+      "synonyms": ["NADH", "NAD+H", "Reduced NAD", "nadh"],
+      "description": "NADH (reduced form)"
+    },
+    "NADP": {
+      "canonical": "NADP",
+      "full_name": "Nicotinamide Adenine Dinucleotide Phosphate (Oxidized)",
+      "synonyms": ["NADP+", "NADP", "nadp"],
+      "description": "NADP+ (oxidized form)"
+    },
+    "NADPH": {
+      "canonical": "NADPH",
+      "full_name": "Nicotinamide Adenine Dinucleotide Phosphate (Reduced)",
+      "synonyms": ["NADPH", "NADP+H", "Reduced NADP", "nadph"],
+      "description": "NADPH (reduced form)"
+    },
+    "P3G": {
+      "canonical": "P3G",
+      "full_name": "3-Phosphoglycerate",
+      "synonyms": ["3PG", "P3G", "3-Phosphoglycerate", "3-PG", "p3g"],
+      "description": "3-Phosphoglycerate"
+    },
+    "PEP": {
+      "canonical": "PEP",
+      "full_name": "Phosphoenolpyruvate",
+      "synonyms": ["PEP", "Phosphoenolpyruvic acid", "pep"],
+      "description": "Phosphoenolpyruvate"
+    },
+    "GLU": {
+      "canonical": "GLU",
+      "full_name": "Glutamate",
+      "synonyms": ["Glutamate", "Glu", "Glutamic Acid", "L-Glutamate", "glu"],
+      "description": "Intracellular glutamate"
+    },
+    "EGLU": {
+      "canonical": "EGLU",
+      "full_name": "Extracellular Glutamate",
+      "synonyms": ["E-Glutamate", "External Glutamate", "eGlu", "EGLU", "E_GLU"],
+      "description": "Extracellular glutamate"
+    },
+    "GLN": {
+      "canonical": "GLN",
+      "full_name": "Glutamine",
+      "synonyms": ["Glutamine", "Gln", "L-Glutamine", "gln"],
+      "description": "Intracellular glutamine"
+    },
+    "EGLN": {
+      "canonical": "EGLN",
+      "full_name": "Extracellular Glutamine",
+      "synonyms": ["E-Glutamine", "External Glutamine", "eGln", "EGLN", "E_GLN"],
+      "description": "Extracellular glutamine"
+    },
+    "ASP": {
+      "canonical": "ASP",
+      "full_name": "Aspartate",
+      "synonyms": ["Aspartate", "Asp", "Aspartic Acid", "L-Aspartate", "asp"],
+      "description": "Intracellular aspartate"
+    },
+    "EASP": {
+      "canonical": "EASP",
+      "full_name": "Extracellular Aspartate",
+      "synonyms": ["E-Aspartate", "External Aspartate", "eAsp", "EASP", "E_ASP"],
+      "description": "Extracellular aspartate"
+    },
+    "ALA": {
+      "canonical": "ALA",
+      "full_name": "Alanine",
+      "synonyms": ["Alanine", "Ala", "L-Alanine", "ala"],
+      "description": "Intracellular alanine"
+    },
+    "EALA": {
+      "canonical": "EALA",
+      "full_name": "Extracellular Alanine",
+      "synonyms": ["E-Alanine", "External Alanine", "eAla", "EALA", "E_ALA"],
+      "description": "Extracellular alanine"
+    },
+    "GSH": {
+      "canonical": "GSH",
+      "full_name": "Glutathione (Reduced)",
+      "synonyms": ["GSH", "Glutathione", "Reduced Glutathione", "gsh"],
+      "description": "Reduced glutathione"
+    },
+    "GSSG": {
+      "canonical": "GSSG",
+      "full_name": "Glutathione (Oxidized)",
+      "synonyms": ["GSSG", "Oxidized Glutathione", "Glutathione disulfide", "gssg"],
+      "description": "Oxidized glutathione (disulfide)"
+    },
+    "IMP": {
+      "canonical": "IMP",
+      "full_name": "Inosine Monophosphate",
+      "synonyms": ["IMP", "Inosine-5'-monophosphate", "Inosinic Acid", "imp"],
+      "description": "Inosine monophosphate"
+    },
+    "INO": {
+      "canonical": "INO",
+      "full_name": "Inosine",
+      "synonyms": ["Inosine", "Ino", "ino"],
+      "description": "Intracellular inosine"
+    },
+    "EINO": {
+      "canonical": "EINO",
+      "full_name": "Extracellular Inosine",
+      "synonyms": ["E-Inosine", "External Inosine", "eIno", "EINO", "E_INO"],
+      "description": "Extracellular inosine"
+    },
+    "HYPX": {
+      "canonical": "HYPX",
+      "full_name": "Hypoxanthine",
+      "synonyms": ["Hypoxanthine", "Hx", "HXR", "hypx"],
+      "description": "Intracellular hypoxanthine"
+    },
+    "EHYPX": {
+      "canonical": "EHYPX",
+      "full_name": "Extracellular Hypoxanthine",
+      "synonyms": ["E-Hypoxanthine", "External Hypoxanthine", "eHx", "EHYPX", "E_HYPX"],
+      "description": "Extracellular hypoxanthine"
+    },
+    "XAN": {
+      "canonical": "XAN",
+      "full_name": "Xanthine",
+      "synonyms": ["Xanthine", "Xan", "xan"],
+      "description": "Intracellular xanthine"
+    },
+    "EXAN": {
+      "canonical": "EXAN",
+      "full_name": "Extracellular Xanthine",
+      "synonyms": ["E-Xanthine", "External Xanthine", "eXan", "EXAN", "E_XAN"],
+      "description": "Extracellular xanthine"
+    },
+    "URT": {
+      "canonical": "URT",
+      "full_name": "Urate",
+      "synonyms": ["Urate", "Uric Acid", "urt"],
+      "description": "Intracellular urate"
+    },
+    "EURT": {
+      "canonical": "EURT",
+      "full_name": "Extracellular Urate",
+      "synonyms": ["E-Urate", "External Urate", "Plasma Uric Acid", "eUrt", "EURT", "E_URT"],
+      "description": "Extracellular urate"
+    },
+    "ADE": {
+      "canonical": "ADE",
+      "full_name": "Adenine",
+      "synonyms": ["Adenine", "Ade", "ade"],
+      "description": "Intracellular adenine"
+    },
+    "EADE": {
+      "canonical": "EADE",
+      "full_name": "Extracellular Adenine",
+      "synonyms": ["E-Adenine", "External Adenine", "eAde", "EADE", "E_ADE"],
+      "description": "Extracellular adenine"
+    },
+    "ADO": {
+      "canonical": "ADO",
+      "full_name": "Adenosine",
+      "synonyms": ["Adenosine", "Ado", "ado"],
+      "description": "Intracellular adenosine"
+    },
+    "EADO": {
+      "canonical": "EADO",
+      "full_name": "Extracellular Adenosine",
+      "synonyms": ["E-Adenosine", "External Adenosine", "eAdo", "EADO", "E_ADO"],
+      "description": "Extracellular adenosine"
+    },
+    "CYS": {
+      "canonical": "CYS",
+      "full_name": "Cysteine",
+      "synonyms": ["Cysteine", "Cys", "L-Cysteine", "cys"],
+      "description": "Intracellular cysteine"
+    },
+    "ECYS": {
+      "canonical": "ECYS",
+      "full_name": "Extracellular Cysteine",
+      "synonyms": ["E-Cysteine", "External Cysteine", "eCys", "ECYS", "E_CYS"],
+      "description": "Extracellular cysteine"
+    },
+    "MET": {
+      "canonical": "MET",
+      "full_name": "Methionine",
+      "synonyms": ["Methionine", "Met", "L-Methionine", "met"],
+      "description": "Intracellular methionine"
+    },
+    "EMET": {
+      "canonical": "EMET",
+      "full_name": "Extracellular Methionine",
+      "synonyms": ["E-Methionine", "External Methionine", "eMet", "EMET", "E_MET"],
+      "description": "Extracellular methionine"
+    },
+    "GMP": {
+      "canonical": "GMP",
+      "full_name": "Guanosine Monophosphate",
+      "synonyms": ["GMP", "Guanosine-5'-monophosphate", "Guanylic Acid", "gmp"],
+      "description": "Guanosine monophosphate"
+    },
+    "GTP": {
+      "canonical": "GTP",
+      "full_name": "Guanosine Triphosphate",
+      "synonyms": ["GTP", "Guanosine-5'-triphosphate", "gtp"],
+      "description": "Guanosine triphosphate"
+    },
+    "GDP": {
+      "canonical": "GDP",
+      "full_name": "Guanosine Diphosphate",
+      "synonyms": ["GDP", "Guanosine-5'-diphosphate", "gdp"],
+      "description": "Guanosine diphosphate"
+    },
+    "MAL": {
+      "canonical": "MAL",
+      "full_name": "Malate",
+      "synonyms": ["Malate", "Mal", "Malic Acid", "L-Malate", "mal"],
+      "description": "Intracellular malate"
+    },
+    "EMAL": {
+      "canonical": "EMAL",
+      "full_name": "Extracellular Malate",
+      "synonyms": ["E-Malate", "External Malate", "eMal", "EMAL", "E_MAL"],
+      "description": "Extracellular malate"
+    },
+    "FUM": {
+      "canonical": "FUM",
+      "full_name": "Fumarate",
+      "synonyms": ["Fumarate", "Fum", "Fumaric Acid", "fum"],
+      "description": "Intracellular fumarate"
+    },
+    "EFUM": {
+      "canonical": "EFUM",
+      "full_name": "Extracellular Fumarate",
+      "synonyms": ["E-Fumarate", "External Fumarate", "eFum", "EFUM", "E_FUM"],
+      "description": "Extracellular fumarate"
+    },
+    "CIT": {
+      "canonical": "CIT",
+      "full_name": "Citrate",
+      "synonyms": ["Citrate", "Cit", "Citric Acid", "cit"],
+      "description": "Intracellular citrate"
+    },
+    "ECIT": {
+      "canonical": "ECIT",
+      "full_name": "Extracellular Citrate",
+      "synonyms": ["E-Citrate", "External Citrate", "eCit", "ECIT", "E_CIT"],
+      "description": "Extracellular citrate"
+    },
+    "NH4": {
+      "canonical": "NH4",
+      "full_name": "Ammonia/Ammonium",
+      "synonyms": ["NH4", "NH4+", "Ammonia", "Ammonium", "nh4"],
+      "description": "Intracellular ammonia/ammonium"
+    },
+    "ENH4": {
+      "canonical": "ENH4",
+      "full_name": "Extracellular Ammonia",
+      "synonyms": ["E-NH4", "External Ammonia", "eNH4", "ENH4", "E_NH4"],
+      "description": "Extracellular ammonia"
+    },
+    "UREA": {
+      "canonical": "UREA",
+      "full_name": "Urea",
+      "synonyms": ["Urea", "Carbamide", "urea"],
+      "description": "Intracellular urea"
+    },
+    "EUREA": {
+      "canonical": "EUREA",
+      "full_name": "Extracellular Urea",
+      "synonyms": ["E-Urea", "External Urea", "eUrea", "EUREA", "E_UREA"],
+      "description": "Extracellular urea"
+    }
+  },
+  "common_patterns": {
+    "external_prefixes": ["E-", "E_", "e", "Ext-", "External ", "Plasma ", "Serum "],
+    "internal_prefixes": ["I-", "I_", "i", "Int-", "Internal ", "Cellular "],
+    "time_keywords": ["time", "hours", "days", "minutes", "seconds", "t", "Time", "Hour", "Day"]
+  }
+}

@@ -1,0 +1,19 @@
+c:\Users\Jorgelindo\Desktop\Mario_RBC_up\scripts\run_bounded_autosearch.py
+  c:\Users\Jorgelindo\Desktop\Mario_RBC_up\scripts\run_bounded_autosearch.py:46:15 - error: Could not access item in TypedDict
+  ????"mutation_policy_path" is not a required key in "SearchState", so access may result in runtime exception (reportTypedDictNotRequiredAccess)
+  c:\Users\Jorgelindo\Desktop\Mario_RBC_up\scripts\run_bounded_autosearch.py:49:15 - error: Could not access item in TypedDict
+  ????"base_policy_path" is not a required key in "SearchState", so access may result in runtime exception (reportTypedDictNotRequiredAccess)
+  c:\Users\Jorgelindo\Desktop\Mario_RBC_up\scripts\run_bounded_autosearch.py:92:17 - error: Could not access item in TypedDict
+  ????"base_manifest_path" is not a required key in "SearchState", so access may result in runtime exception (reportTypedDictNotRequiredAccess)
+  c:\Users\Jorgelindo\Desktop\Mario_RBC_up\scripts\run_bounded_autosearch.py:109:29 - error: "mutation_summary" is possibly unbound (reportPossiblyUnboundVariable)
+  c:\Users\Jorgelindo\Desktop\Mario_RBC_up\scripts\run_bounded_autosearch.py:119:22 - error: Could not access item in TypedDict
+  ????"job_spec_path" is not a required key in "SearchState", so access may result in runtime exception (reportTypedDictNotRequiredAccess)
+  c:\Users\Jorgelindo\Desktop\Mario_RBC_up\scripts\run_bounded_autosearch.py:121:8 - error: Could not access item in TypedDict
+  ????"dry_run" is not a required key in "SearchState", so access may result in runtime exception (reportTypedDictNotRequiredAccess)
+  c:\Users\Jorgelindo\Desktop\Mario_RBC_up\scripts\run_bounded_autosearch.py:162:8 - error: Could not access item in TypedDict
+  ????"dry_run" is not a required key in "SearchState", so access may result in runtime exception (reportTypedDictNotRequiredAccess)
+  c:\Users\Jorgelindo\Desktop\Mario_RBC_up\scripts\run_bounded_autosearch.py:297:12 - error: Type "CompiledStateGraph[SearchState, None, SearchState, SearchState]" is not assignable to return type "StateGraph[Unknown, None, Unknown, Unknown]"
+  ????"CompiledStateGraph[SearchState, None, SearchState, SearchState]" is not assignable to "StateGraph[Unknown, None, Unknown, Unknown]" (reportReturnType)
+  c:\Users\Jorgelindo\Desktop\Mario_RBC_up\scripts\run_bounded_autosearch.py:328:25 - error: Cannot access attribute "invoke" for class "StateGraph[Unknown, None, Unknown, Unknown]"
+  ????Attribute "invoke" is unknown (reportAttributeAccessIssue)
+9 errors, 0 warnings, 0 informations

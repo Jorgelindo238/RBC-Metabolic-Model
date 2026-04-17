@@ -1,0 +1,323 @@
+{
+  "contract_type": "hermes_calibration_stage_plan",
+  "contract_version": 1,
+  "status": "ready_for_manual_run",
+  "generated_at": "2026-03-27T02:10:58.158698+00:00",
+  "generated_by": "live_phase_c_lower_glyco_purine",
+  "seed_params_path": "Simulations\\brodbar\\calibration\\hybrid_long_horizon_phase2_only\\best_params.json",
+  "active_hypothesis": "Lower glycolysis still controls the coupled P3G/PEP/PYR tension that feeds ATP and extracellular lactate behavior.",
+  "target_scope": "glycolysis_extracellular",
+  "optimization_strategy": "vmax_only",
+  "protect": [
+    "ATP",
+    "ADP",
+    "EGLC",
+    "ELAC",
+    "LAC"
+  ],
+  "subsystem_proposals": [
+    {
+      "agent": "adenylate",
+      "hypothesis": "Adenylate exchange is still letting ATP and ADP collapse in the pure ODE.",
+      "reasoning": "ATP/ADP collapse is still present in the pure ODE, so the next bounded move should reopen adenylate coupling rather than another nearby glucose seam.",
+      "tradeoff_note": "Could soften glucose or PYR/LAC gains if the adenylate pool is overcompensated.",
+      "phase": 2,
+      "target_scope": "core_glycolysis_energy",
+      "optimization_strategy": "vmax_then_km",
+      "target_metabolites": [
+        "ATP",
+        "ADP",
+        "AMP",
+        "IMP"
+      ],
+      "allowed_parameters": [
+        "vmax_VAK",
+        "vmax_VAK2",
+        "vmax_VAK_rev",
+        "km_ADP_ATP"
+      ],
+      "expected_gain": [
+        "retain_ATP",
+        "retain_ADP",
+        "reduce_AMP_overaccumulation"
+      ],
+      "risk_metabolites": [
+        "EGLC",
+        "ELAC",
+        "PYR"
+      ],
+      "protect_metabolites": [
+        "ATP",
+        "ADP",
+        "EGLC",
+        "ELAC",
+        "LAC"
+      ],
+      "conflicts_with": [],
+      "recommendation": "hold",
+      "seam_status": "saturated",
+      "recommendation_strength": 0.9338596308486037,
+      "should_run": false
+    },
+    {
+      "agent": "lower_glycolysis",
+      "hypothesis": "Lower glycolysis still controls the coupled P3G/PEP/PYR tension that feeds ATP and extracellular lactate behavior.",
+      "reasoning": "If PYR or PEP remain structurally strained, a lower-glycolysis seam can sometimes open a new fit basin after the glucose-side seams have saturated.",
+      "tradeoff_note": "Historically this seam can improve ATP and extracellular anchors while breaking PEP/PYR if it is too free.",
+      "phase": 1,
+      "target_scope": "glycolysis_extracellular",
+      "optimization_strategy": "vmax_only",
+      "target_metabolites": [
+        "P3G",
+        "P2G",
+        "PEP",
+        "PYR",
+        "B23PG"
+      ],
+      "allowed_parameters": [
+        "vmax_VPGM",
+        "vmax_VENOPGM",
+        "vmax_VDPGM",
+        "vmax_V23DPGP",
+        "vmax_VPK"
+      ],
+      "expected_gain": [
+        "reduce_PYR_spike",
+        "stabilize_lower_glycolysis",
+        "support_ATP"
+      ],
+      "risk_metabolites": [
+        "PEP",
+        "ELAC",
+        "B23PG"
+      ],
+      "protect_metabolites": [
+        "ATP",
+        "ADP",
+        "EGLC",
+        "ELAC",
+        "LAC"
+      ],
+      "conflicts_with": [
+        "pyruvate_lactate_outlet"
+      ],
+      "recommendation": "run",
+      "seam_status": "open",
+      "recommendation_strength": 0.54,
+      "should_run": true
+    },
+    {
+      "agent": "glucose_commitment",
+      "hypothesis": "Upstream glucose commitment is still shaping the late EGLC plateau through HK/PFK framing.",
+      "reasoning": "If EGLC remains shallow while glucose-axis intermediates are still off-target, the next bounded seam is the glucose commitment / hexose framing pocket.",
+      "tradeoff_note": "Can improve glucose draw while making ELAC or ATP worse if the commitment step over-pulls carbon.",
+      "phase": 1,
+      "target_scope": "glycolysis_extracellular",
+      "optimization_strategy": "km_only",
+      "target_metabolites": [
+        "EGLC",
+        "GLC",
+        "G6P",
+        "F6P"
+      ],
+      "allowed_parameters": [
+        "vmax_VHK",
+        "vmax_VPFK",
+        "km_GLC_HK",
+        "km_G6P",
+        "km_F6P"
+      ],
+      "expected_gain": [
+        "steeper_EGLC",
+        "better_hexose_shape"
+      ],
+      "risk_metabolites": [
+        "ATP",
+        "ELAC"
+      ],
+      "protect_metabolites": [
+        "ATP",
+        "ADP",
+        "EGLC",
+        "ELAC",
+        "LAC"
+      ],
+      "conflicts_with": [
+        "extracellular_transport"
+      ],
+      "recommendation": "hold",
+      "seam_status": "saturated",
+      "recommendation_strength": 0.5259910352765922,
+      "should_run": false
+    },
+    {
+      "agent": "purine_salvage",
+      "hypothesis": "Purine salvage imbalance is amplifying AMP/IMP drift and destabilizing the energy quartet.",
+      "reasoning": "AMP rise or IMP collapse suggests the purine seam may still be distorting the energy block even when the glucose-side fit is strong.",
+      "tradeoff_note": "Can improve AMP/IMP while leaving ATP/ADP unchanged if adenylate exchange is the dominant bottleneck.",
+      "phase": 2,
+      "target_scope": "core_glycolysis_energy",
+      "optimization_strategy": "vmax_only",
+      "target_metabolites": [
+        "AMP",
+        "IMP",
+        "ATP",
+        "ADP"
+      ],
+      "allowed_parameters": [
+        "vmax_VAMPD1",
+        "vmax_VIMPH",
+        "vmax_VNDPK",
+        "vmax_VNDPK_rev"
+      ],
+      "expected_gain": [
+        "reduce_AMP_accumulation",
+        "retain_IMP",
+        "stabilize_purine_pool"
+      ],
+      "risk_metabolites": [
+        "ATP",
+        "ADP"
+      ],
+      "protect_metabolites": [
+        "ATP",
+        "ADP",
+        "EGLC",
+        "ELAC",
+        "LAC"
+      ],
+      "conflicts_with": [],
+      "recommendation": "run",
+      "seam_status": "open",
+      "recommendation_strength": 0.5,
+      "should_run": true
+    },
+    {
+      "agent": "extracellular_transport",
+      "hypothesis": "Extracellular transport remains the most direct lever on the shallow EGLC and underpowered ELAC trajectories.",
+      "reasoning": "EGLC is still shallow in the pure ODE or ELAC remains soft, so the transport seam is still a plausible way to preserve directionality while sharpening extracellular shape.",
+      "tradeoff_note": "This seam may reproduce a previously saturated glucose basin if the current seed already contains the useful transport move.",
+      "phase": 1,
+      "target_scope": "glycolysis_extracellular",
+      "optimization_strategy": "vmax_then_km",
+      "target_metabolites": [
+        "EGLC",
+        "ELAC",
+        "GLC",
+        "LAC"
+      ],
+      "allowed_parameters": [
+        "vmax_VEGLC",
+        "vmax_VELAC",
+        "km_EGLC",
+        "km_GLC_transport",
+        "km_LAC"
+      ],
+      "expected_gain": [
+        "steeper_EGLC",
+        "stronger_ELAC_export"
+      ],
+      "risk_metabolites": [
+        "ATP",
+        "PYR",
+        "LAC"
+      ],
+      "protect_metabolites": [
+        "ATP",
+        "ADP",
+        "EGLC",
+        "ELAC",
+        "LAC"
+      ],
+      "conflicts_with": [
+        "glucose_commitment",
+        "pyruvate_lactate_outlet"
+      ],
+      "recommendation": "hold",
+      "seam_status": "saturated",
+      "recommendation_strength": 0.481652184130028,
+      "should_run": false
+    },
+    {
+      "agent": "pyruvate_lactate_outlet",
+      "hypothesis": "The PYR/LAC outlet seam is still shaping the long-horizon pyruvate rebound and lactate loss.",
+      "reasoning": "If PYR spikes transiently or LAC falls late, the LDH/outlet seam is the most direct narrow recovery set.",
+      "tradeoff_note": "This seam often saturates quickly once the lower-glycolysis block is already tuned.",
+      "phase": 1,
+      "target_scope": "glycolysis_extracellular",
+      "optimization_strategy": "vmax_then_km",
+      "target_metabolites": [
+        "PYR",
+        "LAC",
+        "ELAC",
+        "PEP"
+      ],
+      "allowed_parameters": [
+        "vmax_VLDH",
+        "km_PYR",
+        "km_LAC",
+        "km_PEP"
+      ],
+      "expected_gain": [
+        "reduce_PYR_spike",
+        "retain_LAC_accumulation",
+        "recover_ELAC"
+      ],
+      "risk_metabolites": [
+        "EGLC",
+        "ATP"
+      ],
+      "protect_metabolites": [
+        "ATP",
+        "ADP",
+        "EGLC",
+        "ELAC",
+        "LAC"
+      ],
+      "conflicts_with": [
+        "lower_glycolysis",
+        "extracellular_transport"
+      ],
+      "recommendation": "hold",
+      "seam_status": "saturated",
+      "recommendation_strength": 0.343542608046833,
+      "should_run": false
+    }
+  ],
+  "stage_plan": [
+    {
+      "name": "phase1_lower_glycolysis",
+      "phases": [
+        1
+      ],
+      "param_scope": "glycolysis_extracellular",
+      "target_scope": "glycolysis_extracellular",
+      "include_params": [
+        "vmax_VPGM",
+        "vmax_VENOPGM",
+        "vmax_VDPGM",
+        "vmax_V23DPGP",
+        "vmax_VPK"
+      ],
+      "n_trials": 6,
+      "global_trials": 0,
+      "seed": 29,
+      "atp_focus": true,
+      "atp_floor": 0.25,
+      "adp_floor": 0.1,
+      "amp_floor": 0.05,
+      "imp_floor": 0.02,
+      "adenylate_target": 0.9,
+      "atp_penalty_weight": 10.0,
+      "amp_penalty_weight": 6.0,
+      "imp_penalty_weight": 5.0,
+      "pool_penalty_weight": 14.0,
+      "curve_fit_strength": 0.1,
+      "t_max": 42.0
+    }
+  ],
+  "manual_run_hint": {
+    "command_preview": "python src\\MM_calibration.py --load-params \"Simulations\\brodbar\\calibration\\hybrid_long_horizon_phase2_only\\best_params.json\" --stage-plan-file \"config\\generated\\hermes_calibration\\live_phase_c_lower_glyco_purine.json\" --target-scope glycolysis_extracellular --optimization-strategy vmax_only",
+    "note": "Phase A stops before execution. Review the written stage plan, then run the command manually."
+  }
+}

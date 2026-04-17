@@ -1,0 +1,42 @@
+{
+  "contract_type": "hermes_calibration_stage_plan",
+  "contract_version": 1,
+  "hypothesis": "Reopen VEGLC shape under hardened VELAC to recover extracellular glucose draw without reopening broad lactate efflux freedom.",
+  "generated_by": "codex_manual_probe",
+  "protect": [
+    "ATP",
+    "ADP",
+    "EGLC",
+    "ELAC",
+    "LAC"
+  ],
+  "stage_plan": [
+    {
+      "name": "veglc_reopen_under_hardened_velac",
+      "phases": [
+        1
+      ],
+      "param_scope": "hybrid_glucose_lactate",
+      "target_scope": "glycolysis_extracellular",
+      "include_params": [
+        "hybrid_blend_VEGLC",
+        "hybrid_import_hill_VEGLC",
+        "hybrid_export_hill_VEGLC",
+        "hybrid_reverse_scale_VEGLC"
+      ],
+      "n_trials": 3,
+      "global_trials": 0,
+      "seed": 29,
+      "curve_fit_strength": 0.1,
+      "t_max": 12.0,
+      "teacher_dataset_path": "C:\\Users\\Jorgelindo\\Desktop\\Mario_RBC_up\\Simulations\\brodbar\\hermes\\teacher_student\\datasets\\teacher_curve_extracellular_focus.json",
+      "teacher_student_weight": 0.35,
+      "teacher_focus_metabolites": [
+        "EGLC",
+        "ELAC",
+        "LAC"
+      ],
+      "teacher_focus_weight": 4.0
+    }
+  ]
+}

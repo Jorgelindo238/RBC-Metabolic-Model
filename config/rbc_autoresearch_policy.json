@@ -1,0 +1,93 @@
+{
+  "policy_name": "baseline_pathway_outer_loop_v2",
+  "notes": "Mutable strategy-aware policy for RBC calibration autoresearch. Designed for fast outer-loop screening before promotion benchmarks. Keeps the same biochemical target scope while allowing strategy mutation across vmax-only, km-only, joint, and staged calibration modes.",
+  "base_run": {
+    "load_params": "Simulations/brodbar/calibration/best_params.json",
+    "phases": [
+      1,
+      2,
+      3
+    ],
+    "target_scope": "glycolysis_extracellular",
+    "param_scope": "glycolysis_extracellular",
+    "optimization_strategy": "vmax_then_km",
+    "generate_plots": false,
+    "atp_focus": false,
+    "atp_floor": 0.15,
+    "adp_floor": 0.05,
+    "adenylate_target": 0.65,
+    "atp_penalty_weight": 8.0,
+    "pool_penalty_weight": 10.0,
+    "n_trials": 4,
+    "global_trials": 0,
+    "seed": 29,
+    "t_max": 28.0,
+    "curve_fit_strength": 0.1
+  },
+  "mutation_space": {
+    "optimization_strategy": [
+      "vmax_only",
+      "km_only",
+      "joint_vmax_km",
+      "vmax_then_km",
+      "staged_full"
+    ],
+    "n_trials": [
+      3,
+      4,
+      6
+    ],
+    "global_trials": [
+      0,
+      1
+    ],
+    "seed": [
+      17,
+      29,
+      42,
+      73
+    ],
+    "t_max": [
+      14.0,
+      21.0,
+      28.0,
+      35.0
+    ],
+    "curve_fit_strength": [
+      0.05,
+      0.1,
+      0.15,
+      0.25
+    ],
+    "atp_focus": [
+      false,
+      true
+    ],
+    "adenylate_target": [
+      0.6,
+      0.65,
+      0.7
+    ],
+    "atp_penalty_weight": [
+      8.0,
+      10.0
+    ],
+    "pool_penalty_weight": [
+      10.0,
+      12.0
+    ]
+  },
+  "guardrails": {
+    "min_t_max": 14.0,
+    "max_t_max": 35.0,
+    "max_curve_fit_strength": 0.25,
+    "require_generate_plots_false": true,
+    "allowed_optimization_strategies": [
+      "vmax_only",
+      "km_only",
+      "joint_vmax_km",
+      "vmax_then_km",
+      "staged_full"
+    ]
+  }
+}

@@ -1,0 +1,387 @@
+{
+  "contract_type": "calibration_run_artifact_manifest",
+  "contract_version": 2,
+  "generated_at": "2026-03-12T00:00:00Z",
+  "job": {
+    "job_name": "core_upstream_probe_example",
+    "hypothesis": "Validate the bounded calibration job interface against the fixed benchmark harness without changing scientific logic.",
+    "job_version": 1,
+    "job_path": "config\\generated\\calibration_job.example.json",
+    "policy_path": "config\\policy_core_upstream_probe.json",
+    "manifest_path": "config\\rbc_core_upstream_probe_benchmarks.json",
+    "time_budget_seconds": 1800.0,
+    "case_time_budget_seconds": 600.0,
+    "timeout_policy": "stop_after_case",
+    "tags": [
+      "orchestration",
+      "adapter",
+      "example"
+    ],
+    "metadata": {
+      "created_by": "windsurf",
+      "execution_mode": "dry_run_validation",
+      "workspace_id": "00000000-0000-0000-0000-000000000001",
+      "created_by_user_id": "00000000-0000-0000-0000-000000000002",
+      "agent_session_id": "00000000-0000-0000-0000-000000000003",
+      "visibility": "workspace",
+      "run_origin": "scientific_runtime"
+    }
+  },
+  "run": {
+    "run_dir": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe",
+    "timestamp": "20260311_234048",
+    "policy_name": "core_upstream_probe",
+    "manifest_name": "rbc_core_upstream_probe_v1",
+    "manifest_description": "Focused benchmark manifest for the core-only upstream hexose-phosphate gate probe. Scores G6P/F6P entry pacing and adenylate coupling while keeping lower-glycolysis, purine, and transport compensation closed.",
+    "optimization_strategy": "joint_vmax_km",
+    "parameter_classes": null,
+    "stage_plan": [
+      {
+        "name": "core_upstream_gate_probe",
+        "phases": [
+          1
+        ],
+        "target_scope": "core_glycolysis_energy",
+        "param_scope": "core_upstream_glycolysis_probe",
+        "parameter_classes": [
+          "vmax",
+          "km"
+        ],
+        "include_params": [
+          "km_ATP_HK",
+          "km_ATP_PFK",
+          "km_F6P",
+          "km_G6P",
+          "km_GLC_HK",
+          "vmax_VHK",
+          "vmax_VPFK"
+        ],
+        "n_trials": 10,
+        "global_trials": 0,
+        "atp_focus": false
+      }
+    ],
+    "status": "baseline",
+    "benchmark_status": "baseline",
+    "completion_status": "completed",
+    "elapsed_seconds": 1264.52,
+    "time_budget_seconds": 1800.0,
+    "case_time_budget_seconds": 600.0,
+    "timeout_policy": "stop_after_case",
+    "completed_cases": 4,
+    "total_cases": 4,
+    "coverage_ratio": 1.0,
+    "coverage_weight_ratio": 1.0,
+    "timed_out": false,
+    "crashed": false,
+    "stop_reason": null
+  },
+  "inputs": {
+    "policy_snapshot": {
+      "type": "policy_snapshot",
+      "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\policy_snapshot.json",
+      "exists": true,
+      "size_bytes": 1685
+    },
+    "manifest_snapshot": {
+      "type": "manifest_snapshot",
+      "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\manifest_snapshot.json",
+      "exists": true,
+      "size_bytes": 2445
+    }
+  },
+  "outputs": {
+    "summary": {
+      "aggregate_score": 17.529887382701435,
+      "mean_final_loss": 10.99993175849635,
+      "mean_improvement_pct": 12.755603647559655,
+      "best_case": "core_alt_seed",
+      "worst_case": "core_mid_horizon_soft_atp_guard",
+      "time_aware_score": 17.529887382701435,
+      "score_basis": "full_manifest_weighted_mean"
+    },
+    "case_count": 4,
+    "completed_cases": 4,
+    "total_cases": 4,
+    "coverage_ratio": 1.0,
+    "coverage_weight_ratio": 1.0,
+    "cases": [
+      {
+        "name": "core_mid_horizon",
+        "description": "Primary probe case for the upstream HK/PFK gate hypothesis.",
+        "weight": 1.0,
+        "score": 16.64651395702317,
+        "score_breakdown": {
+          "final_loss_component": 10.22384529532916,
+          "robust_target_loss": 1.616630568847058,
+          "robust_target_component": 0.48498917065411734,
+          "endpoint_component": 0.11995461869862958,
+          "glycolysis_energy_component": 2.9511628043974096,
+          "glycolysis_component": 1.6201972156569973,
+          "extracellular_component": 0.7496171501025379,
+          "nucleotide_purine_component": 0.49674770218432035,
+          "discard_component": 0.0,
+          "total_score": 16.64651395702317
+        },
+        "optimization_strategy": "joint_vmax_km",
+        "parameter_classes": null,
+        "target_scope": "core_glycolysis_energy",
+        "param_scope": "core_upstream_glycolysis_probe",
+        "seed": 29,
+        "t_max": 28.0,
+        "baseline_loss": 11.904279691444465,
+        "final_loss": 10.22384529532916,
+        "improvement_pct": 14.11622071785682,
+        "monitor_metrics": {
+          "target": 10.22384529532916,
+          "endpoint_nrmse": 0.5997730934931479,
+          "joint": 10.22384529532916,
+          "glycolysis_energy": 9.837209347991365,
+          "nucleotide_purine": 9.934954043686407,
+          "amino_redox_side": 8.020339809901385,
+          "extracellular": 7.496171501025379,
+          "glycolysis": 8.100986078284986
+        },
+        "elapsed_seconds": 322.14,
+        "case_completion_status": "completed",
+        "case_budget_seconds": 600.0,
+        "case_time_budget_exceeded": false,
+        "artifacts": {
+          "calibration_report": {
+            "type": "calibration_report",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon\\calibration_report.json",
+            "exists": true,
+            "size_bytes": 21670
+          },
+          "best_params_json": {
+            "type": "best_params_json",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon\\best_params.json",
+            "exists": true,
+            "size_bytes": 3720
+          },
+          "best_params_py": {
+            "type": "best_params_python",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon\\best_params.py",
+            "exists": true,
+            "size_bytes": 3226
+          },
+          "results_tsv": {
+            "type": "case_results_tsv",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon\\results.tsv",
+            "exists": true,
+            "size_bytes": 1215
+          }
+        }
+      },
+      {
+        "name": "core_short_low_forcing",
+        "description": "Checks whether upstream gate improvement appears without stronger forcing.",
+        "weight": 0.8,
+        "score": 17.920720804138316,
+        "score_breakdown": {
+          "final_loss_component": 10.992317465902644,
+          "robust_target_loss": 1.86840070857329,
+          "robust_target_component": 0.560520212571987,
+          "endpoint_component": 0.24405151549821924,
+          "glycolysis_energy_component": 3.235746193080639,
+          "glycolysis_component": 1.4478157098911975,
+          "extracellular_component": 0.6832909067109787,
+          "nucleotide_purine_component": 0.7569788004826502,
+          "discard_component": 0.0,
+          "total_score": 17.920720804138316
+        },
+        "optimization_strategy": "joint_vmax_km",
+        "parameter_classes": null,
+        "target_scope": "core_glycolysis_energy",
+        "param_scope": "core_upstream_glycolysis_probe",
+        "seed": 29,
+        "t_max": 14.0,
+        "baseline_loss": 12.409700919455037,
+        "final_loss": 10.992317465902644,
+        "improvement_pct": 11.42157625515633,
+        "monitor_metrics": {
+          "target": 10.992317465902644,
+          "endpoint_nrmse": 1.2202575774910962,
+          "joint": 10.992317465902644,
+          "glycolysis_energy": 10.785820643602129,
+          "nucleotide_purine": 15.139576009653004,
+          "amino_redox_side": 7.192376443749745,
+          "extracellular": 6.832909067109787,
+          "glycolysis": 7.239078549455987
+        },
+        "elapsed_seconds": 288.41,
+        "case_completion_status": "completed",
+        "case_budget_seconds": 600.0,
+        "case_time_budget_exceeded": false,
+        "artifacts": {
+          "calibration_report": {
+            "type": "calibration_report",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_short_low_forcing\\calibration_report.json",
+            "exists": true,
+            "size_bytes": 21686
+          },
+          "best_params_json": {
+            "type": "best_params_json",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_short_low_forcing\\best_params.json",
+            "exists": true,
+            "size_bytes": 3716
+          },
+          "best_params_py": {
+            "type": "best_params_python",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_short_low_forcing\\best_params.py",
+            "exists": true,
+            "size_bytes": 3226
+          },
+          "results_tsv": {
+            "type": "case_results_tsv",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_short_low_forcing\\results.tsv",
+            "exists": true,
+            "size_bytes": 1231
+          }
+        }
+      },
+      {
+        "name": "core_mid_horizon_soft_atp_guard",
+        "description": "Secondary diagnostic with a softer ATP guard to test whether the upstream gate probe destabilizes adenylates.",
+        "weight": 0.7,
+        "score": 19.1003659370182,
+        "score_breakdown": {
+          "final_loss_component": 12.67769727532419,
+          "robust_target_loss": 1.616630568847058,
+          "robust_target_component": 0.48498917065411734,
+          "endpoint_component": 0.11995461869862958,
+          "glycolysis_energy_component": 2.9511628043974096,
+          "glycolysis_component": 1.6201972156569973,
+          "extracellular_component": 0.7496171501025379,
+          "nucleotide_purine_component": 0.49674770218432035,
+          "discard_component": 0.0,
+          "total_score": 19.1003659370182
+        },
+        "optimization_strategy": "joint_vmax_km",
+        "parameter_classes": null,
+        "target_scope": "core_glycolysis_energy",
+        "param_scope": "core_upstream_glycolysis_probe",
+        "seed": 29,
+        "t_max": 28.0,
+        "baseline_loss": 14.14563810247068,
+        "final_loss": 12.67769727532419,
+        "improvement_pct": 10.377339053302226,
+        "monitor_metrics": {
+          "target": 12.67769727532419,
+          "endpoint_nrmse": 0.5997730934931479,
+          "joint": 12.67769727532419,
+          "glycolysis_energy": 9.837209347991365,
+          "nucleotide_purine": 9.934954043686407,
+          "amino_redox_side": 8.020339809901385,
+          "extracellular": 7.496171501025379,
+          "glycolysis": 8.100986078284986
+        },
+        "elapsed_seconds": 341.07,
+        "case_completion_status": "completed",
+        "case_budget_seconds": 600.0,
+        "case_time_budget_exceeded": false,
+        "artifacts": {
+          "calibration_report": {
+            "type": "calibration_report",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon_soft_atp_guard\\calibration_report.json",
+            "exists": true,
+            "size_bytes": 21682
+          },
+          "best_params_json": {
+            "type": "best_params_json",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon_soft_atp_guard\\best_params.json",
+            "exists": true,
+            "size_bytes": 3720
+          },
+          "best_params_py": {
+            "type": "best_params_python",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon_soft_atp_guard\\best_params.py",
+            "exists": true,
+            "size_bytes": 3226
+          },
+          "results_tsv": {
+            "type": "case_results_tsv",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_mid_horizon_soft_atp_guard\\results.tsv",
+            "exists": true,
+            "size_bytes": 1225
+          }
+        }
+      },
+      {
+        "name": "core_alt_seed",
+        "description": "Basic stochastic robustness check for the upstream HK/PFK gate probe.",
+        "weight": 0.5,
+        "score": 16.47263078371548,
+        "score_breakdown": {
+          "final_loss_component": 10.105866997429407,
+          "robust_target_loss": 1.5966228879615598,
+          "robust_target_component": 0.47898686638846794,
+          "endpoint_component": 0.11643543797850714,
+          "glycolysis_energy_component": 2.9180377450245216,
+          "glycolysis_component": 1.6089221687772586,
+          "extracellular_component": 0.7482540984798919,
+          "nucleotide_purine_component": 0.4961274696374261,
+          "discard_component": 0.0,
+          "total_score": 16.47263078371548
+        },
+        "optimization_strategy": "joint_vmax_km",
+        "parameter_classes": null,
+        "target_scope": "core_glycolysis_energy",
+        "param_scope": "core_upstream_glycolysis_probe",
+        "seed": 42,
+        "t_max": 28.0,
+        "baseline_loss": 11.904279691444465,
+        "final_loss": 10.105866997429407,
+        "improvement_pct": 15.107278563923243,
+        "monitor_metrics": {
+          "target": 10.105866997429407,
+          "endpoint_nrmse": 0.5821771898925356,
+          "joint": 10.105866997429407,
+          "glycolysis_energy": 9.726792483415073,
+          "nucleotide_purine": 9.922549392748522,
+          "amino_redox_side": 8.008066251158954,
+          "extracellular": 7.482540984798918,
+          "glycolysis": 8.044610843886293
+        },
+        "elapsed_seconds": 312.9,
+        "case_completion_status": "completed",
+        "case_budget_seconds": 600.0,
+        "case_time_budget_exceeded": false,
+        "artifacts": {
+          "calibration_report": {
+            "type": "calibration_report",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_alt_seed\\calibration_report.json",
+            "exists": true,
+            "size_bytes": 21691
+          },
+          "best_params_json": {
+            "type": "best_params_json",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_alt_seed\\best_params.json",
+            "exists": true,
+            "size_bytes": 3720
+          },
+          "best_params_py": {
+            "type": "best_params_python",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_alt_seed\\best_params.py",
+            "exists": true,
+            "size_bytes": 3226
+          },
+          "results_tsv": {
+            "type": "case_results_tsv",
+            "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\core_alt_seed\\results.tsv",
+            "exists": true,
+            "size_bytes": 1216
+          }
+        }
+      }
+    ]
+  },
+  "artifacts": {
+    "eval_summary": {
+      "type": "eval_summary",
+      "path": "Simulations\\brodbar\\autoresearch\\20260311_234048_core_upstream_probe\\eval_summary.json",
+      "exists": true,
+      "size_bytes": 13648
+    }
+  }
+}

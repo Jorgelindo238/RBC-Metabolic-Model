@@ -1,0 +1,18 @@
+{
+  "job_name": "bounded_search_1773549208",
+  "hypothesis": "Test autosearch bounded mutation (LangGraph)",
+  "policy_path": "config\\generated\\policy_candidate_1773549208.json",
+  "manifest_path": "config\\generated\\manifest_candidate_1773549208.json",
+  "job_version": 1,
+  "tags": [
+    "autosearch",
+    "bounded_search"
+  ],
+  "metadata": {
+    "orchestrator": "bounded_autosearch_v1",
+    "candidate_id": "1773549208",
+    "base_policy_path": "config\\policy_vmax_only.json",
+    "base_manifest_path": "config\\rbc_core_km_only_benchmarks.json",
+    "mutation_summary": "Mutated adenylate_target from 0.65 to 0.7"
+  }
+}

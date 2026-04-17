@@ -1,0 +1,84 @@
+{
+  "contract_type": "manual_mixed_vmaxkm_then_hybrid_stage_plan",
+  "contract_version": 1,
+  "status": "manual_run_ready",
+  "seed_params_path": "Simulations/brodbar/calibration/hybrid_flux_glucose_lactate_longrun/best_params.json",
+  "active_hypothesis": "Pre-anchor glucose and lactate transport with classical vmax/km calibration, then let neutral hybrid glucose-lactate kinetics open a nearby basin on the same true-ODE objective.",
+  "target_scope": "glycolysis_extracellular",
+  "optimization_strategy": "legacy",
+  "protect": [
+    "ATP",
+    "ADP",
+    "EGLC",
+    "ELAC",
+    "PYR",
+    "PEP",
+    "LAC"
+  ],
+  "stage_plan": [
+    {
+      "name": "phase1_vmax_km_glucose_lactate_anchor",
+      "phases": [
+        1
+      ],
+      "target_scope": "glycolysis_extracellular",
+      "param_scope": "glycolysis_extracellular",
+      "parameter_classes": [
+        "vmax",
+        "km"
+      ],
+      "include_params": [
+        "vmax_VEGLC",
+        "km_EGLC",
+        "km_GLC_transport",
+        "vmax_VELAC",
+        "vmax_VLDH",
+        "vmax_VPK",
+        "km_PYR",
+        "km_PEP",
+        "km_LAC"
+      ],
+      "n_trials": 8,
+      "global_trials": 0,
+      "seed": 29,
+      "atp_focus": true,
+      "atp_floor": 0.25,
+      "adp_floor": 0.10,
+      "amp_floor": 0.05,
+      "imp_floor": 0.02,
+      "adenylate_target": 0.90,
+      "atp_penalty_weight": 10.0,
+      "amp_penalty_weight": 6.0,
+      "imp_penalty_weight": 5.0,
+      "pool_penalty_weight": 14.0,
+      "curve_fit_strength": 0.1,
+      "t_max": 42.0
+    },
+    {
+      "name": "phase1_hybrid_glucose_lactate_opening",
+      "phases": [
+        1
+      ],
+      "target_scope": "glycolysis_extracellular",
+      "param_scope": "hybrid_glucose_lactate",
+      "parameter_classes": [
+        "hybrid"
+      ],
+      "n_trials": 8,
+      "global_trials": 0,
+      "seed": 29,
+      "atp_focus": true,
+      "atp_floor": 0.25,
+      "adp_floor": 0.10,
+      "amp_floor": 0.05,
+      "imp_floor": 0.02,
+      "adenylate_target": 0.90,
+      "atp_penalty_weight": 10.0,
+      "amp_penalty_weight": 6.0,
+      "imp_penalty_weight": 5.0,
+      "pool_penalty_weight": 14.0,
+      "curve_fit_strength": 0.1,
+      "t_max": 42.0
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "contract_type": "hermes_calibration_stage_plan",
+  "contract_version": 1,
+  "status": "ready_for_manual_run",
+  "generated_at": "2026-03-28T19:21:55.478826+00:00",
+  "generated_by": "live_flux_learning_smoke",
+  "seed_params_path": "Simulations\\brodbar\\calibration\\hybrid_downstream_pk_eno_longrun\\best_params.json",
+  "active_hypothesis": "Teacher-student hybrid proposal from flux learning",
+  "target_scope": "glycolysis_extracellular",
+  "optimization_strategy": "hybrid_only",
+  "protect": [
+    "ATP",
+    "ADP",
+    "EGLC",
+    "ELAC",
+    "PYR",
+    "PEP",
+    "LAC"
+  ],
+  "subsystem_proposals": [],
+  "stage_plan": [
+    {
+      "name": "teacher_student_hybrid_followup",
+      "phases": [
+        1
+      ],
+      "param_scope": "hybrid_glucose_lactate_plus_downstream",
+      "target_scope": "glycolysis_extracellular",
+      "include_params": [
+        "hybrid_blend_VENOPGM",
+        "hybrid_substrate_hill_VENOPGM",
+        "hybrid_backpressure_hill_VENOPGM",
+        "hybrid_backpressure_scale_VENOPGM",
+        "hybrid_blend_VPK",
+        "hybrid_pep_hill_VPK",
+        "hybrid_adp_hill_VPK",
+        "hybrid_atp_backpressure_scale_VPK",
+        "hybrid_pyr_backpressure_scale_VPK",
+        "hybrid_blend_VLDH",
+        "hybrid_forward_hill_VLDH",
+        "hybrid_reverse_hill_VLDH",
+        "hybrid_reverse_scale_VLDH",
+        "hybrid_blend_VELAC",
+        "hybrid_forward_hill_VELAC",
+        "hybrid_reverse_hill_VELAC",
+        "hybrid_km_ELAC"
+      ],
+      "n_trials": 8,
+      "global_trials": 0,
+      "seed": 29,
+      "curve_fit_strength": 0.1,
+      "t_max": 42.0
+    }
+  ],
+  "manual_run_hint": {
+    "command_preview": "python src\\MM_calibration.py --load-params \"Simulations\\brodbar\\calibration\\hybrid_downstream_pk_eno_longrun\\best_params.json\" --stage-plan-file \"config\\generated\\hermes_calibration\\teacher_student_flux_learning_live_homogeneous.json\" --target-scope glycolysis_extracellular --optimization-strategy hybrid_only --seed 29 --t-max 42.0 --curve-fit-strength 0.1",
+    "note": "Phase A stops before execution. Review the written stage plan, then run the command manually."
+  }
+}

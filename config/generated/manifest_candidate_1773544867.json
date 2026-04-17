@@ -1,0 +1,89 @@
+{
+  "manifest_name": "rbc_core_km_only_identifiability_v1",
+  "notes": "Focused benchmark manifest for the core glycolysis-energy Km campaign. Prioritizes identifiability of core glycolysis and adenylate behavior while keeping ATP guarding explicit but secondary.",
+  "results_tsv": "Simulations/brodbar/autoresearch/results_core_km_only_identifiability_v1.tsv",
+  "scoring": {
+    "final_loss_weight": 1.0,
+    "robust_target_weight": 0.3,
+    "endpoint_weight": 0.2,
+    "monitor_weights": {
+      "glycolysis_energy": 0.3,
+      "glycolysis": 0.2,
+      "extracellular": 0.1,
+      "nucleotide_purine": 0.05
+    },
+    "discard_penalty": 0.2,
+    "robust_nrmse_cap": 8.0,
+    "robust_top_k": 10,
+    "scale_weight_rules": [
+      {
+        "max_exp_mean_abs": 0.02,
+        "weight": 0.35
+      },
+      {
+        "max_exp_mean_abs": 0.1,
+        "weight": 0.6
+      },
+      {
+        "max_exp_mean_abs": 0.5,
+        "weight": 0.85
+      },
+      {
+        "max_exp_mean_abs": 2.0,
+        "weight": 1.0
+      },
+      {
+        "weight": 1.1
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "core_mid_horizon",
+      "description": "Primary identifiability case for the focused Km campaign.",
+      "weight": 1.0,
+      "run_overrides": {
+        "t_max": 28.0,
+        "curve_fit_strength": 0.15,
+        "atp_focus": false,
+        "seed": 29
+      }
+    },
+    {
+      "name": "core_short_low_forcing",
+      "description": "Checks whether early-shape improvement appears without relying on stronger forcing.",
+      "weight": 0.8,
+      "run_overrides": {
+        "t_max": 14.0,
+        "curve_fit_strength": 0.05,
+        "atp_focus": false,
+        "seed": 29
+      }
+    },
+    {
+      "name": "core_mid_horizon_soft_atp_guard",
+      "description": "Secondary diagnostic with a softer ATP guard to ensure the focused Km fit does not immediately collapse adenylates.",
+      "weight": 0.7,
+      "run_overrides": {
+        "t_max": 28.0,
+        "curve_fit_strength": 0.15,
+        "atp_focus": true,
+        "adenylate_target": 0.55,
+        "atp_penalty_weight": 4.0,
+        "pool_penalty_weight": 6.0,
+        "seed": 29
+      }
+    },
+    {
+      "name": "core_alt_seed",
+      "description": "Basic stochastic robustness check for the focused core objective.",
+      "weight": 0.5,
+      "run_overrides": {
+        "t_max": 28.0,
+        "curve_fit_strength": 0.15,
+        "atp_focus": false,
+        "seed": 42
+      }
+    }
+  ]
+}

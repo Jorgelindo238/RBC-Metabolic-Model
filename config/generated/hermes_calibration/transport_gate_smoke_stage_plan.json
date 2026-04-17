@@ -1,0 +1,21 @@
+{
+  "stage_plan": [
+    {
+      "name": "transport_gate_smoke_stage",
+      "param_scope": "hybrid_glucose_lactate",
+      "target_scope": "glycolysis_extracellular",
+      "curve_fit_strength": 0.1,
+      "seed": 29,
+      "include_params": [
+        "hybrid_blend_VEGLC",
+        "hybrid_import_hill_VEGLC",
+        "hybrid_export_hill_VEGLC",
+        "hybrid_reverse_scale_VEGLC",
+        "transport_gate_km_VEGLC",
+        "transport_gate_hill_VEGLC"
+      ],
+      "n_trials": 1,
+      "global_trials": 0
+    }
+  ]
+}

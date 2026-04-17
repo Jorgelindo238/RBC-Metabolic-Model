@@ -1,0 +1,110 @@
+{
+  "contract_type": "hermes_calibration_stage_plan",
+  "contract_version": 1,
+  "status": "ready_for_manual_run",
+  "generated_at": "2026-03-27T02:40:00+00:00",
+  "generated_by": "live_forced_lower_glyco_purine_coalition",
+  "seed_params_path": "Simulations\\brodbar\\calibration\\hybrid_long_horizon_phase2_only\\best_params.json",
+  "active_hypothesis": "A bounded lower_glycolysis + purine_salvage coalition may open a basin that the single seams do not open alone.",
+  "target_scope": "core_glycolysis_energy",
+  "optimization_strategy": "vmax_then_km",
+  "protect": [
+    "ATP",
+    "ADP",
+    "EGLC",
+    "ELAC",
+    "LAC"
+  ],
+  "subsystem_proposals": [
+    {
+      "agent": "lower_glycolysis",
+      "phase": 1,
+      "target_scope": "glycolysis_extracellular",
+      "optimization_strategy": "vmax_only",
+      "allowed_parameters": [
+        "vmax_VPGM",
+        "vmax_VENOPGM",
+        "vmax_VDPGM",
+        "vmax_V23DPGP",
+        "vmax_VPK"
+      ]
+    },
+    {
+      "agent": "purine_salvage",
+      "phase": 2,
+      "target_scope": "core_glycolysis_energy",
+      "optimization_strategy": "vmax_only",
+      "allowed_parameters": [
+        "vmax_VAMPD1",
+        "vmax_VIMPH",
+        "vmax_VNDPK",
+        "vmax_VNDPK_rev"
+      ]
+    }
+  ],
+  "stage_plan": [
+    {
+      "name": "phase1_lower_glycolysis",
+      "phases": [
+        1
+      ],
+      "param_scope": "glycolysis_extracellular",
+      "target_scope": "glycolysis_extracellular",
+      "include_params": [
+        "vmax_VPGM",
+        "vmax_VENOPGM",
+        "vmax_VDPGM",
+        "vmax_V23DPGP",
+        "vmax_VPK"
+      ],
+      "n_trials": 6,
+      "global_trials": 0,
+      "seed": 29,
+      "atp_focus": true,
+      "atp_floor": 0.25,
+      "adp_floor": 0.1,
+      "amp_floor": 0.05,
+      "imp_floor": 0.02,
+      "adenylate_target": 0.9,
+      "atp_penalty_weight": 10.0,
+      "amp_penalty_weight": 6.0,
+      "imp_penalty_weight": 5.0,
+      "pool_penalty_weight": 14.0,
+      "curve_fit_strength": 0.1,
+      "t_max": 42.0
+    },
+    {
+      "name": "phase2_purine_salvage",
+      "phases": [
+        2
+      ],
+      "param_scope": "all",
+      "target_scope": "core_glycolysis_energy",
+      "include_params": [
+        "vmax_VAMPD1",
+        "vmax_VIMPH",
+        "vmax_VNDPK",
+        "vmax_VNDPK_rev"
+      ],
+      "n_trials": 6,
+      "global_trials": 0,
+      "seed": 29,
+      "atp_focus": true,
+      "atp_floor": 0.25,
+      "adp_floor": 0.1,
+      "amp_floor": 0.05,
+      "imp_floor": 0.02,
+      "adenylate_target": 0.9,
+      "atp_penalty_weight": 10.0,
+      "amp_penalty_weight": 6.0,
+      "imp_penalty_weight": 5.0,
+      "pool_penalty_weight": 14.0,
+      "curve_fit_strength": 0.1,
+      "t_max": 42.0
+    }
+  ],
+  "manual_run_hint": {
+    "command_preview": "python src\\MM_calibration.py --load-params \"Simulations\\brodbar\\calibration\\hybrid_long_horizon_phase2_only\\best_params.json\" --stage-plan-file \"config\\generated\\hermes_calibration\\live_forced_lower_glyco_purine_coalition.json\" --target-scope core_glycolysis_energy --optimization-strategy vmax_then_km",
+    "note": "Forced coalition experiment to test whether lower_glycolysis and purine_salvage together open a new basin."
+  }
+}

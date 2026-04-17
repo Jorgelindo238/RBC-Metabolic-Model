@@ -1,0 +1,43 @@
+{
+  "contract_type": "hermes_calibration_stage_plan",
+  "contract_version": 1,
+  "hypothesis": "Promoted hybrid teacher seed with EGLC-only reopening on the VEGLC seam under glucose-focused teacher guidance.",
+  "generated_by": "codex_manual_probe",
+  "protect": [
+    "EGLC",
+    "ELAC",
+    "LAC",
+    "ATP",
+    "ADP"
+  ],
+  "stage_plan": [
+    {
+      "name": "promoted_seed_eglc_focus",
+      "phases": [
+        1
+      ],
+      "param_scope": "hybrid_glucose_lactate",
+      "target_scope": "glycolysis_extracellular",
+      "include_params": [
+        "vmax_VEGLC",
+        "km_GLC_transport",
+        "km_EGLC",
+        "hybrid_blend_VEGLC",
+        "hybrid_import_hill_VEGLC",
+        "hybrid_export_hill_VEGLC",
+        "hybrid_reverse_scale_VEGLC"
+      ],
+      "n_trials": 8,
+      "global_trials": 0,
+      "seed": 29,
+      "curve_fit_strength": 0.1,
+      "t_max": 42.0,
+      "teacher_dataset_path": "C:\\Users\\Jorgelindo\\Desktop\\Mario_RBC_up\\Simulations\\brodbar\\hermes\\teacher_student\\datasets\\teacher_curve_glucose_focus.json",
+      "teacher_student_weight": 0.35,
+      "teacher_focus_metabolites": [
+        "EGLC"
+      ],
+      "teacher_focus_weight": 4.0
+    }
+  ]
+}

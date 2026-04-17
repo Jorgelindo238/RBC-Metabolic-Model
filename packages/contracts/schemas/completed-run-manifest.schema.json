@@ -1,0 +1,383 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rbc-metabolic-model.local/packages/contracts/schemas/completed-run-manifest.schema.json",
+  "title": "Completed Run Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_type",
+    "contract_version",
+    "generated_at",
+    "job",
+    "run",
+    "inputs",
+    "outputs",
+    "artifacts"
+  ],
+  "properties": {
+    "contract_type": {
+      "const": "calibration_run_artifact_manifest"
+    },
+    "contract_version": {
+      "const": 1
+    },
+    "generated_at": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "job": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "job_name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "hypothesis": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "job_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "job_path": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "policy_path": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "manifest_path": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "baseline_run_dir": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "promotion_manifest_path": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "tags": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_dir",
+        "timestamp",
+        "policy_name",
+        "manifest_name",
+        "manifest_description",
+        "optimization_strategy",
+        "parameter_classes",
+        "stage_plan",
+        "status"
+      ],
+      "properties": {
+        "run_dir": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "timestamp": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "policy_name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "manifest_name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "manifest_description": {
+          "type": "string"
+        },
+        "optimization_strategy": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "parameter_classes": {
+          "$ref": "#/$defs/stringArrayOrNull"
+        },
+        "stage_plan": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/stagePlanItem"
+          }
+        },
+        "status": {
+          "$ref": "#/$defs/stringOrNull"
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_snapshot",
+        "manifest_snapshot"
+      ],
+      "properties": {
+        "policy_snapshot": {
+          "$ref": "#/$defs/artifactRef"
+        },
+        "manifest_snapshot": {
+          "$ref": "#/$defs/artifactRef"
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "case_count",
+        "cases"
+      ],
+      "properties": {
+        "summary": {
+          "type": "object",
+          "properties": {
+            "aggregate_score": {
+              "$ref": "#/$defs/numberOrNull"
+            },
+            "mean_final_loss": {
+              "$ref": "#/$defs/numberOrNull"
+            },
+            "mean_improvement_pct": {
+              "$ref": "#/$defs/numberOrNull"
+            },
+            "best_case": {
+              "$ref": "#/$defs/stringOrNull"
+            },
+            "worst_case": {
+              "$ref": "#/$defs/stringOrNull"
+            }
+          },
+          "additionalProperties": true
+        },
+        "case_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/caseRecord"
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eval_summary"
+      ],
+      "properties": {
+        "eval_summary": {
+          "$ref": "#/$defs/artifactRef"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stringOrNull": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "numberOrNull": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "integerOrNull": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "stringArray": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "stringArrayOrNull": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "numberMap": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/numberOrNull"
+      }
+    },
+    "artifactRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "path",
+        "exists"
+      ],
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "exists": {
+          "type": "boolean"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "stagePlanItem": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "phases": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "target_scope": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "param_scope": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "parameter_classes": {
+          "$ref": "#/$defs/stringArrayOrNull"
+        },
+        "include_params": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "n_trials": {
+          "$ref": "#/$defs/integerOrNull"
+        },
+        "global_trials": {
+          "$ref": "#/$defs/integerOrNull"
+        },
+        "atp_focus": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "caseRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "description",
+        "weight",
+        "score",
+        "score_breakdown",
+        "optimization_strategy",
+        "parameter_classes",
+        "target_scope",
+        "param_scope",
+        "seed",
+        "t_max",
+        "baseline_loss",
+        "final_loss",
+        "improvement_pct",
+        "monitor_metrics",
+        "artifacts"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "description": {
+          "type": "string"
+        },
+        "weight": {
+          "$ref": "#/$defs/numberOrNull"
+        },
+        "score": {
+          "$ref": "#/$defs/numberOrNull"
+        },
+        "score_breakdown": {
+          "$ref": "#/$defs/numberMap"
+        },
+        "optimization_strategy": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "parameter_classes": {
+          "$ref": "#/$defs/stringArrayOrNull"
+        },
+        "target_scope": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "param_scope": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "seed": {
+          "$ref": "#/$defs/integerOrNull"
+        },
+        "t_max": {
+          "$ref": "#/$defs/numberOrNull"
+        },
+        "baseline_loss": {
+          "$ref": "#/$defs/numberOrNull"
+        },
+        "final_loss": {
+          "$ref": "#/$defs/numberOrNull"
+        },
+        "improvement_pct": {
+          "$ref": "#/$defs/numberOrNull"
+        },
+        "monitor_metrics": {
+          "$ref": "#/$defs/numberMap"
+        },
+        "artifacts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "calibration_report",
+            "best_params_json",
+            "best_params_py",
+            "results_tsv"
+          ],
+          "properties": {
+            "calibration_report": {
+              "$ref": "#/$defs/artifactRef"
+            },
+            "best_params_json": {
+              "$ref": "#/$defs/artifactRef"
+            },
+            "best_params_py": {
+              "$ref": "#/$defs/artifactRef"
+            },
+            "results_tsv": {
+              "$ref": "#/$defs/artifactRef"
+            }
+          }
+        }
+      }
+    }
+  }
+}

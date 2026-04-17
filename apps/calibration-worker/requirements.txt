@@ -1,0 +1,14 @@
+fastapi>=0.115.0
+numpy>=1.24.0,<2.0.0
+scipy>=1.10.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+optuna>=3.0.0
+networkx>=3.1
+openpyxl>=3.1.0
+xlrd>=1.2.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.1
+python-multipart>=0.0.9
+PyYAML>=6.0

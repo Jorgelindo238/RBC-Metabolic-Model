@@ -1,0 +1,17 @@
+{
+  "name": "@rbc/contracts",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Machine-readable shared contracts that mirror the stable Python calibration boundaries.",
+  "exports": {
+    "./schemas/calibration-job": "./schemas/calibration-job.schema.json",
+    "./schemas/calibration-runs-row": "./schemas/calibration-runs-row.schema.json",
+    "./schemas/completed-run-manifest": "./schemas/completed-run-manifest.schema.json",
+    "./schemas/run-registry-record": "./schemas/run-registry-record.schema.json"
+  },
+  "files": [
+    "schemas",
+    "scripts",
+    "README.md"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "stage_plan": [
+    {
+      "name": "veglc_velac_coupled_from_local_veglc_seed",
+      "phases": [
+        1
+      ],
+      "param_scope": "all",
+      "target_scope": "glycolysis_extracellular",
+      "curve_fit_strength": 0.1,
+      "seed": 29,
+      "include_params": [
+        "vmax_VEGLC",
+        "km_EGLC",
+        "km_GLC_transport",
+        "hybrid_blend_VELAC",
+        "hybrid_efflux_hill_VELAC",
+        "hybrid_backpressure_hill_VELAC",
+        "hybrid_backpressure_scale_VELAC",
+        "hybrid_km_ELAC",
+        "hybrid_lac_retention_strength_VELAC",
+        "hybrid_lac_retention_hill_VELAC",
+        "hybrid_lac_retention_km_scale_VELAC"
+      ],
+      "n_trials": 8,
+      "global_trials": 0
+    }
+  ]
+}

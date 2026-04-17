@@ -1,0 +1,53 @@
+{
+  "stage_plan": [
+    {
+      "name": "veglc_velac_vldh_triplet_teacher_eglc_elac_atp",
+      "phases": [
+        1
+      ],
+      "param_scope": "all",
+      "target_scope": "glycolysis_extracellular",
+      "curve_fit_strength": 0.1,
+      "seed": 29,
+      "teacher_dataset_path": "Simulations/brodbar/hermes/teacher_student/datasets/teacher_curve_eglc_elac_atp_focus.json",
+      "teacher_student_weight": 0.35,
+      "teacher_focus_metabolites": [
+        "EGLC",
+        "ELAC",
+        "ATP"
+      ],
+      "teacher_focus_weight": 4.0,
+      "reject_eglc_final_increase_frac": 0.10,
+      "reject_elac_final_drop_frac": 0.10,
+      "include_params": [
+        "vmax_VEGLC",
+        "km_EGLC",
+        "km_GLC_transport",
+        "hybrid_blend_VEGLC",
+        "hybrid_import_hill_VEGLC",
+        "hybrid_export_hill_VEGLC",
+        "hybrid_reverse_scale_VEGLC",
+        "vmax_VELAC",
+        "km_LAC",
+        "hybrid_blend_VELAC",
+        "hybrid_efflux_hill_VELAC",
+        "hybrid_backpressure_hill_VELAC",
+        "hybrid_backpressure_scale_VELAC",
+        "hybrid_km_ELAC",
+        "hybrid_lac_retention_strength_VELAC",
+        "hybrid_lac_retention_hill_VELAC",
+        "hybrid_lac_retention_km_scale_VELAC",
+        "vmax_VLDH",
+        "km_PYR",
+        "km_NAD_NADH",
+        "km_NADH_NAD",
+        "hybrid_blend_VLDH",
+        "hybrid_forward_hill_VLDH",
+        "hybrid_reverse_hill_VLDH",
+        "hybrid_reverse_scale_VLDH"
+      ],
+      "n_trials": 8,
+      "global_trials": 0
+    }
+  ]
+}
