@@ -40,9 +40,20 @@ Déployer sur un hôte Python CPU durable:
 Variable attendue côté `web`:
 
 - `CALIBRATION_API_BASE_URL`
+- `CALIBRATION_API_SHARED_SECRET`
+
+Variable attendue côté `calibration-worker`:
+
+- `CALIBRATION_WORKER_SHARED_SECRET`
 
 Exemple:
 
 ```env
 CALIBRATION_API_BASE_URL=https://calibration-api.airbc.org
+CALIBRATION_API_SHARED_SECRET=replace_with_a_long_random_secret
+CALIBRATION_WORKER_SHARED_SECRET=replace_with_the_same_long_random_secret
 ```
+
+Le proxy Next du `web` injecte automatiquement le header privé
+`x-airbc-worker-secret` vers le worker. Les routes `/calibration/*` refusent
+les appels directs sans ce secret partagé.

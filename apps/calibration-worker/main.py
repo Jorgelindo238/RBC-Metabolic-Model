@@ -8,6 +8,8 @@ also exposing lightweight job endpoints for a future async UI migration.
 from __future__ import annotations
 
 import json
+import os
+import secrets
 import sqlite3
 import sys
 import traceback
@@ -17,8 +19,9 @@ from threading import Lock, Thread
 from typing import Any
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 _THIS_DIR = Path(__file__).resolve().parent
@@ -52,6 +55,7 @@ app.add_middleware(
 _RUNTIME_DIR = _THIS_DIR / "runtime"
 _JOBS_DB = _RUNTIME_DIR / "calibration_jobs.sqlite3"
 _LOCK = Lock()
+_AUTH_HEADER = "x-airbc-worker-secret"
 
 
 class CalibrationJobCreateResponse(BaseModel):
@@ -68,6 +72,10 @@ class CalibrationJobRecord(BaseModel):
     request: dict[str, Any]
     result: dict[str, Any] | None = None
     error: str | None = None
+
+
+def _get_expected_shared_secret() -> str:
+    return os.getenv("CALIBRATION_WORKER_SHARED_SECRET", "").strip()
 
 
 def _now_iso() -> str:
@@ -161,6 +169,33 @@ def _run_job(job_id: str, request_payload: dict[str, Any]) -> None:
     except Exception as exc:  # pragma: no cover - safety net for worker mode
         traceback.print_exc()
         _upsert_job(job_id, "failed", request_payload, result=None, error=str(exc))
+
+
+@app.middleware("http")
+async def require_calibration_worker_auth(request: Request, call_next):
+    if not request.url.path.startswith("/calibration"):
+        return await call_next(request)
+
+    expected_secret = _get_expected_shared_secret()
+    if not expected_secret:
+        return JSONResponse(
+            {
+                "detail": (
+                    "Calibration worker auth is not configured. "
+                    "Set CALIBRATION_WORKER_SHARED_SECRET on the worker host."
+                )
+            },
+            status_code=503,
+        )
+
+    provided_secret = request.headers.get(_AUTH_HEADER, "").strip()
+    if not provided_secret or not secrets.compare_digest(provided_secret, expected_secret):
+        return JSONResponse(
+            {"detail": "Unauthorized calibration worker request."},
+            status_code=401,
+        )
+
+    return await call_next(request)
 
 
 @app.get("/")
