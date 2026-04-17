@@ -43,6 +43,26 @@ class CalibrationRequest(BaseModel):
     active_dataset_label: Optional[str] = Field(
         None, description="Active research dataset label"
     )
+    rerun_pure_ode: bool = Field(
+        False,
+        description="Whether to replay the calibrated candidate through the pure ODE and score combined triage.",
+    )
+    orchestration_mode: Optional[str] = Field(
+        "single_run",
+        description="single_run or strategy_race; worker uses this to select the execution path.",
+    )
+    enable_strategy_memory: bool = Field(
+        True,
+        description="Whether orchestration can reuse prior winning strategies for similar datasets.",
+    )
+    enable_teacher_flux_rescue: bool = Field(
+        False,
+        description="Whether orchestration may launch a generic teacher-flux rescue pass for supported reactions.",
+    )
+    strategy_race_budget: Optional[int] = Field(
+        None,
+        description="Optional cap on how many strategy candidates the worker should race for this dataset.",
+    )
 
 
 @router.post("/run")

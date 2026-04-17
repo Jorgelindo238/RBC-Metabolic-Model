@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import os
 import sys
+from types import SimpleNamespace
 from pathlib import Path
 
 import pytest
@@ -127,13 +128,18 @@ class TestAdapterRobocopWiring:
         assert triage["overall"] == "keep"
         assert triage["next_best_experiment"]
 
-    def test_pure_ode_triage_placeholder_is_structured(self):
-        pure_ode_triage = _build_pure_ode_triage_safely()
+    def test_pure_ode_triage_returns_structured_skip_when_disabled(self):
+        pure_ode_triage, artifacts = _build_pure_ode_triage_safely(
+            request=SimpleNamespace(rerun_pure_ode=False),
+            params={"vmax_VHK": 1.0},
+            output_dir=ROOT / "tmp_disabled_pure_ode",
+        )
 
         assert pure_ode_triage is not None
         assert pure_ode_triage["overall"] == "needs_review"
         assert pure_ode_triage["skipped"] is True
-        assert "main.py" in pure_ode_triage["reason"]
+        assert "disabled" in pure_ode_triage["reason"].lower()
+        assert artifacts is None
 
     def test_combined_triage_is_deferred_until_real_pure_ode_exists(self):
         calibration_triage = {
@@ -142,7 +148,11 @@ class TestAdapterRobocopWiring:
             "discard_triggers": [],
             "caveats": [],
         }
-        pure_ode_triage = _build_pure_ode_triage_safely()
+        pure_ode_triage, _artifacts = _build_pure_ode_triage_safely(
+            request=SimpleNamespace(rerun_pure_ode=False),
+            params={"vmax_VHK": 1.0},
+            output_dir=ROOT / "tmp_disabled_combined",
+        )
 
         combined = _build_combined_triage_safely(calibration_triage, pure_ode_triage)
 
@@ -168,3 +178,35 @@ class TestAdapterRobocopWiring:
 
         assert combined is not None
         assert combined["overall"] == "keep"
+
+    def test_pure_ode_triage_uses_real_rerun_artifacts_when_available(self, monkeypatch, tmp_path):
+        class _Verdict:
+            def to_dict(self):
+                return {"overall": "healthy", "reason": "Pure ODE stayed healthy.", "skipped": False}
+
+        def _fake_rerun(**_kwargs):
+            csv_path = tmp_path / "metabolites" / "all_metabolites.csv"
+            csv_path.parent.mkdir(parents=True, exist_ok=True)
+            csv_path.write_text("Time,ATP\n1,1.2\n2,1.1\n", encoding="utf-8")
+            return {
+                "success": True,
+                "artifacts": {
+                    "all_metabolites_csv": str(csv_path),
+                    "reaction_fluxes_csv": None,
+                },
+            }
+
+        monkeypatch.setattr("services.mm_calibration_adapter.run_pure_ode_rerun", _fake_rerun)
+        monkeypatch.setattr("services.mm_calibration_adapter.triage_pure_ode_csv", lambda _path: _Verdict())
+
+        pure_ode_triage, artifacts = _build_pure_ode_triage_safely(
+            request=SimpleNamespace(rerun_pure_ode=True),
+            params={"vmax_VHK": 1.0},
+            output_dir=tmp_path / "pure_ode",
+        )
+
+        assert pure_ode_triage is not None
+        assert pure_ode_triage["overall"] == "healthy"
+        assert pure_ode_triage["skipped"] is False
+        assert artifacts is not None
+        assert artifacts["all_metabolites_csv"]

@@ -15,6 +15,7 @@ import numpy as np
 from fastapi import HTTPException
 
 import MM_calibration as mm
+from services.pure_ode_runtime import run_pure_ode_rerun
 
 def _load_robocop_modules():
     """Load the top-level ``services/robocop`` planner + triage modules.
@@ -75,6 +76,7 @@ try:
     skipped_triage = getattr(_triage_module, "skipped_triage")
     triage_calibration_report = getattr(_triage_module, "triage_calibration_report")
     skipped_pure_ode_triage = getattr(_pure_ode_triage_module, "skipped_pure_ode_triage")
+    triage_pure_ode_csv = getattr(_pure_ode_triage_module, "triage_pure_ode_csv")
     combine_triage_verdicts = getattr(_pure_ode_triage_module, "combine_triage_verdicts")
     _ROBOCOP_PLANNER_AVAILABLE = True
     _ROBOCOP_IMPORT_ERROR = ""
@@ -85,6 +87,7 @@ except Exception:  # pragma: no cover - defensive fallback
     skipped_triage = None  # type: ignore[assignment]
     triage_calibration_report = None  # type: ignore[assignment]
     skipped_pure_ode_triage = None  # type: ignore[assignment]
+    triage_pure_ode_csv = None  # type: ignore[assignment]
     combine_triage_verdicts = None  # type: ignore[assignment]
     _ROBOCOP_PLANNER_AVAILABLE = False
     _ROBOCOP_IMPORT_ERROR = traceback.format_exc()
@@ -494,19 +497,60 @@ def _triage_report_safely(
             return None
 
 
-def _build_pure_ode_triage_safely() -> Optional[Dict[str, Any]]:
-    """Emit a structured placeholder until the web path reruns ``main.py``."""
+def _build_pure_ode_triage_safely(
+    *,
+    request: Any,
+    params: Dict[str, float],
+    output_dir: Path,
+) -> tuple[Optional[Dict[str, Any]], Optional[Dict[str, str | None]]]:
+    """Run an isolated pure-ODE replay and score it via the RoBoCop triage."""
 
     if not _ROBOCOP_PLANNER_AVAILABLE:
-        return None
+        return None, None
     try:
-        return skipped_pure_ode_triage(
-            "Pure ODE triage is not available yet for web calibration runs. "
-            "Re-run main.py on the calibrated candidate to score all_metabolites.csv."
-        ).to_dict()
+        if not bool(getattr(request, "rerun_pure_ode", False)):
+            return (
+                skipped_pure_ode_triage(
+                    "Pure ODE rerun was disabled for this calibration request. "
+                    "Set rerun_pure_ode=true to score the calibrated candidate."
+                ).to_dict(),
+                None,
+            )
+
+        rerun_payload = run_pure_ode_rerun(
+            request=request,
+            custom_params=params,
+            output_dir=output_dir,
+        )
+        if not rerun_payload.get("success"):
+            return (
+                skipped_pure_ode_triage(
+                    "Pure ODE rerun failed for this calibration candidate: "
+                    + str(rerun_payload.get("error") or "unknown error")
+                ).to_dict(),
+                None,
+            )
+
+        artifacts = rerun_payload.get("artifacts") or {}
+        metabolites_csv = artifacts.get("all_metabolites_csv")
+        if not metabolites_csv:
+            return (
+                skipped_pure_ode_triage(
+                    "Pure ODE rerun completed, but all_metabolites.csv was not produced."
+                ).to_dict(),
+                _to_native(artifacts),
+            )
+        verdict = triage_pure_ode_csv(metabolites_csv).to_dict()
+        return verdict, _to_native(artifacts)
     except Exception:  # pragma: no cover - defensive fallback
-        _logger.exception("pure_ode_triage.skipped_pure_ode_triage failed")
-        return None
+        _logger.exception("pure_ode_triage replay failed")
+        try:
+            return (
+                skipped_pure_ode_triage("pure_ode_triage replay raised unexpectedly").to_dict(),
+                None,
+            )
+        except Exception:
+            return None, None
 
 
 def _build_combined_triage_safely(
@@ -526,7 +570,7 @@ def _build_combined_triage_safely(
         return None
 
 
-def run_web_calibration(request) -> dict:
+def _run_single_web_calibration(request) -> dict:
     user_selected_params = list(request.params_to_optimize.keys())
     selected_params = list(user_selected_params)
     allowed_params = set(mm.build_parameter_taxonomy()["classes"].get(mm.PARAM_CLASS_VMAX, [])) | set(
@@ -665,7 +709,11 @@ def run_web_calibration(request) -> dict:
             measured_metabolites=target_metabolites,
             user_selected_params=user_selected_params,
         )
-        pure_ode_triage_verdict = _build_pure_ode_triage_safely()
+        pure_ode_triage_verdict, pure_ode_artifacts = _build_pure_ode_triage_safely(
+            request=request,
+            params=current_params,
+            output_dir=out_dir / "pure_ode_rerun",
+        )
         combined_triage_verdict = _build_combined_triage_safely(
             triage_verdict,
             pure_ode_triage_verdict,
@@ -717,6 +765,7 @@ def run_web_calibration(request) -> dict:
                 "message": message,
                 "optimization_strategy": optimization_strategy,
                 "optimized_params": filtered_optimized,
+                "all_optimized_params": {str(name): float(value) for name, value in current_params.items()},
                 "initial_params": filtered_initial,
                 "objective_value": final_loss,
                 "iterations": int(request.max_iterations),
@@ -735,9 +784,25 @@ def run_web_calibration(request) -> dict:
                 "calibration_completed": True,
                 "calibration_failed": False,
                 "result_summary": result_summary,
+                "research_data_mode": research_data_mode,
+                "active_dataset_id": active_dataset_id,
+                "active_dataset_label": active_dataset_label,
                 "custom_data_plan": custom_data_plan_dict,
                 "triage": triage_verdict,
                 "pure_ode_triage": pure_ode_triage_verdict,
+                "pure_ode_artifacts": pure_ode_artifacts,
                 "combined_triage": combined_triage_verdict,
             }
         )
+
+
+def run_web_calibration(request, *, allow_orchestration: bool = True) -> dict:
+    orchestration_mode = str(getattr(request, "orchestration_mode", "single_run") or "single_run").strip().lower()
+    if allow_orchestration and orchestration_mode == "strategy_race":
+        from services.custom_calibration_orchestrator import run_strategy_race_calibration
+
+        return run_strategy_race_calibration(
+            request,
+            single_run_callable=_run_single_web_calibration,
+        )
+    return _run_single_web_calibration(request)

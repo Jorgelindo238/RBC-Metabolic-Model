@@ -31,6 +31,7 @@ interface CalibrationResult {
   success: boolean
   message: string
   optimized_params: Record<string, number>
+  all_optimized_params?: Record<string, number>
   initial_params: Record<string, number>
   objective_value: number
   iterations: number
@@ -46,6 +47,22 @@ interface CalibrationResult {
   calibration_completed?: boolean
   calibration_failed?: boolean
   result_summary?: string
+  custom_data_plan?: {
+    recommended_strategy?: string
+    target_scope?: string
+    notes?: string[]
+    rationale?: string[]
+    dangerous_compensators_present?: string[]
+    parameter_additions?: string[]
+  } | null
+  triage?: {
+    overall?: string
+    reason?: string
+    discard_triggers?: string[]
+    keep_signals?: string[]
+    caveats?: string[]
+    next_best_experiment?: string | null
+  } | null
   pure_ode_triage?: {
     overall?: string
     reason?: string
@@ -64,6 +81,44 @@ interface CalibrationResult {
     discard_triggers?: string[]
     caveats?: string[]
   } | null
+  orchestration?: {
+    mode?: string
+    winner_strategy?: string
+    winner_verdict?: string
+    strategies_considered?: string[]
+    memory_hits?: string[]
+    runs?: Array<{
+      strategy: string
+      verdict?: string
+      final_loss?: number
+      improvement_pct?: number
+      r_squared?: number
+      result_summary?: string
+    }>
+    teacher_flux_rescue?: {
+      status?: string
+      reason?: string
+      reactions?: string[]
+      distillation?: {
+        recommended_params_path?: string | null
+      } | null
+    } | null
+  } | null
+}
+
+interface CalibrationJobCreateResponse {
+  jobId: string
+  status: string
+  createdAt: string
+}
+
+interface CalibrationJobRecord {
+  jobId: string
+  status: string
+  createdAt: string
+  updatedAt: string
+  result: CalibrationResult | null
+  error?: string | null
 }
 
 function triageBadgeVariant(
@@ -246,6 +301,11 @@ export function ParameterCalibration() {
   const [error, setError] = useState<string | null>(null)
   const [showCanonical, setShowCanonical] = useState(false)
   const [targetMetabolites, setTargetMetabolites] = useState<string[]>([])
+  const [executionMode, setExecutionMode] = useState<'single_run' | 'strategy_race'>('strategy_race')
+  const [rerunPureOde, setRerunPureOde] = useState(true)
+  const [enableTeacherFluxRescue, setEnableTeacherFluxRescue] = useState(true)
+  const [jobId, setJobId] = useState<string | null>(null)
+  const [jobStatus, setJobStatus] = useState<string | null>(null)
 
   useEffect(() => {
     return () => {
@@ -405,6 +465,8 @@ export function ParameterCalibration() {
     setLoading(true)
     setError(null)
     setResult(null)
+    setJobId(null)
+    setJobStatus(null)
     try {
       let expData: Record<string, number[]> = {}
       let targetMets: string[] = []
@@ -436,7 +498,7 @@ export function ParameterCalibration() {
         paramsToOpt[p] = buildParamBounds(p)
       }
 
-      const res = await apiClient.post<CalibrationResult>('/calibration/run', {
+      const payload = {
         target_metabolites: targetMets,
         exp_time: timePoints,
         exp_data: expData,
@@ -447,11 +509,45 @@ export function ParameterCalibration() {
         research_data_mode: resolvedDatasetSummary.mode,
         active_dataset_id: resolvedDatasetSummary.datasetId,
         active_dataset_label: resolvedDatasetSummary.label,
-      })
-      setResult(res.data)
+        rerun_pure_ode: rerunPureOde,
+        orchestration_mode: executionMode,
+        enable_strategy_memory: executionMode === 'strategy_race',
+        enable_teacher_flux_rescue: executionMode === 'strategy_race' ? enableTeacherFluxRescue : false,
+      }
+
+      let resolvedResult: CalibrationResult
+      if (executionMode === 'strategy_race') {
+        const job = await apiClient.post<CalibrationJobCreateResponse>('/calibration/jobs', payload)
+        setJobId(job.data.jobId)
+        setJobStatus(job.data.status)
+
+        let attempts = 0
+        while (attempts < 240) {
+          const jobRecord = await apiClient.get<CalibrationJobRecord>(`/calibration/jobs/${job.data.jobId}`)
+          setJobStatus(jobRecord.data.status)
+          if (jobRecord.data.status === 'completed' && jobRecord.data.result) {
+            resolvedResult = jobRecord.data.result
+            break
+          }
+          if (jobRecord.data.status === 'failed') {
+            throw new Error(jobRecord.data.error || 'Calibration worker job failed')
+          }
+          attempts += 1
+          await new Promise((resolve) => window.setTimeout(resolve, 2500))
+        }
+
+        if (!resolvedResult!) {
+          throw new Error('Calibration worker job timed out before completion')
+        }
+      } else {
+        const res = await apiClient.post<CalibrationResult>('/calibration/run', payload)
+        resolvedResult = res.data
+      }
+
+      setResult(resolvedResult)
       activateCalibration(
         buildActiveResearchCalibration(
-          res.data,
+          resolvedResult,
           selected,
           optimizationStrategy,
           maxIter,
@@ -468,9 +564,12 @@ export function ParameterCalibration() {
   }, [
     activateCalibration,
     buildParamBounds,
+    enableTeacherFluxRescue,
+    executionMode,
     availableParams,
     optimizationStrategy,
     maxIter,
+    rerunPureOde,
     resolvedDataset,
     resolvedDatasetSummary,
     resolvedResearchDataMode,
@@ -733,10 +832,64 @@ export function ParameterCalibration() {
               className="h-9 w-20"
             />
           </div>
+          <div className="flex min-w-[220px] flex-col gap-1">
+            <Label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              Execution Mode
+            </Label>
+            <Select
+              value={executionMode}
+              onValueChange={(value) => setExecutionMode(value as 'single_run' | 'strategy_race')}
+            >
+              <SelectTrigger className="w-[220px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="single_run">Single run</SelectItem>
+                <SelectItem value="strategy_race">Worker strategy race</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              {executionMode === 'strategy_race'
+                ? 'Runs multiple strategies in the worker, reuses dataset memory, and can trigger teacher-flux rescue.'
+                : 'Runs one calibration immediately in the API path.'}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-background/40 px-3 py-2">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={rerunPureOde}
+                onChange={(event) => setRerunPureOde(event.target.checked)}
+              />
+              Run pure ODE replay
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={enableTeacherFluxRescue}
+                onChange={(event) => setEnableTeacherFluxRescue(event.target.checked)}
+                disabled={executionMode !== 'strategy_race'}
+              />
+              Enable teacher-flux rescue
+            </label>
+          </div>
+          <div className="flex flex-col gap-1">
             <Button onClick={run} disabled={loading || !selected.length} className="gap-2">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
-              {loading ? 'Calibrating...' : `Calibrate (${selected.length})`}
+              {loading
+                ? executionMode === 'strategy_race'
+                  ? 'Running worker campaign...'
+                  : 'Calibrating...'
+                : executionMode === 'strategy_race'
+                  ? `Launch worker race (${selected.length})`
+                  : `Calibrate (${selected.length})`}
             </Button>
+            {jobId ? (
+              <p className="text-[11px] text-muted-foreground">
+                Job {jobId.slice(0, 12)}... {jobStatus ?? 'queued'}
+              </p>
+            ) : null}
+          </div>
           </CardFooter>
       </Card>
 
@@ -765,6 +918,108 @@ export function ParameterCalibration() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
+            {result.orchestration ? (
+              <div className="rounded-2xl border border-border/60 bg-background/40 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="rounded-full">
+                    {result.orchestration.mode ?? 'strategy_race'}
+                  </Badge>
+                  {result.orchestration.winner_strategy ? (
+                    <Badge variant="default" className="rounded-full">
+                      Winner {result.orchestration.winner_strategy}
+                    </Badge>
+                  ) : null}
+                  {result.orchestration.winner_verdict ? (
+                    <Badge variant={triageBadgeVariant(result.orchestration.winner_verdict)} className="rounded-full">
+                      {result.orchestration.winner_verdict}
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Strategy race evaluated {result.orchestration.strategies_considered?.length ?? 0} candidates.
+                  {result.orchestration.memory_hits?.length
+                    ? ` Warm-started from ${result.orchestration.memory_hits.length} prior memory hit(s).`
+                    : ' No prior memory hits were available for this dataset fingerprint.'}
+                </p>
+                {result.orchestration.runs?.length ? (
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {result.orchestration.runs.map((run) => (
+                      <div key={run.strategy} className="rounded-xl border border-border/50 bg-background/60 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono text-xs">{run.strategy}</span>
+                          <Badge variant={triageBadgeVariant(run.verdict)} className="rounded-full">
+                            {run.verdict ?? 'pending'}
+                          </Badge>
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Loss {typeof run.final_loss === 'number' ? run.final_loss.toFixed(4) : 'n/a'} · R²{' '}
+                          {typeof run.r_squared === 'number' ? run.r_squared.toFixed(3) : 'n/a'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {result.orchestration.teacher_flux_rescue ? (
+                  <div className="mt-4 rounded-xl border border-border/50 bg-background/60 p-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge
+                        variant={result.orchestration.teacher_flux_rescue.status === 'completed' ? 'default' : 'outline'}
+                        className="rounded-full"
+                      >
+                        Teacher-flux {result.orchestration.teacher_flux_rescue.status ?? 'skipped'}
+                      </Badge>
+                      {result.orchestration.teacher_flux_rescue.reactions?.map((reaction) => (
+                        <Badge key={reaction} variant="outline" className="rounded-full">
+                          {reaction}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {result.orchestration.teacher_flux_rescue.reason ??
+                        'Teacher-flux rescue artifacts were prepared for the winner.'}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {result.custom_data_plan || result.triage ? (
+              <div className="rounded-2xl border border-border/60 bg-background/40 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  {result.custom_data_plan?.recommended_strategy ? (
+                    <Badge variant="outline" className="rounded-full">
+                      Planner {result.custom_data_plan.recommended_strategy}
+                    </Badge>
+                  ) : null}
+                  {result.triage?.overall ? (
+                    <Badge variant={triageBadgeVariant(result.triage.overall)} className="rounded-full">
+                      Curve triage {result.triage.overall}
+                    </Badge>
+                  ) : null}
+                </div>
+                {result.triage?.reason ? (
+                  <p className="mt-3 text-sm text-muted-foreground">{result.triage.reason}</p>
+                ) : null}
+                {result.custom_data_plan?.rationale?.length ? (
+                  <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
+                    {result.custom_data_plan.rationale.slice(0, 3).map((item) => (
+                      <li key={item}>- {item}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                {result.triage?.discard_triggers?.length ? (
+                  <div className="mt-3">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-destructive">Discard triggers</p>
+                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      {result.triage.discard_triggers.slice(0, 3).map((item) => (
+                        <li key={item}>- {item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
             {result.pure_ode_triage ? (
               <div className="rounded-2xl border border-border/60 bg-background/40 p-4">
                 <div className="flex flex-wrap items-center gap-2">
@@ -773,7 +1028,7 @@ export function ParameterCalibration() {
                   </Badge>
                   {result.pure_ode_triage.skipped ? (
                     <Badge variant="outline" className="rounded-full">
-                      main.py rerun required
+                      rerun unavailable
                     </Badge>
                   ) : null}
                   {result.combined_triage?.overall ? (

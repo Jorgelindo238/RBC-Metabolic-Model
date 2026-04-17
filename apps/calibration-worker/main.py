@@ -164,6 +164,7 @@ def _upsert_job(job_id: str, status: str, request_json: dict[str, Any], result: 
 
 def _run_job(job_id: str, request_payload: dict[str, Any]) -> None:
     try:
+        _upsert_job(job_id, "running", request_payload, result=None, error=None)
         result = run_web_calibration(CalibrationRequest(**request_payload))
         _upsert_job(job_id, "completed", request_payload, result=result, error=None)
     except Exception as exc:  # pragma: no cover - safety net for worker mode
