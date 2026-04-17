@@ -1,7 +1,7 @@
-# 🩸 ClawBlood — AI-Powered Blood Bag Conservation Platform
+# 🩸 airbc — AI-Powered Blood Bag Conservation Platform
 
 <p align="center">
-  <img src="apps/web/public/favicon.svg" alt="ClawBlood Logo" width="80" height="80" />
+  <img src="apps/web/public/favicon.svg" alt="airbc Logo" width="80" height="80" />
 </p>
 
 <p align="center">
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Jorgelindo238/clawblood"><img src="https://img.shields.io/badge/GitHub-clawblood-181717?logo=github" alt="GitHub" /></a>
+  <a href="https://github.com/Jorgelindo238/RBC-Metabolic-Model"><img src="https://img.shields.io/badge/GitHub-RBC--Metabolic--Model-181717?logo=github" alt="GitHub" /></a>
   <img src="https://img.shields.io/badge/Next.js-15-black?logo=nextdotjs" alt="Next.js 15" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19" />
   <img src="https://img.shields.io/badge/FastAPI-Python-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
@@ -21,19 +21,19 @@
 
 ---
 
-ClawBlood is a research platform for studying **red blood cell metabolism during storage**. It helps researchers and blood banking teams track glucose depletion, ATP decline, and metabolic drift throughout the storage period — and detect quality changes before they become critical.
+airbc is a research platform for studying **red blood cell metabolism during storage**. It helps researchers and blood banking teams track glucose depletion, ATP decline, and metabolic drift throughout the storage period — and detect quality changes before they become critical.
 
 Built on the **Bordbar et al. (2015)** whole-cell kinetic reconstruction of RBC metabolism.
 
 <p align="center">
-  <a href="https://app.clawblood.com/sign-up"><strong>Create free account</strong></a> · 
-  <a href="https://app.clawblood.com/sign-in">Sign in</a> · 
+  <a href="https://app.airbc.org/sign-up"><strong>Create free account</strong></a> ·
+  <a href="https://app.airbc.org/sign-in">Sign in</a> ·
   <a href="https://calendar.google.com/calendar/appointments">Schedule a demo</a>
 </p>
 
 ---
 
-## What ClawBlood Does
+## What airbc Does
 
 - **Simulate** dynamic RBC metabolic behavior over configurable storage horizons (up to 42 days)
 - **Monitor** glucose, ATP, lactate, 2,3-BPG, glutathione, and 113 total metabolites
@@ -49,9 +49,9 @@ Built on the **Bordbar et al. (2015)** whole-cell kinetic reconstruction of RBC 
 
 ```
 apps/
-├── web/            → Next.js 15 authenticated research platform (app.clawblood.com)
+├── web/            → Next.js 15 authenticated research platform (app.airbc.org)
 ├── api/            → FastAPI scientific backend (7 routers, ~200 reactions)
-└── marketing/      → Marketing homepage (clawblood.com)
+└── marketing/      → Marketing homepage (airbc.org)
 
 src/                → Mechanistic ODE model (equadiff_brodbar.py, 113 metabolites)
 streamlit_app/core/ → Python scientific modules (imported by FastAPI via sys.path)
@@ -64,7 +64,7 @@ services/robocop/   → RoBoCop runtime, tracing, and bounded mutation orchestra
 | **Backend** | FastAPI, Python, scipy | Scientific ODE simulation and analysis |
 | **Auth** | Supabase (Google OAuth + email/password) | User profiles, admin roles, workspaces |
 | **AI** | RoBoCop (LangGraph + LangChain) | Grounded research interpretation, chat, and monitoring support |
-| **Marketing** | Next.js 15 | Product homepage at clawblood.com |
+| **Marketing** | Next.js 15 | Product homepage at airbc.org |
 
 ---
 
@@ -175,5 +175,5 @@ See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full technical architecture gui
 ---
 
 <p align="center">
-  <strong>ClawBlood</strong> · Polytechnique Montreal · Jolicoeur Lab — 2026
+  <strong>airbc</strong> · Polytechnique Montreal · Jolicoeur Lab — 2026
 </p>
