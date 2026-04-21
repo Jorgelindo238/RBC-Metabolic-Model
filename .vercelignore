@@ -7,11 +7,8 @@
 .vscode
 AgentOps
 RBC
-apps/marketing
-apps/web
 hermes-agent
 output
-packages
 skills
 tasks
 tests
