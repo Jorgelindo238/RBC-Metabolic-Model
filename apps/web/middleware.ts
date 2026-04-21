@@ -1,6 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+  const isPublicCalibrationTaxonomy =
+    request.method === 'GET' && pathname === '/api/calibration/available-parameters'
+
+  if (isPublicCalibrationTaxonomy) {
+    return NextResponse.next({ request })
+  }
+
   const bypassAuth = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true'
   if (bypassAuth) {
     return NextResponse.next({ request })
@@ -34,13 +42,13 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user && !request.nextUrl.pathname.startsWith('/sign-in') && !request.nextUrl.pathname.startsWith('/sign-up') && !request.nextUrl.pathname.startsWith('/auth')) {
+  if (!user && !pathname.startsWith('/sign-in') && !pathname.startsWith('/sign-up') && !pathname.startsWith('/auth')) {
     const url = request.nextUrl.clone()
     url.pathname = '/sign-in'
     return NextResponse.redirect(url)
   }
 
-  if (user && (request.nextUrl.pathname.startsWith('/sign-in') || request.nextUrl.pathname.startsWith('/sign-up'))) {
+  if (user && (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     url.search = '?feature=home'
