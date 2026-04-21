@@ -3,7 +3,6 @@
 import { useEffect, useMemo } from 'react'
 import { FieldGrid } from '../ui/FieldGrid.js'
 import { MetricGrid } from '../ui/MetricGrid.js'
-import { RunCard } from '../ui/RunCard.js'
 import { SimulationWorkspace } from '../features/SimulationWorkspace'
 import { FluxAnalysis } from '../features/FluxAnalysis'
 import { BagRepository } from '../features/BagRepository'
@@ -27,6 +26,7 @@ import type {
 import Link from 'next/link'
 import type { PlatformNavItem } from './platform-shell.types'
 import { Button } from '../ui/button'
+import { Activity, ArrowRight, Database, FlaskConical, History, Play, ShieldCheck } from 'lucide-react'
 
 interface WorkspaceFeatureContentProps {
   access: { mode?: string | null } | null
@@ -140,6 +140,40 @@ function formatSeconds(value: unknown) {
   return `${numericValue.toFixed(1)}s`
 }
 
+function formatNumber(value: unknown, digits = 3) {
+  if (value === null || value === undefined || value === '') {
+    return '—'
+  }
+
+  const numericValue = Number(value)
+  if (Number.isNaN(numericValue)) {
+    return String(value)
+  }
+
+  if (Number.isInteger(numericValue)) {
+    return String(numericValue)
+  }
+
+  return numericValue.toFixed(digits)
+}
+
+function formatRunCaseLabel(run: any) {
+  if (
+    run?.completedCases !== null &&
+    run?.completedCases !== undefined &&
+    run?.totalCases !== null &&
+    run?.totalCases !== undefined
+  ) {
+    return `${run.completedCases}/${run.totalCases}`
+  }
+
+  if (run?.caseCount !== null && run?.caseCount !== undefined) {
+    return String(run.caseCount)
+  }
+
+  return '—'
+}
+
 function sortRegistryRuns(left: any, right: any) {
   const leftScore = Number(left?.aggregateScore ?? Number.POSITIVE_INFINITY)
   const rightScore = Number(right?.aggregateScore ?? Number.POSITIVE_INFINITY)
@@ -183,6 +217,126 @@ function groupRegistryRuns(runs: any[]) {
     }))
 }
 
+function RegistryMetricTile({
+  label,
+  value,
+  note,
+  tone = 'neutral',
+}: {
+  label: string
+  value: string
+  note: string
+  tone?: 'neutral' | 'accent' | 'cyan' | 'emerald'
+}) {
+  const toneClass =
+    tone === 'accent'
+      ? 'border-red-400/25 bg-red-400/[0.08] shadow-[0_22px_60px_-42px_rgba(239,68,68,0.9)]'
+      : tone === 'cyan'
+        ? 'border-cyan-300/20 bg-cyan-300/[0.08]'
+        : tone === 'emerald'
+          ? 'border-emerald-300/20 bg-emerald-300/[0.08]'
+          : 'border-white/10 bg-white/[0.035]'
+
+  return (
+    <div className={cn('rounded-3xl border p-4 backdrop-blur-sm', toneClass)}>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">{label}</p>
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-white">{value}</p>
+      <p className="mt-1 text-xs leading-5 text-slate-400">{note}</p>
+    </div>
+  )
+}
+
+function WorkflowStep({
+  step,
+  title,
+  copy,
+  href,
+  icon: Icon,
+  active = false,
+}: {
+  step: string
+  title: string
+  copy: string
+  href: string
+  icon: typeof Database
+  active?: boolean
+}) {
+  return (
+    <Link
+      className={cn(
+        'group relative grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border p-3 transition-all duration-300 hover:-translate-y-0.5',
+        active
+          ? 'border-red-300/30 bg-red-400/[0.11] shadow-[0_22px_70px_-44px_rgba(214,40,57,0.95)]'
+          : 'border-white/10 bg-white/[0.035] hover:border-cyan-300/25 hover:bg-cyan-300/[0.06]'
+      )}
+      href={href}
+    >
+      <span
+        className={cn(
+          'flex size-10 items-center justify-center rounded-2xl border',
+          active ? 'border-red-200/30 bg-red-300/15 text-red-100' : 'border-white/10 bg-slate-950/50 text-cyan-100'
+        )}
+      >
+        <Icon className="size-4" />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[10px] font-semibold uppercase tracking-[0.26em] text-slate-500">{step}</span>
+        <span className="mt-1 block text-sm font-semibold text-white">{title}</span>
+        <span className="mt-0.5 block text-xs leading-5 text-slate-400">{copy}</span>
+      </span>
+      <ArrowRight className="size-4 text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-cyan-100" />
+    </Link>
+  )
+}
+
+function RegistryLedgerRow({ run }: { run: any }) {
+  const benchmarkStatus = run?.benchmarkStatus ?? run?.status ?? 'unknown'
+  const completionStatus = run?.completionStatus ?? 'unknown'
+  const score = formatNumber(run?.aggregateScore)
+  const finalLoss = formatNumber(run?.meanFinalLoss)
+  const label = run?.label ?? run?.runId ?? 'Calibration run'
+  const scope = [run?.targetScope, run?.paramScope].filter(Boolean).join(' · ')
+  const recorded = run?.runTimestampUtc ?? run?.recordedAt
+
+  return (
+    <div className="group grid gap-4 border-t border-white/10 px-1 py-4 transition-colors duration-200 hover:bg-white/[0.025] md:grid-cols-[minmax(0,1.6fr)_0.7fr_0.7fr_0.6fr_auto] md:items-center md:px-3">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]', getRegistryStatusTone(benchmarkStatus))}>
+            {getRegistryStatusLabel(benchmarkStatus)}
+          </span>
+          <span className="truncate text-sm font-semibold text-white">{label}</span>
+        </div>
+        <p className="mt-1 truncate text-xs leading-5 text-slate-500">
+          {scope || run?.policyName || 'Scope not recorded'}
+        </p>
+      </div>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-600 md:hidden">Score</p>
+        <p className="font-mono text-sm text-slate-100">{score}</p>
+      </div>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-600 md:hidden">Final loss</p>
+        <p className="font-mono text-sm text-slate-300">{finalLoss}</p>
+      </div>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-600 md:hidden">Cases</p>
+        <p className="font-mono text-sm text-slate-300">{formatRunCaseLabel(run)}</p>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
+        <span className="text-xs text-slate-500">{recorded ? String(recorded).slice(0, 10) : getRegistryStatusLabel(completionStatus)}</span>
+        <Link
+          className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors hover:border-red-300/30 hover:bg-red-400/10 hover:text-white"
+          href={`/runs/${run.runId}`}
+        >
+          Inspect
+          <ArrowRight className="size-3" />
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 function RegistrySurface({ access, detail, detailFields, runs }: Omit<WorkspaceFeatureContentProps, 'feature'>) {
   const { setContext } = useResearchContext()
   const registryContext = useMemo(() => buildCalibrationRegistryResearchContext(detail, runs), [detail, runs])
@@ -194,6 +348,9 @@ function RegistrySurface({ access, detail, detailFields, runs }: Omit<WorkspaceF
   const latestElapsed = formatSeconds(detail?.summary?.elapsedSeconds)
   const totalCompleted = runs.filter(run => normalizeRegistryStatus(run?.completionStatus) === 'completed').length
   const totalBenchmarked = runs.filter(run => normalizeRegistryStatus(run?.benchmarkStatus ?? run?.status) !== 'unknown').length
+  const latestAggregateScore = formatNumber(detail?.summary?.aggregateScore)
+  const latestFinalLoss = formatNumber(detail?.summary?.meanFinalLoss)
+  const latestCaseCount = formatNumber(detail?.summary?.caseCount, 0)
 
   useEffect(() => {
     setContext(registryContext)
@@ -202,131 +359,68 @@ function RegistrySurface({ access, detail, detailFields, runs }: Omit<WorkspaceF
 
   return (
     <>
-      <section className="panel overflow-hidden border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.97),rgba(15,23,42,0.82))] shadow-[0_24px_80px_-48px_rgba(8,15,40,0.95)]">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.18fr)_minmax(320px,0.82fr)]">
-          <div className="grid gap-4">
+      <section className="panel relative overflow-hidden border-white/10 bg-[radial-gradient(circle_at_14%_0%,rgba(214,40,57,0.22),transparent_30%),radial-gradient(circle_at_88%_12%,rgba(34,211,238,0.16),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.98),rgba(12,15,22,0.94))] shadow-[0_28px_90px_-54px_rgba(8,15,40,0.95)]">
+        <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-red-300/40 to-transparent" />
+        <div className="pointer-events-none absolute -right-16 -top-24 size-72 rounded-full border border-cyan-200/10 bg-cyan-300/[0.035] blur-2xl" />
+        <div className="grid gap-7 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
+          <div className="relative grid gap-5">
             <div className="flex flex-wrap items-center gap-3">
-              <p className="eyebrow">Historical ledger</p>
+              <p className="eyebrow">Evidence cockpit</p>
               <span className={cn('inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em]', getRegistryStatusTone(latestBenchmarkStatus))}>
                 {getRegistryStatusLabel(latestBenchmarkStatus)}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-300">
+                <History className="size-3" />
+                Historical, not live
               </span>
             </div>
 
             <div className="grid gap-2">
               <h1 className="page-title">Calibration Registry</h1>
               <p className="page-copy max-w-3xl">
-                Review the newest visible record, compare benchmark outcomes, and trace every result back to its
-                manifest, report, and registry row. This page is a ledger of evidence, not a live calibration queue.
+                Evidence ledger for calibration runs. Review the newest record, compare benchmark outcomes, and move
+                cleanly from uploaded data into parameter search and simulation.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-emerald-300/20 bg-emerald-300/10 p-3">
-              <div className="min-w-[220px] flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-100/80">
-                  Custom data workflow
-                </p>
-                <p className="mt-1 text-sm leading-6 text-emerald-50/80">
-                  Upload your experimental series first, then launch Parameter Calibration from the active dataset.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  asChild
-                  className="h-9 rounded-full border border-emerald-200/30 bg-emerald-200/15 px-4 text-xs font-semibold text-white hover:bg-emerald-200/25"
-                  variant="ghost"
-                >
-                  <Link href="/research/data-upload">1. Upload custom data</Link>
-                </Button>
-                <Button asChild className="h-9 rounded-full px-4 text-xs font-semibold" size="sm">
-                  <Link href="/research/parameter-calibration">2. Run calibration</Link>
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <ResearchDatasetModeChip />
-              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300">
-                {runs.length} visible records
-              </span>
-              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300">
-                {totalCompleted} completed
-              </span>
-              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300">
-                {totalBenchmarked} benchmarked
-              </span>
-              {latestCoverage ? (
-                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300">
-                  {latestCoverage} coverage
-                </span>
-              ) : null}
-              {latestWeightCoverage ? (
-                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300">
-                  {latestWeightCoverage} weighted coverage
-                </span>
-              ) : null}
-              {latestElapsed ? (
-                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300">
-                  {latestElapsed} elapsed
-                </span>
-              ) : null}
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <RegistryMetricTile label="Aggregate score" note="Latest visible record" tone="accent" value={latestAggregateScore} />
+              <RegistryMetricTile label="Final loss" note="Mean benchmark loss" value={latestFinalLoss} />
+              <RegistryMetricTile label="Coverage" note={latestWeightCoverage ? `${latestWeightCoverage} weighted` : 'Weighted coverage pending'} tone="cyan" value={latestCoverage ?? '—'} />
+              <RegistryMetricTile label="Records" note={`${totalCompleted} completed · ${totalBenchmarked} benchmarked`} tone="emerald" value={String(runs.length)} />
             </div>
 
             <ResearchDatasetBanner className="max-w-3xl" />
           </div>
 
-          <aside className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_20px_60px_-34px_rgba(0,0,0,0.78)] backdrop-blur-sm">
-            <p className="eyebrow">Latest record</p>
-            <div className="mt-4 grid gap-3">
-              <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">What this preview shows</p>
-                <p className="mt-2 text-sm leading-6 text-slate-300">
-                  The newest visible calibration record, its score, and the provenance that anchors the result.
-                </p>
+          <aside className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/50 p-5 shadow-[0_24px_70px_-38px_rgba(0,0,0,0.86)] backdrop-blur-sm">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-red-300/0 via-red-300/40 to-cyan-300/0" />
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="eyebrow">Next best action</p>
+                <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">Run path</h2>
               </div>
+              <ResearchDatasetModeChip />
+            </div>
+            <p className="mt-3 text-sm leading-6 text-slate-400">
+              Registry is the evidence shelf. Use this rail to move from custom data into live calibration and then
+              back here for review.
+            </p>
+            <div className="mt-5 grid gap-3">
+              <WorkflowStep copy="Parse and activate an experimental time series." href="/research/data-upload" icon={Database} step="01" title="Upload custom data" />
+              <WorkflowStep active copy="Start the worker-backed strategy race." href="/research/parameter-calibration" icon={Play} step="02" title="Run calibration" />
+              <WorkflowStep copy="Compare score, loss, coverage, and verdict." href="/research/calibration-registry" icon={ShieldCheck} step="03" title="Review evidence" />
+              <WorkflowStep copy="Carry accepted parameters into forecasts." href="/research/simulation-workspace" icon={FlaskConical} step="04" title="Simulate" />
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Benchmark</p>
-                  <p className="mt-2 text-sm font-semibold text-white">{getRegistryStatusLabel(latestBenchmarkStatus)}</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Completion</p>
-                  <p className="mt-2 text-sm font-semibold text-white">{getRegistryStatusLabel(latestCompletionStatus)}</p>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-100/80">
-                  Comparison axis
-                </p>
-                <p className="mt-2 text-sm font-semibold text-white">
-                  Lower benchmark scores represent stronger evidence against the manifest.
-                </p>
-                <p className="mt-1 text-sm leading-6 text-cyan-50/75">
-                  Use the grouped ledger below to compare baseline, keep, and discard outcomes without treating them
-                  like active jobs.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-fuchsia-400/20 bg-fuchsia-400/10 p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-fuchsia-100/80">
-                  Calibration handoff
-                </p>
-                <p className="mt-2 text-sm font-semibold text-white">
-                  Open the calibration workspace to run the active dataset before simulation.
-                </p>
-                <p className="mt-1 text-sm leading-6 text-fuchsia-50/75">
-                  The registry keeps the evidence trail here. The actual run starts in the calibration workspace and
-                  then feeds the simulation flow.
-                </p>
-                <div className="mt-4">
-                  <Button
-                    asChild
-                    className="h-9 rounded-full border border-fuchsia-300/30 bg-fuchsia-300/15 px-4 text-xs font-semibold text-white hover:bg-fuchsia-300/22"
-                    variant="ghost"
-                  >
-                    <Link href="/research/parameter-calibration">Run calibration</Link>
-                  </Button>
+              <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.07] p-4">
+                <div className="flex items-start gap-3">
+                  <Activity className="mt-1 size-4 text-cyan-100" />
+                  <div>
+                    <p className="text-sm font-semibold text-white">{registryContext.registryComparison.comparisonSummary}</p>
+                    <p className="mt-1 text-xs leading-5 text-cyan-50/70">
+                      Lower benchmark scores represent stronger evidence against the active manifest.
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -356,10 +450,21 @@ function RegistrySurface({ access, detail, detailFields, runs }: Omit<WorkspaceF
         </div>
       </section>
 
-      <section className="panel">
-        <div className="panel-heading">
-          <h2>Latest record snapshot</h2>
-          <p>This is the most recent visible record, not a live execution slot. It surfaces the benchmark result and the fields that anchor it.</p>
+      <section className="panel border-white/10 bg-[linear-gradient(180deg,rgba(26,29,35,0.9),rgba(15,17,23,0.96))]">
+        <div className="panel-heading flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="eyebrow">Latest evidence capsule</p>
+            <h2>Record snapshot</h2>
+            <p>The newest visible record, its benchmark result, and the provenance fields that anchor it.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className={cn('inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em]', getRegistryStatusTone(latestBenchmarkStatus))}>
+              {getRegistryStatusLabel(latestBenchmarkStatus)}
+            </span>
+            <span className={cn('inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em]', getRegistryStatusTone(latestCompletionStatus))}>
+              {getRegistryStatusLabel(latestCompletionStatus)}
+            </span>
+          </div>
         </div>
         {detail ? (
           <>
@@ -368,7 +473,8 @@ function RegistrySurface({ access, detail, detailFields, runs }: Omit<WorkspaceF
                 ['Aggregate score', detail.summary.aggregateScore],
                 ['Mean final loss', detail.summary.meanFinalLoss],
                 ['Time-aware score', detail.summary.timeAwareScore ?? null],
-                ['Case count', detail.summary.caseCount],
+                ['Case count', latestCaseCount],
+                ['Elapsed', latestElapsed],
               ]}
             />
             <FieldGrid fields={detailFields} />
@@ -384,18 +490,19 @@ function RegistrySurface({ access, detail, detailFields, runs }: Omit<WorkspaceF
         )}
       </section>
 
-      <section className="panel">
+      <section className="panel overflow-hidden border-white/10 bg-[linear-gradient(180deg,rgba(19,22,28,0.98),rgba(15,17,23,0.96))]">
         <div className="panel-heading flex flex-wrap items-center justify-between gap-4">
           <div className="grid gap-1">
+            <p className="eyebrow">Benchmark lanes</p>
             <h2>Benchmark ledger</h2>
             <p>Grouped by benchmark status so comparisons stay compact, historical, and evidence-first.</p>
           </div>
-          <Button asChild className="h-9 rounded-full px-4 text-xs font-semibold" size="sm" variant="outline">
+          <Button asChild className="h-9 rounded-full bg-red-600 px-4 text-xs font-semibold text-white hover:bg-red-500" size="sm">
             <Link href="/research/parameter-calibration">Run calibration</Link>
           </Button>
         </div>
         {groupedRuns.length ? (
-          <div className="grid gap-5">
+          <div className="grid gap-6">
             {groupedRuns.map(group => {
               const groupBestScore = group.runs.reduce((best: number | null, run: any) => {
                 if (run.aggregateScore === null || run.aggregateScore === undefined) {
@@ -412,8 +519,8 @@ function RegistrySurface({ access, detail, detailFields, runs }: Omit<WorkspaceF
               const completedCount = group.runs.filter((run: any) => normalizeRegistryStatus(run.completionStatus) === 'completed').length
 
               return (
-                <div className="rounded-3xl border border-white/10 bg-slate-950/55 p-5 shadow-[0_20px_60px_-34px_rgba(0,0,0,0.72)] backdrop-blur-sm" key={group.key}>
-                  <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/50 shadow-[0_20px_70px_-42px_rgba(0,0,0,0.86)] backdrop-blur-sm" key={group.key}>
+                  <div className="flex flex-wrap items-start justify-between gap-4 p-5">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-3">
                         <p className="eyebrow">{group.label}</p>
@@ -437,8 +544,15 @@ function RegistrySurface({ access, detail, detailFields, runs }: Omit<WorkspaceF
                     </div>
                   </div>
 
-                  <div className="mt-5 grid gap-4">
-                    {group.runs.map((run: any) => <RunCard key={run.runId} run={run} />)}
+                  <div className="hidden border-t border-white/10 px-8 py-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-600 md:grid md:grid-cols-[minmax(0,1.6fr)_0.7fr_0.7fr_0.6fr_auto]">
+                    <span>Run</span>
+                    <span>Score</span>
+                    <span>Final loss</span>
+                    <span>Cases</span>
+                    <span className="text-right">Detail</span>
+                  </div>
+                  <div>
+                    {group.runs.map((run: any) => <RegistryLedgerRow key={run.runId} run={run} />)}
                   </div>
                 </div>
               )
