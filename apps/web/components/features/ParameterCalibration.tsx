@@ -121,6 +121,12 @@ interface CalibrationJobRecord {
   error?: string | null
 }
 
+const CALIBRATION_JOB_POLL_INTERVAL_MS = 2500
+const CALIBRATION_JOB_MAX_WAIT_MS = 2 * 60 * 60 * 1000
+const CALIBRATION_JOB_MAX_POLL_ATTEMPTS = Math.ceil(
+  CALIBRATION_JOB_MAX_WAIT_MS / CALIBRATION_JOB_POLL_INTERVAL_MS
+)
+
 function triageBadgeVariant(
   verdict?: string
 ): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -515,14 +521,14 @@ export function ParameterCalibration() {
         enable_teacher_flux_rescue: executionMode === 'strategy_race' ? enableTeacherFluxRescue : false,
       }
 
-      let resolvedResult: CalibrationResult
+      let resolvedResult: CalibrationResult | null = null
       if (executionMode === 'strategy_race') {
         const job = await apiClient.post<CalibrationJobCreateResponse>('/calibration/jobs', payload)
         setJobId(job.data.jobId)
         setJobStatus(job.data.status)
 
         let attempts = 0
-        while (attempts < 240) {
+        while (attempts < CALIBRATION_JOB_MAX_POLL_ATTEMPTS) {
           const jobRecord = await apiClient.get<CalibrationJobRecord>(`/calibration/jobs/${job.data.jobId}`)
           setJobStatus(jobRecord.data.status)
           if (jobRecord.data.status === 'completed' && jobRecord.data.result) {
@@ -533,11 +539,15 @@ export function ParameterCalibration() {
             throw new Error(jobRecord.data.error || 'Calibration worker job failed')
           }
           attempts += 1
-          await new Promise((resolve) => window.setTimeout(resolve, 2500))
+          await new Promise((resolve) => window.setTimeout(resolve, CALIBRATION_JOB_POLL_INTERVAL_MS))
         }
 
-        if (!resolvedResult!) {
-          throw new Error('Calibration worker job timed out before completion')
+        if (!resolvedResult) {
+          throw new Error(
+            `Calibration worker job ${job.data.jobId} is still running after ${Math.round(
+              CALIBRATION_JOB_MAX_WAIT_MS / 60000
+            )} minutes. The worker may still finish; keep the job ID to inspect it from the server.`
+          )
         }
       } else {
         const res = await apiClient.post<CalibrationResult>('/calibration/run', payload)
@@ -885,8 +895,8 @@ export function ParameterCalibration() {
                   : `Calibrate (${selected.length})`}
             </Button>
             {jobId ? (
-              <p className="text-[11px] text-muted-foreground">
-                Job {jobId.slice(0, 12)}... {jobStatus ?? 'queued'}
+              <p className="max-w-[320px] break-all font-mono text-[11px] text-muted-foreground">
+                Job {jobId} · {jobStatus ?? 'queued'}
               </p>
             ) : null}
           </div>
