@@ -5,6 +5,7 @@ export const runtime = 'nodejs'
 const SCIENCE_DEFAULT_BASE_URL = 'https://api.airbc.org/api'
 const MONITORING_DEFAULT_BASE_URL = 'https://monitoring-api.airbc.org/api'
 const RESEARCH_DEFAULT_BASE_URL = 'https://research-api.airbc.org/api'
+const CALIBRATION_SHARED_SECRET_HEADER = 'x-airbc-worker-secret'
 
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
@@ -69,11 +70,29 @@ function buildUpstreamUrl(request: NextRequest, path: string[]) {
   return upstream
 }
 
-function buildHeaders(request: NextRequest) {
+function getCalibrationSharedSecret() {
+  return (
+    process.env.CALIBRATION_API_SHARED_SECRET ??
+    process.env.CALIBRATION_WORKER_SHARED_SECRET ??
+    ''
+  ).trim()
+}
+
+function buildHeaders(request: NextRequest, path: string[]) {
   const headers = new Headers(request.headers)
 
   for (const header of HOP_BY_HOP_HEADERS) {
     headers.delete(header)
+  }
+
+  headers.delete(CALIBRATION_SHARED_SECRET_HEADER)
+
+  if (path[0] === 'calibration') {
+    const sharedSecret = getCalibrationSharedSecret()
+    if (sharedSecret) {
+      headers.set(CALIBRATION_SHARED_SECRET_HEADER, sharedSecret)
+      headers.set('authorization', `Bearer ${sharedSecret}`)
+    }
   }
 
   return headers
@@ -92,9 +111,19 @@ async function proxyRequest(request: NextRequest, path: string[]) {
     )
   }
 
+  if (path[0] === 'calibration' && !getCalibrationSharedSecret()) {
+    return NextResponse.json(
+      {
+        detail:
+          'Calibration worker auth is not configured yet. Set CALIBRATION_API_SHARED_SECRET on the web deployment.',
+      },
+      { status: 503 }
+    )
+  }
+
   const init: RequestInit = {
     method: request.method,
-    headers: buildHeaders(request),
+    headers: buildHeaders(request, path),
     redirect: 'manual',
   }
 
