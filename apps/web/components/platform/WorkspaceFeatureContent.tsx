@@ -220,6 +220,29 @@ function RegistrySurface({ access, detail, detailFields, runs }: Omit<WorkspaceF
               </p>
             </div>
 
+            <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-emerald-300/20 bg-emerald-300/10 p-3">
+              <div className="min-w-[220px] flex-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-100/80">
+                  Custom data workflow
+                </p>
+                <p className="mt-1 text-sm leading-6 text-emerald-50/80">
+                  Upload your experimental series first, then launch Parameter Calibration from the active dataset.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  asChild
+                  className="h-9 rounded-full border border-emerald-200/30 bg-emerald-200/15 px-4 text-xs font-semibold text-white hover:bg-emerald-200/25"
+                  variant="ghost"
+                >
+                  <Link href="/research/data-upload">1. Upload custom data</Link>
+                </Button>
+                <Button asChild className="h-9 rounded-full px-4 text-xs font-semibold" size="sm">
+                  <Link href="/research/parameter-calibration">2. Run calibration</Link>
+                </Button>
+              </div>
+            </div>
+
             <div className="flex flex-wrap gap-2">
               <ResearchDatasetModeChip />
               <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300">
