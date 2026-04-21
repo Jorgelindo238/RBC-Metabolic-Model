@@ -149,7 +149,7 @@ function FluxPathwayCard({
   return (
     <Card
       className={cn(
-        'overflow-hidden border-white/10 bg-slate-950/70 shadow-[0_20px_60px_-34px_rgba(8,15,40,0.8)]',
+        'h-full overflow-hidden border-white/10 bg-slate-950/70 shadow-[0_20px_60px_-34px_rgba(8,15,40,0.8)]',
         isDominant && 'border-cyan-400/25 bg-[linear-gradient(180deg,rgba(8,32,43,0.96),rgba(15,23,42,0.84))]'
       )}
     >
@@ -188,7 +188,7 @@ function FluxPathwayCard({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4 px-5 py-4">
+      <CardContent className="grid gap-4 px-5 py-4 2xl:grid-cols-[minmax(0,1fr)_260px]">
         <div className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-3">
           {reactionSignals.length > 0 ? (
             <FluxBarChart fluxes={fluxes} pathway={pathway} />
@@ -199,20 +199,36 @@ function FluxPathwayCard({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {topSignal && (
-            <Badge variant="outline" className="border-white/10 bg-white/[0.04] text-slate-200">
-              {topSignal.reaction} {formatFluxValue(topSignal.flux)}
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+            Pathway readout
+          </p>
+          <div className="mt-3 space-y-3 text-sm leading-6 text-slate-300">
+            <p>
+              {topSignal
+                ? `${topSignal.reaction} is currently the largest reaction-level signal in this pathway.`
+                : 'No reaction-level signal is active in this pathway snapshot.'}
+            </p>
+            <p>
+              {reactionSignals.length} active signal{reactionSignals.length === 1 ? '' : 's'} across{' '}
+              {reactions.length} modeled reaction{reactions.length === 1 ? '' : 's'}.
+            </p>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {topSignal && (
+              <Badge variant="outline" className="border-white/10 bg-white/[0.04] text-slate-200">
+                {topSignal.reaction} {formatFluxValue(topSignal.flux)}
+              </Badge>
+            )}
+            {isDominant && (
+              <Badge variant="outline" className="border-cyan-400/20 bg-cyan-400/10 text-cyan-100">
+                Highest pathway total
+              </Badge>
+            )}
+            <Badge variant="outline" className="border-white/10 bg-white/[0.04] text-slate-300">
+              {reactions.length} modeled reactions
             </Badge>
-          )}
-          {isDominant && (
-            <Badge variant="outline" className="border-cyan-400/20 bg-cyan-400/10 text-cyan-100">
-              Highest pathway total
-            </Badge>
-          )}
-          <Badge variant="outline" className="border-white/10 bg-white/[0.04] text-slate-300">
-            {reactions.length} modeled reactions
-          </Badge>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -305,7 +321,6 @@ export function FluxAnalysis() {
   }, [fluxContext, setContext])
 
   const pathwayKeys = Object.keys(PATHWAY_GROUPS)
-  const displayPathways = selectedPathway === 'all' ? pathwayKeys : [selectedPathway]
   const selectedPathwayLabel = selectedPathway === 'all' ? 'All pathways' : selectedPathway
   const dominantPathway = fluxContext.summary.dominantPathway
   const topReaction = fluxContext.outputs.topFluxes[0]
@@ -328,53 +343,81 @@ export function FluxAnalysis() {
       : sortedPathwayEntries.filter(([pathway]) => pathway === selectedPathway)
   const pathwayCountLabel = `${visiblePathwayEntries.length} pathway${visiblePathwayEntries.length === 1 ? '' : 's'}`
   const reactionCount = fluxContext.fluxResultAvailable ? Object.keys(fluxContext.outputs.fluxes).length : 0
+  const pathwayExplorerGridClassName = cn(
+    'grid gap-4',
+    selectedPathway === 'all' && visiblePathwayEntries.length > 1 ? '2xl:grid-cols-2' : 'grid-cols-1'
+  )
 
   return (
-    <div className="grid gap-6">
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+    <div className="grid w-full gap-6">
+      <section className="grid gap-6">
         <Card className="relative overflow-hidden border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(15,23,42,0.86))] shadow-[0_30px_90px_rgba(15,23,42,0.35)]">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.14),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.08),transparent_28%)]"
           />
-          <CardHeader className="relative space-y-4 border-b border-white/10 px-5 py-5 sm:px-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge className="rounded-full border-cyan-400/20 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/10">
-                Pathway fluxes
-              </Badge>
-              <Badge
-                variant={resolvedDatasetSummary.mode === 'custom_user_data_mode' ? 'default' : 'secondary'}
-                className="rounded-full"
-              >
-                {resolvedDatasetSummary.label}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="rounded-full border-white/10 bg-white/[0.04] text-slate-200"
-              >
-                {fluxModeLabel}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="rounded-full border-white/10 bg-white/[0.04] text-slate-200"
-              >
-                {calibrationStatusLabel}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="rounded-full border-white/10 bg-white/[0.04] text-slate-200"
-              >
-                {fluxStatusLabel}
-              </Badge>
-            </div>
+          <CardHeader className="relative border-b border-white/10 px-5 py-5 sm:px-6">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.55fr)] lg:items-stretch">
+              <div className="space-y-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className="rounded-full border-cyan-400/20 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/10">
+                    Pathway fluxes
+                  </Badge>
+                  <Badge
+                    variant={resolvedDatasetSummary.mode === 'custom_user_data_mode' ? 'default' : 'secondary'}
+                    className="rounded-full"
+                  >
+                    {resolvedDatasetSummary.label}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="rounded-full border-white/10 bg-white/[0.04] text-slate-200"
+                  >
+                    {fluxModeLabel}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="rounded-full border-white/10 bg-white/[0.04] text-slate-200"
+                  >
+                    {calibrationStatusLabel}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="rounded-full border-white/10 bg-white/[0.04] text-slate-200"
+                  >
+                    {fluxStatusLabel}
+                  </Badge>
+                </div>
 
-            <div className="space-y-3">
-              <CardTitle className="text-3xl text-white sm:text-4xl">Flux Analysis</CardTitle>
-              <CardDescription className="max-w-3xl text-base leading-7 text-slate-400">
-                View Michaelis-Menten flux estimates grouped by metabolic subsystem. Custom uploaded data, when
-                active, overrides the Bordbar concentration snapshot for mapped metabolites while the remaining
-                model concentrations retain their default values.
-              </CardDescription>
+                <div className="space-y-3">
+                  <CardTitle className="text-3xl text-white sm:text-4xl">Flux Analysis</CardTitle>
+                  <CardDescription className="max-w-4xl text-base leading-7 text-slate-400">
+                    View Michaelis-Menten flux estimates grouped by metabolic subsystem. Custom uploaded data, when
+                    active, overrides the Bordbar concentration snapshot for mapped metabolites while the remaining
+                    model concentrations retain their default values.
+                  </CardDescription>
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-white/10 bg-slate-950/50 p-5 shadow-inner shadow-black/20">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-red-300">
+                  Research stack
+                </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Input</p>
+                    <p className="mt-2 text-sm font-semibold text-white">{resolvedDatasetSummary.label}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Route</p>
+                    <p className="mt-2 text-sm font-semibold text-white">{selectedPathwayLabel}</p>
+                  </div>
+                  <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-100/80">Output</p>
+                    <p className="mt-2 text-sm font-semibold text-cyan-50">{fluxStatusLabel}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardHeader>
 
@@ -545,7 +588,7 @@ export function FluxAnalysis() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All pathways</SelectItem>
-                {Object.keys(PATHWAY_GROUPS).map((pathway) => (
+                {pathwayKeys.map((pathway) => (
                   <SelectItem key={pathway} value={pathway}>
                     {pathway}
                   </SelectItem>
@@ -608,7 +651,7 @@ export function FluxAnalysis() {
             </CardContent>
           </Card>
         ) : fluxes ? (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className={pathwayExplorerGridClassName}>
             {visiblePathwayEntries.map(([pathway, pathwayTotal], index) => (
               <FluxPathwayCard
                 key={pathway}

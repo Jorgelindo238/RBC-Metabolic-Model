@@ -554,8 +554,8 @@ export function PathwayVisualization() {
   const graphModeBadge = pathwayViewMode === 'compact' ? 'Compact graph' : 'Network graph'
 
   return (
-    <div className="grid gap-6">
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(330px,0.85fr)]">
+    <div className="grid w-full gap-6">
+      <section className="grid gap-6">
         <Card className="overflow-hidden border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(15,23,42,0.86))] shadow-[0_30px_90px_rgba(15,23,42,0.35)]">
           <CardHeader className="space-y-4 border-b border-white/10 px-5 py-5 sm:px-6">
             <div className="flex flex-wrap items-center gap-2">
@@ -571,10 +571,10 @@ export function PathwayVisualization() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-3">
                 <CardTitle className="text-3xl text-white sm:text-4xl">Pathway Visualization</CardTitle>
-              <CardDescription className="max-w-3xl text-base leading-7 text-slate-400">
-                Inspect the RBC metabolic network as a compact scientific map or switch to the full registry map.
-                RoBoCop stays present, but the graph and playback remain the center of gravity.
-              </CardDescription>
+                <CardDescription className="max-w-4xl text-base leading-7 text-slate-400">
+                  Inspect the RBC metabolic map, replay the latest simulation frame, and select nodes or reactions for
+                  a focused readout.
+                </CardDescription>
               </div>
               <Button type="button" variant="outline" onClick={() => void loadNetwork()} className="gap-2 border-white/10 bg-white/[0.04] text-slate-100 hover:bg-white/[0.08]">
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
@@ -591,7 +591,7 @@ export function PathwayVisualization() {
               <MetricCard label="Most represented" value={network ? dominantPathway : '—'} hint={network ? 'Largest pathway group by node count' : 'Waiting for the graph snapshot'} />
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(290px,0.88fr)]">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
               <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 shadow-inner shadow-black/10">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-2">
@@ -643,7 +643,7 @@ export function PathwayVisualization() {
               </div>
 
               <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 shadow-[0_20px_60px_-34px_rgba(0,0,0,0.78)] backdrop-blur-sm">
-                <p className="eyebrow">RoBoCop lens</p>
+                <p className="eyebrow">Context</p>
                 <div className="mt-4 grid gap-3">
                   <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Dataset</p>
@@ -665,7 +665,7 @@ export function PathwayVisualization() {
                     <p className="mt-1 text-sm leading-6 text-slate-300">{pathwayStatusLine}</p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">RoBoCop cues</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Readout cues</p>
                     <div className="mt-2 space-y-1.5">
                       {observations.map((observation, index) => (
                         <p key={`${index}-${observation}`} className="text-sm leading-6 text-slate-300">{observation}</p>
@@ -713,7 +713,7 @@ export function PathwayVisualization() {
             </CardContent>
           </Card>
         ) : network ? (
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+          <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.45fr)]">
             <Card className="overflow-hidden border-white/10 bg-slate-950/70 shadow-[0_20px_60px_-34px_rgba(8,15,40,0.8)]">
               <CardHeader className="border-b border-white/10 bg-white/[0.03] px-5 py-4">
                 <div className="flex items-start justify-between gap-4">

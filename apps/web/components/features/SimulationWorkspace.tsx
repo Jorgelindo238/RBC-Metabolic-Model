@@ -22,6 +22,8 @@ import { buildSimulationDatasetPayload, summarizeResearchDataset } from '@/lib/r
 import { buildResearchSimulationSnapshot, persistLatestResearchSimulationSnapshot } from '@/lib/research-simulation'
 import type { SimulationRequestMetadata } from '@/hooks/use-simulation'
 
+const DEFAULT_PLOTTED_METABOLITES = ['EGLC', 'ELAC', 'ATP'] as const
+
 function parseLogLine(message: string) {
   const match = message.match(/^\[(.*?)\]\s*(.*)$/)
   return {
@@ -48,6 +50,14 @@ export function SimulationWorkspace() {
     }
 
     return getSimulationKeyMetabolites(result.metabolite_names)
+  }, [result])
+  const defaultPlottedMetabolites = useMemo(() => {
+    if (!result?.success) {
+      return []
+    }
+
+    const available = new Set(result.metabolite_names)
+    return DEFAULT_PLOTTED_METABOLITES.filter((metabolite) => available.has(metabolite))
   }, [result])
 
   const resolvedDataset = activeDataset
@@ -122,7 +132,7 @@ export function SimulationWorkspace() {
     activeResultRef.current = result
     resultParamsRef.current = params
     suppressSelectionContextRef.current = true
-    setSelectedMetabolites(keyMetabolites)
+    setSelectedMetabolites(defaultPlottedMetabolites)
     setRobocopLoading(true)
     setRobocopError(null)
 
@@ -133,9 +143,9 @@ export function SimulationWorkspace() {
     }
 
     try {
-      const interpretationContext = buildSimulationContext(result, params, keyMetabolites, resolvedDatasetSummary, activeCalibration)
+      const interpretationContext = buildSimulationContext(result, params, defaultPlottedMetabolites, resolvedDatasetSummary, activeCalibration)
       setRobocopContext(interpretationContext)
-      const research = buildSimulationResearchContext(result, params, keyMetabolites, resolvedDatasetSummary, activeCalibration)
+      const research = buildSimulationResearchContext(result, params, defaultPlottedMetabolites, resolvedDatasetSummary, activeCalibration)
       setContext(research)
       setRobocopInterpretation(generateSimulationInterpretation(interpretationContext))
     } catch (err: unknown) {
@@ -143,7 +153,7 @@ export function SimulationWorkspace() {
     } finally {
       setRobocopLoading(false)
     }
-  }, [activeCalibration, keyMetabolites, params, result, resolvedDatasetSummary, setContext])
+  }, [activeCalibration, defaultPlottedMetabolites, params, result, resolvedDatasetSummary, setContext])
 
   useLayoutEffect(() => {
     if (!result?.success || activeResultRef.current !== result) {

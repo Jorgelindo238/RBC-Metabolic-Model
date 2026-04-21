@@ -54,7 +54,6 @@ export function PlatformHeader({ productContext }) {
         : buildWorkspaceBadge(productContext)
           ? h('span', { className: 'platform-header-badge platform-header-badge-muted', key: 'workspace' }, buildWorkspaceBadge(productContext))
           : null,
-      h('span', { className: 'platform-header-badge platform-header-badge-muted', key: 'mode' }, productContext?.contextState || 'anonymous'),
     ].filter(Boolean)),
   ])
 }

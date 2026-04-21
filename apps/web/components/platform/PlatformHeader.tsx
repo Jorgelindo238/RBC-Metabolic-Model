@@ -71,9 +71,6 @@ export function PlatformHeader({ productContext }: { productContext: ProductCont
         ) : workspaceBadge ? (
           <span className="platform-header-badge platform-header-badge-muted">{workspaceBadge}</span>
         ) : null}
-        <span className="platform-header-badge platform-header-badge-muted">
-          {productContext?.contextState || 'anonymous'}
-        </span>
       </div>
     </header>
   )
