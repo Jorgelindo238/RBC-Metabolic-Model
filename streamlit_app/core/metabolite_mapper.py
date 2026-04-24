@@ -250,13 +250,45 @@ class MetaboliteMapper:
     
     def _is_time_column(self, column_name: str) -> bool:
         """Check if column name appears to be a time column."""
-        time_keywords = [
-            'time', 'hours', 'days', 'minutes', 'seconds',
-            't', 'hr', 'day', 'min', 'sec', 'hour'
-        ]
-        
-        name_lower = str(column_name).lower()
-        return any(keyword in name_lower for keyword in time_keywords)
+        name_lower = str(column_name).lower().strip()
+        normalized = re.sub(r'[\s_\-]+', ' ', name_lower)
+
+        exact_time_labels = {
+            't',
+            'time',
+            'time day',
+            'time days',
+            'time hour',
+            'time hours',
+            'time min',
+            'time minutes',
+            'time sec',
+            'time seconds',
+            'day',
+            'days',
+            'hour',
+            'hours',
+            'hr',
+            'hrs',
+            'min',
+            'mins',
+            'minute',
+            'minutes',
+            'sec',
+            'secs',
+            'second',
+            'seconds',
+        }
+
+        if normalized in exact_time_labels:
+            return True
+
+        return bool(
+            re.fullmatch(
+                r'(time|day|days|hour|hours|hr|hrs|min|mins|minute|minutes|sec|secs|second|seconds)\s*\d*',
+                normalized,
+            )
+        )
     
     def get_metabolite_info(self, metabolite: str) -> Optional[Dict]:
         """
