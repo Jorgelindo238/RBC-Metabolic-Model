@@ -10,30 +10,54 @@ Keep the airbc / RoBoCop platform moving forward with:
 - reliable calibration/autoresearch workflows
 
 ### Immediate Next Action
-- Keep branch hygiene aligned with the active AgentOps state:
-  - current branch: `kimi-2`
-  - current staged source file: `tests/standardize_bardyn_data.py`
-  - keep secrets, local Vercel state, build outputs, logs, caches, SQLite runtime data, and generated simulation outputs untracked
-- Then rerun a full production calibration smoke test on:
-  - `/api/calibration/available-parameters`
+- Commit and push the current repository hygiene follow-up on `main`:
+  - root `.gitignore`
+  - `.python-version`
+  - calibration-worker runtime note
+  - Storybook assets required by the tracked onboarding docs
+- Redeploy production from GitHub `main`:
+  - `web` -> `app.airbc.org`
+  - `marketing` -> `airbc.org`
+- Verify Vercel production deployments are GitHub-backed, not local/Codex uploads.
+- Then rerun a production smoke test:
+  - Calibration Registry parameter load
   - `/research/parameter-calibration`
   - worker job creation / polling
 
 ### Active Workstreams
 
-#### Repository hygiene - kimi-2
-- Status: In progress
+#### Repository hygiene - main
+- Status: In progress; branch cleanup completed
 - Goal:
-  - track only useful source/doc additions on `kimi-2` while keeping runtime artifacts and credentials out of Git
+  - keep `main` deployable from GitHub while keeping runtime artifacts and credentials out of Git
 - Current state:
-  - `kimi-2` is aligned with the clean `kimi` base at `47fe022`
-  - `tests/standardize_bardyn_data.py` is staged as the only newly selected source file
-  - `apps/monitoring-api`, `apps/research-api`, `services/robocop/messaging`, `AgentOps`, and `qa/robocop` source/doc files are already tracked on this base
-  - remaining untracked files are mostly local env files, `.vercel`, `.next`, `node_modules`, logs, caches, SQLite runtime data, generated simulation outputs, and archived task notes
+  - local and remote branches have been collapsed back to `main`
+  - the previous `kimi-2` cleanup commit has been cherry-picked onto `main`
+  - root docs have been reduced to `README.md` and `ARCHITECTURE.md`
+  - a root `.gitignore` is staged to ignore secrets, local Vercel state, build outputs, logs, caches, SQLite runtime data, generated simulation outputs, and archived task notes
+  - `.python-version` is staged to pin the current supported Python runtime while the Python 3.14 migration remains deferred
 - Decision:
-  - do not stage `.env`, `.streamlit/secrets.toml`, `.vercel`, `.next`, `node_modules`, logs, `__pycache__`, runtime DB files, or `Simulations/...` output directories
+  - do not stage `.env`, `.streamlit/secrets.toml`, `.vercel`, `.next`, `node_modules`, logs, `__pycache__`, runtime DB files, or generated `Simulations/...` output directories
+  - keep only the canonical tracked Bordbar calibration seed/report under `Simulations/brodbar/calibration/`
 - Next step:
-  - commit/push only after reviewing the staged set and deciding whether the Bardyn standardization utility belongs in the next `kimi-2` commit
+  - commit and push the staged hygiene follow-up, then redeploy `web` and `marketing` from GitHub `main`
+
+#### Python 3.14 runtime migration
+- Status: Deferred backlog
+- Goal:
+  - evaluate whether the Python scientific/runtime stack can safely move from Python 3.12 to Python 3.14
+- Current finding:
+  - Python 3.14 is installable with a modern stack (`numpy>=2.3`, `scipy>=1.17`, `pandas>=3.0`)
+  - the current `numpy<2.0.0` constraint is the blocker because NumPy 1.26 does not provide a stable Python 3.14 wheel in this environment and falls back to source compilation
+- Decision:
+  - keep production on Python 3.12 for now
+  - revisit later on a dedicated migration branch rather than changing production runtime directly
+- Future validation plan:
+  - update `requirements.txt`, `api/requirements.txt`, and `apps/calibration-worker/requirements.txt`
+  - run a clean Python 3.14 install
+  - run `py_compile` on API, worker, and scientific entrypoints
+  - run `qa/robocop`
+  - compare at least one calibration/simulation output against the Python 3.12 baseline before promoting
 
 #### 3. RoBoCop Research Assistant v1 - Simulation
 - Status: Completed Phase 1-6 (rule-based interpretation)

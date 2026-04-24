@@ -20,6 +20,10 @@ Ce service est volontairement hors Vercel pour éviter:
 
 ## Démarrage local
 
+Python 3.12 is the recommended runtime. Python 3.14 is not supported yet
+because the scientific stack is pinned to NumPy/SciPy versions with stable
+3.11/3.12 wheels.
+
 ```bash
 cd apps/calibration-worker
 python -m venv .venv

@@ -1,0 +1,66 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+*.pem
+*.key
+
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyright/
+
+# Node and frontend build artifacts
+node_modules/
+.next/
+out/
+dist/
+build/
+package-lock.json
+
+# Platform-local metadata
+.vercel/
+.vscode/
+.playwright-cli/
+
+# Local agent/archive scratch files
+tasks/*.archived
+
+# Logs and local reports
+*.log
+pyright_out.txt
+pyright_output.json
+
+# Runtime databases and mutable API state
+*.sqlite
+*.sqlite3
+*.db
+apps/api/data/*.runtime.json
+apps/api/data/*.sqlite3
+
+# Generated app outputs
+output/
+apps/**/output/
+
+# Local calibration and simulation campaign outputs.
+# Keep only the canonical tracked Bordbar calibration seed/report unless explicitly force-added.
+Simulations/brodbar/**
+!Simulations/brodbar/
+!Simulations/brodbar/calibration/
+!Simulations/brodbar/calibration/best_params.json
+!Simulations/brodbar/calibration/calibration_report.json
+Simulations/brodbar_phase*/
+
+# Local experimental standardization inputs/exports.
+# The standardization script is tracked; raw/private spreadsheets and generated tables stay local.
+tests/Data_exp_update_01042020.xlsx
+tests/bardyn_*_standardized.csv
+tests/bardyn_*_standardized.xlsx
+src/Initial_conditions_JA_Final_corrected.xlsx
