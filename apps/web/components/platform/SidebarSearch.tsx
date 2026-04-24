@@ -43,14 +43,22 @@ export function SidebarSearch({
   }
 
   return (
-    <div className="flex items-center gap-2.5 rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] px-3 py-2 transition-colors focus-within:border-[rgba(214,40,57,0.3)] focus-within:bg-[rgba(255,255,255,0.06)]">
+    <div
+      className="flex items-center gap-2.5 rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] px-3 py-2 transition-colors focus-within:border-[rgba(214,40,57,0.3)] focus-within:bg-[rgba(255,255,255,0.06)]"
+      suppressHydrationWarning
+    >
       <Search className="h-4 w-4 shrink-0 text-[#6b7280]" />
       <input
         aria-label="Search platform modules"
+        autoComplete="off"
         className="w-full min-w-0 border-0 bg-transparent text-sm text-[#e2e5ea] outline-0 placeholder:text-[#4b5563]"
+        data-1p-ignore="true"
+        data-form-type="other"
+        data-lpignore="true"
         onChange={event => onQueryChange(event.target.value)}
         placeholder="Search..."
         ref={inputRef}
+        suppressHydrationWarning
         type="search"
         value={query}
       />

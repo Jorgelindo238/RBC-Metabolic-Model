@@ -155,13 +155,13 @@ export function MetaboliteChart({ result, selectedMetabolites, onSelectionChange
   const calibrationChipLabel = appliedCalibration
     ? 'Latest calibration applied'
     : researchDataMode === 'custom_user_data_mode'
-      ? 'Calibration required before simulation'
+      ? 'Bordbar defaults active · calibration optional'
       : 'Bordbar defaults active'
 
   const calibrationChipClasses = appliedCalibration
     ? 'border-violet-400/20 bg-violet-400/10 text-violet-100'
     : researchDataMode === 'custom_user_data_mode'
-      ? 'border-amber-400/20 bg-amber-400/10 text-amber-100'
+      ? 'border-cyan-400/20 bg-cyan-400/10 text-cyan-100'
       : 'border-white/10 bg-white/5 text-slate-300'
 
   const keyMetabolites = getSimulationKeyMetabolites(result.metabolite_names)

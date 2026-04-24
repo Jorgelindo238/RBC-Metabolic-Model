@@ -202,7 +202,7 @@ export function SimulationWorkspace() {
                 </Badge>
               ) : resolvedResearchDataMode === 'custom_user_data_mode' ? (
                 <Badge variant="secondary" className="rounded-full">
-                  Calibration required before simulation
+                  Bordbar defaults active · calibration optional
                 </Badge>
               ) : (
                 <Badge variant="secondary" className="rounded-full">
