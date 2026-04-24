@@ -150,6 +150,83 @@ Validation:
 
 ---
 
+### Skill: RBC Calibration Campaign
+When to use:
+- running a bounded RBC calibration campaign
+- comparing a candidate policy or manifest against the current benchmark baseline
+- producing a keep/discard triage recommendation grounded in benchmark artifacts
+- reviewing a fast-benchmark win before promotion
+
+Inputs:
+- one-sentence hypothesis
+- policy path
+- manifest path
+- optional baseline run directory for comparison
+- optional promotion manifest path
+
+Read first:
+- `README.md`
+- `ARCHITECTURE.md`
+- `AgentOps/CALIBRATION_ORCHESTRATION.md`
+- `AgentOps/Tasks.md`
+- `config/autoresearch_mutation_policy.yaml`
+- selected policy file
+- selected manifest file
+
+Basic flow:
+1. validate scope against the mutation policy
+2. refuse in-place edits to committed templates
+3. refuse scientific-core edits unless explicitly approved
+4. record the exact `target_scope`, `param_scope`, `optimization_strategy`, `t_max`, `curve_fit_strength`, ATP guard settings, and benchmark manifest
+5. run `python scripts/run_calibration_eval.py --policy <policy> --manifest <manifest>`
+6. locate the newest campaign folder under `Simulations/brodbar/autoresearch/`
+7. read `eval_summary.json`
+8. inspect case-level `calibration_report.json` files when the summary shows a regression or outlier
+9. compare against the best prior result for the same manifest
+10. classify as `keep`, `discard`, or `queue for promotion`
+
+Promotion flow:
+1. run the promotion benchmark separately
+2. use `config/rbc_calibration_promotion_benchmarks.json`
+3. do not call a candidate promotable from the same edited gate that generated the candidate
+
+Output contract:
+- hypothesis
+- exact policy path
+- exact manifest path
+- exact command run
+- exact `target_scope`
+- exact `param_scope`
+- exact `optimization_strategy`
+- `aggregate_score`
+- `mean_final_loss`
+- `mean_improvement_pct`
+- `best_case`
+- `worst_case`
+- `status`
+- protected metric notes
+- recommendation
+- next best experiment
+
+Validation:
+- `aggregate_score`, `mean_final_loss`, `mean_improvement_pct`, `best_case`, and `worst_case` are reported
+- protected monitor metrics are checked before recommending promotion
+- ATP, adenylate, extracellular, and robustness regressions are called out even when the score improves
+- promotion claims are backed by the promotion benchmark, not only the fast gate
+- `results.tsv`, `eval_summary.json`, and `calibration_report.json` are never edited by hand
+
+Repository notes:
+- `scripts/run_calibration_eval.py` is the fixed outer-loop evaluator
+- `src/MM_calibration.py` is the scientific execution engine
+- `config/rbc_calibration_benchmarks.json` is the default fast search gate
+- `config/rbc_calibration_promotion_benchmarks.json` is the promotion gate
+- candidate configs should live under `config/generated/`
+
+Success standard:
+- a good run is a lower score that remains scientifically interpretable, respects protected metrics, and is strong enough to justify the next experiment or promotion check
+
+---
+
 ### Skill: Timeout-Path Validation
 When to use:
 - validating time-aware search behavior
@@ -278,7 +355,7 @@ Validation:
 ### Skill: Monitoring Surface Reorg
 When to use:
 - reorganizing the Monitoring sidebar and overview around Overview, Bag Repository, Quality Forecast, and Alerts
-- hiding a legacy Monitoring RoBoCop placeholder while reserving Hermes as the future messaging gateway
+- hiding a legacy Monitoring RoBoCop placeholder while reserving a future automation gateway
 - updating shared monitoring copy so the visible product structure stays consistent
 
 Basic flow:
@@ -310,7 +387,7 @@ Basic flow:
 Validation:
 - overview reads like a control tower
 - route cards remain visible and coherent below the hero
-- Hermes stays framed as the future gateway rather than an active page
+- the future automation gateway stays framed as planned infrastructure rather than an active page
 - other Monitoring routes are unchanged
 
 ---

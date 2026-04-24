@@ -995,3 +995,9 @@ Do not use this file as a task tracker or execution log.
 - `vmax_then_km` is now the preferred default strategy for the custom-data path because it gives a disciplined Vmax-first pass before tightening Km values.
 - ATP/ADP are still the hardest targets. The profile-aware bridge parameters can be useful, but the acceptance gate correctly rejected a destabilizing adenylate bridge when it hurt protected core metrics.
 - Better extracellular fit should improve Monitoring forecasts because Monitoring is driven primarily by extracellular signals, even when the calibration work is done in Research mode.
+
+## Repository hygiene memory
+- When creating a follow-up branch from a clean AgentOps base, stage only source/doc files that are intentionally useful.
+- Leave local credentials, Vercel project state, build artifacts, logs, caches, SQLite runtime data, generated simulation outputs, and archived task files untracked unless a later decision explicitly promotes one of them.
+- The local `hermes-agent/` checkout is no longer an active dependency. If `Hermes` still appears in Python symbol names or artifact paths, treat it as legacy naming to migrate deliberately with tests.
+- `kimi-2` currently tracks only the selected useful source addition `tests/standardize_bardyn_data.py` on top of the clean `kimi` base.

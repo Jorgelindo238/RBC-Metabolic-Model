@@ -1166,3 +1166,22 @@ Why it matters:
 - this is the first evidence that hybridizing `VPK`/`VENOPGM` can move the model without breaking the official Brodbar ODE path
 - however, the true ODE gains are still too small to claim a biological rescue on `ATP/ADP` or the pyruvate axis
 - the next useful step should likely combine the successful transport-side hybrid basin with this new downstream hybrid seam in one wider hybrid search
+
+## 2026-04-23 AgentOps alignment checkpoint
+
+Aligned the active work state with AgentOps after the `kimi` / `kimi-2` branch cleanup.
+
+Current repository state:
+- `kimi-2` is the active branch
+- `tests/standardize_bardyn_data.py` is staged as the only selected new source file
+- source/doc files for messaging, orchestration docs, `monitoring-api`, and `research-api` are already tracked on the clean base
+- remaining untracked files are treated as local runtime, generated scientific outputs, caches, logs, credentials, or archived task notes
+
+Decision:
+- keep the local `hermes-agent/` checkout removed
+- keep Telegram alerting as native outbound-only RoBoCop messaging
+- keep legacy `Hermes` names in Python symbols and artifact paths for a later deliberate migration, not as an active dependency
+
+Next checkpoint:
+- review whether the Bardyn standardization utility belongs in the next `kimi-2` commit
+- then return to the production calibration smoke test against the Hetzner worker and Vercel web proxy

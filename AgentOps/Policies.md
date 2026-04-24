@@ -153,8 +153,9 @@ Monitoring mode includes:
 - alerts
 - RoBoCop support
 
-### Hermes
-Hermes is internal engine logic, not the visible product identity.
+### Automation gateway
+The future automation gateway is internal engine logic, not the visible product identity.
+RoBoCop remains the product-facing research assistant name.
 
 ---
 

@@ -16,6 +16,11 @@ The three sections are designed to be read in sequence:
 - the **Hybrid Kinetics Migration Plan** tells where the scientific frontier
   is moving so that bounded agent search stays aligned with the physics.
 
+Naming note: the local `hermes-agent/` checkout is no longer required for this
+project. Some Python symbols and older artifact paths still contain `Hermes` or
+`hermes` as legacy names; treat those as implementation debt, not as an active
+runtime dependency.
+
 ---
 
 ## 1. Purpose

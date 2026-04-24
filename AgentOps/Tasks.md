@@ -10,15 +10,30 @@ Keep the airbc / RoBoCop platform moving forward with:
 - reliable calibration/autoresearch workflows
 
 ### Immediate Next Action
-- Branch the future Hetzner calibration worker into production `web` by setting:
-  - `CALIBRATION_API_BASE_URL`
-  - `CALIBRATION_API_SHARED_SECRET`
-- Then rerun a full production smoke test on:
+- Keep branch hygiene aligned with the active AgentOps state:
+  - current branch: `kimi-2`
+  - current staged source file: `tests/standardize_bardyn_data.py`
+  - keep secrets, local Vercel state, build outputs, logs, caches, SQLite runtime data, and generated simulation outputs untracked
+- Then rerun a full production calibration smoke test on:
   - `/api/calibration/available-parameters`
   - `/research/parameter-calibration`
   - worker job creation / polling
 
 ### Active Workstreams
+
+#### Repository hygiene - kimi-2
+- Status: In progress
+- Goal:
+  - track only useful source/doc additions on `kimi-2` while keeping runtime artifacts and credentials out of Git
+- Current state:
+  - `kimi-2` is aligned with the clean `kimi` base at `47fe022`
+  - `tests/standardize_bardyn_data.py` is staged as the only newly selected source file
+  - `apps/monitoring-api`, `apps/research-api`, `services/robocop/messaging`, `AgentOps`, and `qa/robocop` source/doc files are already tracked on this base
+  - remaining untracked files are mostly local env files, `.vercel`, `.next`, `node_modules`, logs, caches, SQLite runtime data, generated simulation outputs, and archived task notes
+- Decision:
+  - do not stage `.env`, `.streamlit/secrets.toml`, `.vercel`, `.next`, `node_modules`, logs, `__pycache__`, runtime DB files, or `Simulations/...` output directories
+- Next step:
+  - commit/push only after reviewing the staged set and deciding whether the Bardyn standardization utility belongs in the next `kimi-2` commit
 
 #### 3. RoBoCop Research Assistant v1 - Simulation
 - Status: Completed Phase 1-6 (rule-based interpretation)
@@ -157,10 +172,10 @@ Keep the airbc / RoBoCop platform moving forward with:
 - Next step:
   - run a real overnight bounded autosearch session on the calibration policy space once the desired wall-clock budget is chosen
 
-#### Hermes-assisted calibration orchestration V1
+#### Calibration orchestration V1
 - Status: Phase D seam-memory reuse across repeated bounded cycles implemented
 - Goal:
-  - use Hermes as a bounded outer-loop orchestrator for `src/MM_calibration.py` without mutating the scientific core
+  - use RoBoCop orchestration as a bounded outer-loop controller for `src/MM_calibration.py` without mutating the scientific core
 - Scope:
   - artifact reading
   - subsystem-agent diagnosis
@@ -170,14 +185,14 @@ Keep the airbc / RoBoCop platform moving forward with:
   - seam-memory tracking
 - Current direction:
   - coordinator plus subsystem agents is preferred over one agent per enzyme
-  - the scientific core stays frozen; Hermes should only mutate generated stage-plan / decision artifacts
+  - the scientific core stays frozen; the orchestration layer should only mutate generated stage-plan / decision artifacts
   - candidate ranking should stay fit-first, pure-ODE-second, penalty-last
 - Working spec:
-  - `HERMES_CALIBRATION_V1.md`
+  - `AgentOps/CALIBRATION_ORCHESTRATION.md`
 - Current implementation:
   - shared calibration state schema now exists in `services/robocop/calibration_state.py`
   - coordinator prompt contract and structured response schema now exist in `services/robocop/calibration_prompts.py`
-  - Hermes calibration toolset now includes:
+  - calibration orchestration toolset now includes:
     - `calibration_get_artifact_summary`
     - `calibration_get_trajectory_group`
     - `calibration_get_candidate_history`
@@ -186,7 +201,7 @@ Keep the airbc / RoBoCop platform moving forward with:
     - `calibration_execute_phase_b`
     - `calibration_coordinate_phase_c`
     - `calibration_run_phase_d_session`
-  - the stage-plan writer only writes bounded JSON under `config/generated/hermes_calibration/` and stops before execution
+  - the stage-plan writer only writes bounded JSON under the legacy generated calibration path and stops before execution
   - the Phase A coordinator loop now:
     - reads artifact summaries
     - infers saturated seams from recent run history
@@ -211,7 +226,11 @@ Keep the airbc / RoBoCop platform moving forward with:
     - feeds same-seed saturated seams into the next arbitration pass
     - carries dangerous seams forward across promoted seeds
     - advances the working seed only after a `promote`
-    - writes session summaries and seam-memory ledgers under `Simulations/brodbar/hermes/phase_d/`
+    - writes session summaries and seam-memory ledgers under the legacy Phase D artifact path
+- Current naming note:
+  - the local `hermes-agent/` clone has been removed
+  - some Python classes, workflow labels, and historical artifact paths still contain `Hermes` / `hermes` as legacy implementation names
+  - treat those names as technical debt to migrate later, not as an active runtime dependency
 - Next step:
   - exercise the new Phase D session loop on a real calibration seed and inspect whether the seam-memory policy avoids redundant local retries
 
@@ -255,7 +274,7 @@ Keep the airbc / RoBoCop platform moving forward with:
   - `src/MM_calibration.py` remains the only editable scientific-orchestrator file
   - the enforcement service in `services/robocop/calibration_edit_policy.py` now treats the full file as editable
   - the earlier zone markers remain as historical scaffolding but are no longer the active enforcement boundary
-  - the Hermes calibration toolset now exposes `calibration_validate_agent_edit`
+  - the calibration orchestration toolset now exposes `calibration_validate_agent_edit`
   - the guarded write path now goes through `calibration_apply_agent_edit`, which refuses to write any patch unless validation already passes
   - the new Phase E loop in `services/robocop/calibration_phase_e.py` now:
     - applies a bounded patch only after the edit gate passes
@@ -409,11 +428,11 @@ Keep the airbc / RoBoCop platform moving forward with:
   - Quality Forecast
   - Alerts
 - Future gateway:
-  - Hermes (planned)
+  - automation gateway (planned)
 - Current implementation:
   - Monitoring Overview now acts as the command center with KPI strips, operational snapshot cards, recent activity, and future gateway framing
   - the active route cards underneath the hero stay focused on Bag Repository, Quality Forecast, and Alerts
-  - Hermes remains hidden as the future gateway slot rather than a live Monitoring page
+  - the future gateway remains hidden rather than appearing as a live Monitoring page
   - Bag Repository now uses a backend-backed intake flow with server-side duplicate protection and a shared persisted inventory source
   - Quality Forecast now reads the same persisted bag inventory so newly created bags flow through to the predictive surface
   - Alerts now derives forecast-driven triage items from the same Monitoring inventory and exposes operator workflow actions
@@ -424,7 +443,7 @@ Keep the airbc / RoBoCop platform moving forward with:
 
 #### RoBoCop role
 - Status: Clarified
-- RoBoCop is the central agent across the product, with Monitoring reserving a hidden future gateway slot for Hermes
+- RoBoCop is the central agent across the product, with Monitoring reserving a hidden future automation gateway slot
 - Future two-mode logic:
   - Research
   - Monitoring

@@ -56,10 +56,7 @@ The next deployment step is to point the web proxy at the future Hetzner calibra
 ```text
 Mario_RBC_up/
 ├── .streamlit/                         # Local Streamlit runtime config
-├── AGENTS.md                           # Working rules for AI-assisted development
 ├── ARCHITECTURE.md                     # This document
-├── AUTOSEARCH_ARCHITECTURE.md          # Autosearch runner boundaries and LangGraph implementation
-├── CURVE_TRIAGE.md                     # Calibration promotion / triage notes
 ├── LICENSE
 ├── README.md
 ├── apps/                               # Product-plane applications
@@ -87,7 +84,6 @@ Mario_RBC_up/
 ├── packages/                           # Future shared JS/TS packages
 │   └── contracts/                      # Shared contracts/adapters for bounded backend interfaces
 ├── pnpm-workspace.yaml                 # JS workspace boundary for apps/* and packages/* only
-├── program.md                          # Autoresearch operating rules for calibration campaigns
 ├── RBC/
 │   └── Rxn_RBC.txt                     # Reaction network definition
 ├── Simulations/                        # Generated outputs, reports, benchmark runs
@@ -112,10 +108,6 @@ Mario_RBC_up/
 │   ├── run_bounded_autosearch.py       # LangGraph-based bounded autosearch runner
 │   ├── run_calibration_eval.py         # Policy/manifest benchmark runner
 │   └── run_calibration_job.py          # Stable job-spec adapter delegating to the benchmark runner
-├── skills/
-│   └── calibration/
-│       └── rbc-calibration-campaign/
-│           └── SKILL.md                # Repo-local Hermes skill spec for campaign run + triage
 ├── services/                           # Future non-Next service shells and adapters
 │   └── scientific-runtime/             # Reserved integration shell around bounded Python execution
 ├── src/                                # Core model, CLI, calibration engine
@@ -288,7 +280,7 @@ It constrains mutation to approved configuration surfaces by default, accepts a 
 
 The current implementation uses a LangGraph `StateGraph` in `scripts/run_bounded_autosearch.py` with four sequential nodes (`propose → evaluate → verify → archive`). Every run—dry or real, pass or fail—writes a structured decision record to a persistent append-only JSONL ledger at `Simulations/brodbar/autoresearch/agent_orchestration/autosearch_memory.jsonl`.
 
-See `AUTOSEARCH_ARCHITECTURE.md` for the full state schema, node descriptions, and boundary definitions.
+See `AgentOps/AUTORESEARCH.md` for the full state schema, node descriptions, and boundary definitions.
 
 ### 4b. Product-Plane Custom Calibration Orchestration
 
@@ -387,7 +379,7 @@ Next.js feature component (client)
 ### Autoresearch data flow
 
 ```text
-program.md + autoresearch_mutation_policy.yaml
+AgentOps/CALIBRATION_ORCHESTRATION.md + autoresearch_mutation_policy.yaml
     -> scripts/run_bounded_autosearch.py (LangGraph StateGraph)
     -> node_propose: config/generated/ candidate policy and manifest creation
     -> node_evaluate: subprocess to scripts/run_calibration_job.py
@@ -628,14 +620,14 @@ The autoresearch orchestration layer is a thin layer that governs how an agent m
 
 It is made of:
 
- - `program.md` - the campaign charter defining objective, experiment loop, required reporting, keep/discard logic, and promotion rules
+ - `AgentOps/CALIBRATION_ORCHESTRATION.md` - the campaign charter defining objective, experiment loop, required reporting, keep/discard logic, and promotion rules
  - `config/autoresearch_mutation_policy.yaml` - a strict mutation contract defining approved templates, mutable fields, approval-required fields, immutable paths, and rejection triggers
  - `config/generated/` - the intended workspace for candidate policy and manifest copies created during bounded search
- - `skills/calibration/rbc-calibration-campaign/SKILL.md` - a repo-local Hermes skill spec describing how to run and triage RBC calibration campaigns
+ - `AgentOps/Skills.md` - the repo-local skill registry, including the RBC calibration campaign run and triage workflow
  - `scripts/run_calibration_job.py` - a stable machine-callable adapter that validates job specs and forwards bounded runs to the fixed evaluator
  - `scripts/run_bounded_autosearch.py` - LangGraph-based state machine implementing the bounded search loop with four nodes: `propose`, `evaluate`, `verify`, `archive`
  - `Simulations/brodbar/autoresearch/agent_orchestration/autosearch_memory.jsonl` - append-only global memory ledger recording every search decision
- - `AUTOSEARCH_ARCHITECTURE.md` - detailed boundary definitions, state schema, node descriptions, and CLI usage
+ - `AgentOps/AUTORESEARCH.md` - detailed boundary definitions, state schema, node descriptions, and CLI usage
 
  This layer does **not** replace `src/MM_calibration.py` or `scripts/run_calibration_eval.py`.
 
