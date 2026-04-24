@@ -415,6 +415,13 @@ class SimulationEngine:
 
             return {"error": "Simulation modules not available"}
 
+        if float(t_max) <= 1:
+
+            return {
+                "error": "Simulation duration t_max must be greater than 1 day; use at least 2 days.",
+                "success": False,
+            }
+
 
 
         try:

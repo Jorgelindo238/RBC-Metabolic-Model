@@ -25,7 +25,7 @@ class SimulationDatasetPayload(BaseModel):
 
 
 class SimulationRequest(BaseModel):
-    t_max: float = Field(42, description="Simulation duration in days")
+    t_max: float = Field(42, ge=2, description="Simulation duration in days")
     curve_fit_strength: float = Field(0.0, description="Curve fitting strength (0 to 1)")
     ic_source: str = Field("JA Final", description="Initial conditions source")
     solver_method: str = Field("RK45", description="ODE solver method")

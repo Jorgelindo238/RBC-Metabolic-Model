@@ -217,7 +217,7 @@ export function SimulationWorkspace() {
               <Label>Storage Duration</Label>
               <Badge variant="secondary" className="font-mono text-[11px]">{params.t_max} days</Badge>
             </div>
-            <Slider min={1} max={60} step={1} value={[params.t_max]} onValueChange={([v]) => updateParam('t_max', v)} />
+            <Slider min={2} max={60} step={1} value={[params.t_max]} onValueChange={([v]) => updateParam('t_max', v)} />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
