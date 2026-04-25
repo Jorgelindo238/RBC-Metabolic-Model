@@ -126,7 +126,7 @@ class TestAbsoluteFloorViolations:
     def test_atp_collapse_triggers_collapsed_verdict(self):
         trajectories = _healthy_trajectories()
         # Make ATP collapse toward zero — the canonical fit-first failure mode
-        # documented in AgentOps/Memory.md item 44.
+        # documented in AgentOps/Memory.md and AgentOps/CalibrationOps.md.
         trajectories["ATP"] = [1.60, 1.20, 0.80, 0.40, 0.20, 0.05]
         verdict = triage_pure_ode_trajectories(_times(), trajectories)
         assert verdict.overall == VERDICT_COLLAPSED

@@ -2,8 +2,9 @@
 
 Phase 2 (P2) of the improved custom-data calibration pipeline.
 
-This module turns the prose rules in ``CURVE_TRIAGE.md`` into executable
-code. Given a ``calibration_report.json`` payload (the dict produced by
+This module turns the curve-triage rules summarized in
+``AgentOps/CalibrationOps.md`` into executable code. Given a
+``calibration_report.json`` payload (the dict produced by
 ``src/MM_calibration.py``), plus the set of metabolites the user actually
 measured and the parameters they optimised, it returns a structured
 ``TriageVerdict`` describing:
@@ -43,11 +44,11 @@ from services.robocop.custom_dataset_planner import (
 
 
 # ---------------------------------------------------------------------------
-# CURVE_TRIAGE categories
+# CalibrationOps triage categories
 # ---------------------------------------------------------------------------
 
 # Physiological anchors — the curves that summarise whether the storage-lesion
-# physiology is being reproduced (CURVE_TRIAGE.md Priority 1).
+# physiology is being reproduced (CalibrationOps protected anchors).
 _PHYSIOLOGICAL_ANCHORS: Set[str] = set(PRIORITY_1_METABOLITES)
 
 # Likely parametric — internal glycolysis + purine intermediates that usually
@@ -324,7 +325,7 @@ def _build_protected_status(
         spread is not None and spread <= _ADENYLATE_COHERENCE_SPREAD
     )
 
-    # Discard trigger: ATP critical — this is the strongest rule in CURVE_TRIAGE.
+    # Discard trigger: ATP critical -- this is the strongest triage rule.
     if atp_nrmse is not None and atp_nrmse > _ATP_CRITICAL_NRMSE:
         discard_triggers.append(
             f"ATP nRMSE={atp_nrmse:.3f} exceeds critical threshold "
@@ -553,7 +554,7 @@ def triage_calibration_report(
         discard_triggers.append(
             "Purine curves improved but the energy anchors "
             + ", ".join(entry.name for entry in energy_concerns)
-            + " regressed. CURVE_TRIAGE discards this pattern."
+            + " regressed. CalibrationOps triage discards this pattern."
         )
 
     # (3) Side-metabolism wins at the cost of Priority 1 anchors.

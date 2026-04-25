@@ -9,8 +9,8 @@ the orthogonal question:
     "Regardless of how well the calibration fit the measured points, did the
     model remain physiologically credible across the full horizon?"
 
-The repeated failure pattern this closes (see ``AgentOps/Memory.md`` items 44
-and 48) is:
+The repeated failure pattern this closes (see ``AgentOps/Memory.md`` and
+``AgentOps/CalibrationOps.md``) is:
 
 * the calibration objective improves materially,
 * but the pure ODE still drives ATP and ADP toward zero by the end of the

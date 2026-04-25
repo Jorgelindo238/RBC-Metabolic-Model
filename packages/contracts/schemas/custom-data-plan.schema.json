@@ -29,7 +29,7 @@
     "dangerous_compensators_present": {
       "type": "object",
       "additionalProperties": { "type": "string" },
-      "description": "Dangerous-compensator parameters that the user chose to optimise. Key = parameter name, value = short rationale from CURVE_TRIAGE."
+      "description": "Dangerous-compensator parameters that the user chose to optimise. Key = parameter name, value = short rationale from CalibrationOps triage."
     },
     "dangerous_compensators_guarded": {
       "type": "array",

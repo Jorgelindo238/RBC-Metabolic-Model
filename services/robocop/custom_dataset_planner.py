@@ -16,8 +16,9 @@ parameters and returns:
 The adapter (``apps/api/services/mm_calibration_adapter.py``) is responsible
 for consuming this plan and wiring it into ``MM_calibration.run_calibration``.
 
-All data comes from ``CURVE_TRIAGE.md`` and the agreed custom-data contract.
-Nothing in the scientific core is mutated.
+All data comes from the curve-triage rules summarized in
+``AgentOps/CalibrationOps.md`` and the agreed custom-data contract. Nothing in
+the scientific core is mutated.
 """
 
 from __future__ import annotations
@@ -27,7 +28,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, 
 
 
 # ---------------------------------------------------------------------------
-# Triage priority tiers (mirrors CURVE_TRIAGE.md "Calibration priority levels")
+# Triage priority tiers (mirrors CalibrationOps protected-anchor ordering)
 # ---------------------------------------------------------------------------
 
 PRIORITY_1_METABOLITES: Set[str] = {
@@ -46,7 +47,7 @@ PRIORITY_3_METABOLITES: Set[str] = {
 
 PRIORITY_4_METABOLITES: Set[str] = {
     "GLU", "GLN", "SER", "SAH", "OXOP", "MAL", "CIT",
-    # secondary extracellular readouts per CURVE_TRIAGE Priority 4
+    # secondary extracellular readouts per the low-priority triage tier
     "EXAN", "EURT", "EGLN", "EGLU", "EADE", "EINO", "EHYPX",
     "EMAL", "EFUM", "ECIT", "EOXOP", "ESER", "EARG",
     "EGSH", "EGSSG", "EASN", "EALA", "ECYS", "EMET", "EASP",
@@ -68,7 +69,7 @@ EXTRACELLULAR_METABOLITES: Set[str] = {
 }
 
 # ---------------------------------------------------------------------------
-# Dangerous compensators (mirrors CURVE_TRIAGE.md "Dangerous compensator parameters")
+# Dangerous compensators (mirrors CalibrationOps compensator guardrails)
 # ---------------------------------------------------------------------------
 
 _DANGEROUS_COMPENSATOR_DIRECT: Dict[str, str] = {
@@ -96,7 +97,7 @@ _DANGEROUS_COMPENSATOR_DIRECT: Dict[str, str] = {
     ),
 }
 
-# Secondary VE* exports listed as compensators in CURVE_TRIAGE.
+# Secondary VE* exports listed as compensators in CalibrationOps.
 _DANGEROUS_EXPORT_VMAXS: Set[str] = {
     "vmax_VEXAN", "vmax_VEURT", "vmax_VEINO", "vmax_VEADE",
     "vmax_VEGLN", "vmax_VEGLU", "vmax_VEOXOP", "vmax_VESER",
@@ -147,7 +148,7 @@ _KEPT_ADENYLATE_ADDITIONS: Set[str] = {
 
 @dataclass
 class CustomDataAssessment:
-    """What the user actually measured, broken down by CURVE_TRIAGE priority."""
+    """What the user actually measured, broken down by triage priority."""
 
     measured: List[str]
     priority_1_measured: List[str]
@@ -264,7 +265,7 @@ def _fraction_measured(measured: Iterable[str], tier: Set[str]) -> float:
 def assess_custom_dataset(
     measured_metabolites: Optional[Sequence[str]],
 ) -> CustomDataAssessment:
-    """Classify a user's measured metabolite list against CURVE_TRIAGE tiers."""
+    """Classify a user's measured metabolite list against triage tiers."""
 
     measured = _normalize(measured_metabolites)
     measured_set = set(measured)
@@ -316,7 +317,7 @@ def assess_custom_dataset(
         )
     if p4 and not p1 and not p2:
         warnings.append(
-            "Only side-metabolism targets are measured. CURVE_TRIAGE rules "
+            "Only side-metabolism targets are measured. CalibrationOps rules "
             "discourage promoting calibrations driven by Priority 4 curves."
         )
 
