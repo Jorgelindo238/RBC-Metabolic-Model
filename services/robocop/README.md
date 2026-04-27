@@ -27,6 +27,11 @@ In this phase, RoBoCop owns:
   - builds the trace metadata, node-specific tags, and compact state snapshots shared by the runtime
 - `mutation/`
   - contains the bounded RoBoCop Mutation Agent v2 candidate generator
+- `agentic/`
+  - offline DeepAgents-based campaign supervisor prototype (advisory only).
+    See `services/robocop/agentic/README.md` and `AgentOps/CalibrationOps.md`
+    for the boundary contract. Optional dependency set lives in
+    `requirements-agentic.txt`. Not imported by web/API/worker production paths.
 
 ## Current boundary
 

@@ -37,6 +37,23 @@ streamlit_app/core
 
 services/robocop
   RoBoCop planning, triage, pure-ODE validation, memory, and orchestration helpers
+  services/robocop/agentic
+    DeepAgents-based campaign supervisor (offline single-shot + Path 3
+    autonomous campaign mode). Optional deepagents dependency in
+    requirements-agentic.txt; never imported by web/API/worker production
+    paths. Mutating tools gated on allow_mutations=True + CampaignBudget.
+
+scripts/run_bounded_autosearch.py
+  Deterministic LangGraph-based bounded autosearch runner. Source of
+  truth for calibration decisions. Writes the canonical
+  Simulations/.../autosearch_decisions.jsonl ledger.
+
+scripts/run_agentic_autosearch.py
+  Path 3 autonomous DeepAgents-driven campaign runner. Ships ALONGSIDE
+  scripts/run_bounded_autosearch.py - does not replace it. Loops the
+  agentic supervisor with hard caps (iteration / wall-clock / USD /
+  tool-call / kill-switch). Writes a SEPARATE
+  Simulations/robocop_agentic/campaign_decisions.jsonl ledger.
 
 scripts
   benchmark, calibration-job, artifact, registry, and bounded autosearch CLIs

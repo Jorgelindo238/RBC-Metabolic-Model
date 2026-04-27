@@ -58,6 +58,10 @@ Simulations/brodbar/**
 !Simulations/brodbar/calibration/calibration_report.json
 Simulations/brodbar_phase*/
 
+# Agentic supervisor runtime sandbox - all writes by services/robocop/agentic
+# and scripts/run_agentic_autosearch land here. Never tracked.
+Simulations/robocop_agentic/
+
 # Local experimental standardization inputs/exports.
 # The standardization script is tracked; raw/private spreadsheets and generated tables stay local.
 tests/Data_exp_update_01042020.xlsx
