@@ -68,3 +68,14 @@ tests/Data_exp_update_01042020.xlsx
 tests/bardyn_*_standardized.csv
 tests/bardyn_*_standardized.xlsx
 src/Initial_conditions_JA_Final_corrected.xlsx
+
+# Generated runtime configs from autosearch / smoke campaigns.
+# scripts/run_bounded_autosearch.py and scripts/run_agentic_autosearch.py
+# emit job/manifest/policy triplets per candidate iteration; these are
+# transient operator-run artifacts, not part of the source contract.
+# The *.example.json files in config/generated/ remain tracked as
+# canonical schema samples. Historical *_candidate_*.json files
+# already in git are left alone; only new ones are ignored.
+config/generated/job_candidate_*.json
+config/generated/manifest_candidate_*.json
+config/generated/policy_candidate_*.json
