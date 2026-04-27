@@ -1,0 +1,34 @@
+# ================================================================
+# RoBoCop Agentic Supervisor - Optional Local Dependencies
+# ================================================================
+# This file is intentionally NOT installed by:
+#   - api/requirements.txt
+#   - apps/calibration-worker/requirements.txt
+#   - apps/research-api/requirements.txt
+#   - apps/monitoring-api/requirements.txt
+#
+# It exists only for the offline DeepAgents RoBoCop supervisor
+# prototype that lives in services/robocop/agentic/.
+#
+# Per AgentOps/CalibrationOps.md ("DeepAgents direction"):
+#   - prototype is offline-only
+#   - no production dependency at first
+#   - all writes go through explicit bounded tools
+#   - compare DeepAgents recommendations to the existing LangGraph
+#     runner before any promotion
+#
+# Local install:
+#   pip install -r requirements.txt
+#   pip install -r requirements-agentic.txt
+# ================================================================
+
+# DeepAgents harness (LangChain/LangGraph-native agent harness)
+# https://github.com/langchain-ai/deepagents
+deepagents>=0.5.3
+
+# Required by deepagents for model resolution and OpenAI tool calling.
+# langgraph / langchain-core / langsmith / openai are already pinned in
+# the root requirements.txt; we add the langchain umbrella here because
+# init_chat_model lives in langchain.chat_models.
+langchain>=0.3.0
+langchain-openai>=0.2.0
