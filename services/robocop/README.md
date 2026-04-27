@@ -30,8 +30,11 @@ In this phase, RoBoCop owns:
 - `agentic/`
   - offline DeepAgents-based campaign supervisor prototype (advisory only).
     See `services/robocop/agentic/README.md` and `AgentOps/CalibrationOps.md`
-    for the boundary contract. Optional dependency set lives in
-    `requirements-agentic.txt`. Not imported by web/API/worker production paths.
+    for the boundary contract. Optional dependency set is pinned in the
+    root `requirements.txt` under the "RoBoCop Agentic Supervisor"
+    section. Not imported by web/API/worker production paths, and the
+    production deployment manifests do not pull from the root
+    `requirements.txt`.
 
 ## Current boundary
 

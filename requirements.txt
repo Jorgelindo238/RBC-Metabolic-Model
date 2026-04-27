@@ -55,3 +55,33 @@ pydantic-settings>=2.0.0
 
 # OpenAI Integration
 openai>=1.0.0
+
+# ================================================================
+# RoBoCop Agentic Supervisor (services/robocop/agentic/)
+# ----------------------------------------------------------------
+# These pins were previously in a separate requirements-agentic.txt
+# and were folded back into this file on 2026-04-27. They are
+# intentionally NOT installed by the production deployment manifests:
+#   - api/requirements.txt
+#   - apps/calibration-worker/requirements.txt
+#   - apps/research-api/requirements.txt
+#   - apps/monitoring-api/requirements.txt
+# Those manifests are self-contained and do NOT pull from this root
+# requirements.txt, so the agentic stack remains isolated from
+# production runtime images. This root file is for local dev and the
+# offline DeepAgents supervisor in services/robocop/agentic/ only.
+# Per AgentOps/CalibrationOps.md ("DeepAgents direction"):
+#   - prototype is offline-only
+#   - all writes go through explicit bounded tools
+#   - compare DeepAgents recommendations to the existing LangGraph
+#     runner before any promotion
+# ================================================================
+
+# DeepAgents harness (LangChain/LangGraph-native agent harness)
+# https://github.com/langchain-ai/deepagents
+deepagents>=0.5.3
+
+# Required by deepagents for model resolution and OpenAI tool calling.
+# init_chat_model lives in langchain.chat_models, hence the umbrella.
+langchain>=0.3.0
+langchain-openai>=0.2.0

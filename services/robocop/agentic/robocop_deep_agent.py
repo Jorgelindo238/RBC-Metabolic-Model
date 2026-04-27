@@ -4,8 +4,12 @@ This module is intentionally conservative:
 
 - It is OFF by default. Importing it has no side effects.
 - Calling :func:`build_robocop_deep_agent` requires the optional
-  ``deepagents`` and ``langchain-openai`` packages from
-  ``requirements-agentic.txt``.
+  ``deepagents`` and ``langchain-openai`` packages, both pinned in
+  the root ``requirements.txt`` (under the agentic section).
+  Production deployment manifests (``api/requirements.txt``,
+  ``apps/calibration-worker/requirements.txt``, etc.) intentionally
+  do NOT pull from the root file, so the agentic stack remains
+  isolated from production runtime images.
 - The returned agent is a compiled LangGraph graph (per the deepagents
   README). Caller code is responsible for invoking it with a bounded
   message payload.
@@ -35,9 +39,9 @@ DEFAULT_AGENT_NAME = "robocop-supervisor"
 class DeepAgentsNotInstalledError(RuntimeError):
     """Raised when ``deepagents`` is not importable.
 
-    Install the optional dependency set from the repo root:
+    Install the agentic dependency set from the repo root:
 
-    ``pip install -r requirements-agentic.txt``
+    ``pip install -r requirements.txt``
     """
 
 
@@ -93,7 +97,7 @@ def build_robocop_deep_agent(
     except ImportError as exc:  # pragma: no cover - depends on optional install
         raise DeepAgentsNotInstalledError(
             "deepagents is not installed. Run "
-            "`pip install -r requirements-agentic.txt` from the repo root."
+            "`pip install -r requirements.txt` from the repo root."
         ) from exc
 
     # Configure mutation context BEFORE constructing the tool registry

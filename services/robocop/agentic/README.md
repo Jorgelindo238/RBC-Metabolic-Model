@@ -51,13 +51,18 @@ remains the source of truth.
 ## Install (local only)
 
 ```powershell
-pip install -r requirements-agentic.txt
+pip install -r requirements.txt
 ```
 
-This file is intentionally NOT included in `api/requirements.txt`,
+The agentic deps (`deepagents`, `langchain`, `langchain-openai`) are
+pinned in the root `requirements.txt` under the explicit
+"RoBoCop Agentic Supervisor" section. The production deployment
+manifests (`api/requirements.txt`,
 `apps/calibration-worker/requirements.txt`,
-`apps/research-api/requirements.txt`, or
-`apps/monitoring-api/requirements.txt`.
+`apps/research-api/requirements.txt`,
+`apps/monitoring-api/requirements.txt`) are self-contained and do
+NOT pull from the root `requirements.txt`, so the agentic stack
+remains isolated from production runtime images.
 
 ## Required environment
 
