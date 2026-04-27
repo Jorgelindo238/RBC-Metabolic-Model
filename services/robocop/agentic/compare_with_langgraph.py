@@ -120,6 +120,10 @@ def compare(agentic_path: Path, langgraph_path: Path, out_dir: Optional[Path] = 
     }
 
     out_dir = out_dir or (COMPARISONS_ROOT / _utc_stamp())
+    if not out_dir.is_absolute():
+        out_dir = (REPO_ROOT / out_dir).resolve()
+    else:
+        out_dir = out_dir.resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "comparison.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False),
