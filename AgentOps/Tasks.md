@@ -115,7 +115,7 @@ Current state:
 - 3 subagents (`planner`, `triage_analyst`, `archivist`) with explicit per-subagent tool ACLs
 - `services/robocop/agentic/offline_runner.py` runs a single supervisor turn and writes a result JSON under `Simulations/robocop_agentic/runs/`
 - `services/robocop/agentic/compare_with_langgraph.py` is the parity gate against `scripts/run_bounded_autosearch.py` decisions
-- optional dependencies isolated in `requirements-agentic.txt` (NOT in the production web/API/worker images)
+- optional dependencies pinned in the root `requirements.txt` under the "RoBoCop Agentic Supervisor" section; the production deployment manifests (`api/requirements.txt`, `apps/calibration-worker/requirements.txt`, etc.) do not pull from root, so the agentic stack stays out of web/API/worker images
 - `qa/robocop/test_agentic_package.py` covers tool registry, ACLs, sandbox-only writes, and path-allow-list refusal
 - `qa/conftest.py` was added to fix a pre-existing namespace-package shadow that previously hid `services.robocop.messaging` from the qa suite
 

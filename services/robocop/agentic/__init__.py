@@ -8,7 +8,7 @@ production paths. See ``services/robocop/agentic/README.md`` and
 Intentionally light at import time: the heavy ``deepagents`` /
 ``langchain`` imports live inside ``robocop_deep_agent`` so that simply
 importing this package (e.g. for tests) does not require the optional
-``requirements-agentic.txt`` install.
+agentic dependency set in the root ``requirements.txt``.
 """
 
 from __future__ import annotations

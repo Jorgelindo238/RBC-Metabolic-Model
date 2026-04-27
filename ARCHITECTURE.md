@@ -39,9 +39,12 @@ services/robocop
   RoBoCop planning, triage, pure-ODE validation, memory, and orchestration helpers
   services/robocop/agentic
     DeepAgents-based campaign supervisor (offline single-shot + Path 3
-    autonomous campaign mode). Optional deepagents dependency in
-    requirements-agentic.txt; never imported by web/API/worker production
-    paths. Mutating tools gated on allow_mutations=True + CampaignBudget.
+    autonomous campaign mode). Optional deepagents dependency in the
+    root requirements.txt under the "RoBoCop Agentic Supervisor"
+    section; production deployment manifests do not pull from the root
+    file, so the agentic stack stays out of web/API/worker images.
+    Never imported by web/API/worker production paths. Mutating tools
+    gated on allow_mutations=True + CampaignBudget.
 
 scripts/run_bounded_autosearch.py
   Deterministic LangGraph-based bounded autosearch runner. Source of

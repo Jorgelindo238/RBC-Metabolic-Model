@@ -149,7 +149,7 @@ Implemented prototype files:
 - `services/robocop/agentic/offline_runner.py`
 - `services/robocop/agentic/compare_with_langgraph.py`
 - `services/robocop/agentic/README.md`
-- `requirements-agentic.txt`
+- `requirements.txt` (agentic deps under the "RoBoCop Agentic Supervisor" section)
 - `qa/robocop/test_agentic_package.py`
 - `qa/conftest.py`
 

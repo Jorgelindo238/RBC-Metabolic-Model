@@ -16,8 +16,8 @@ Two write surfaces exist:
 
 Heavy dependencies (``langchain_core.tools``, ``deepagents``) are
 imported lazily so that ``import services.robocop.agentic.tools`` works
-in environments without the optional ``requirements-agentic.txt``
-install (e.g. ``qa/robocop`` test runs).
+in environments without the optional agentic dependency set in the
+root ``requirements.txt`` (e.g. ``qa/robocop`` test runs).
 
 Mutation gating
 ---------------
