@@ -168,6 +168,12 @@ def run_offline_campaign(
     parsed = _try_parse_json(final_text)
 
     out_dir = out_dir or (RUNS_ROOT / _utc_stamp())
+    # Resolve relative paths against REPO_ROOT so result_payload["out_dir"]
+    # always reports a repo-relative path on stdout.
+    if not out_dir.is_absolute():
+        out_dir = (REPO_ROOT / out_dir).resolve()
+    else:
+        out_dir = out_dir.resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     result_payload = {
         "goal": goal,
