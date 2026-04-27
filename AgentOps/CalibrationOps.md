@@ -124,8 +124,8 @@ Priority reaction families:
 ## DeepAgents direction
 
 Decision:
-- DeepAgents can become the RoBoCop campaign supervisor.
-- It should not replace the deterministic scientific engine.
+- DeepAgents is now the RoBoCop campaign supervisor candidate.
+- It does not replace the deterministic scientific engine.
 
 Target architecture:
 - DeepAgents: planner, campaign supervisor, subagents, memory, high-level decisions.
@@ -134,23 +134,34 @@ Target architecture:
 - RoBoCop tools: calibration, strategy race, pure-ODE replay, triage, teacher-flux rescue, archive.
 - `src/MM_calibration.py`: scientific truth source.
 
-Prototype rules:
+Prototype rules (still in force during the offline phase):
 - offline first
 - no production dependency at first
 - no free-form scientific file mutation
 - all writes through explicit bounded tools
 - compare DeepAgents recommendations to the existing LangGraph runner before promotion
 
-Future prototype file:
-- `services/robocop/agentic/robocop_deep_agent.py`
+Implemented prototype files:
+- `services/robocop/agentic/robocop_deep_agent.py` (`build_robocop_deep_agent`)
+- `services/robocop/agentic/tools.py` (8 bounded tools + per-subagent ACL)
+- `services/robocop/agentic/prompts.py`
+- `services/robocop/agentic/subagents.py`
+- `services/robocop/agentic/offline_runner.py`
+- `services/robocop/agentic/compare_with_langgraph.py`
+- `services/robocop/agentic/README.md`
+- `requirements-agentic.txt`
+- `qa/robocop/test_agentic_package.py`
+- `qa/conftest.py`
 
-Candidate safe tools:
-- `run_strategy_race`
-- `run_pure_ode_replay`
-- `run_teacher_flux_rescue`
-- `read_memory`
-- `append_decision`
-- `summarize_campaign`
+Implemented safe tools (read-only or dry-run in this phase):
+- `read_session_memory` (read-only)
+- `summarize_campaign` (read-only)
+- `run_curve_triage` (read-only, wraps `services/robocop/curve_triage.py`)
+- `run_pure_ode_replay` (read-only, wraps `services/robocop/pure_ode_triage.py`)
+- `run_combined_triage` (read-only)
+- `run_strategy_race` (dry-run wrapper; real execution stays in `scripts/run_bounded_autosearch.py`)
+- `run_teacher_flux_rescue` (dry-run wrapper)
+- `append_recommendation` (write-only to `Simulations/robocop_agentic/recommendations.jsonl`)
 
 ## Current known scientific posture
 
