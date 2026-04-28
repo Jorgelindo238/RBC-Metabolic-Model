@@ -204,6 +204,8 @@ def build_command(job_spec: dict) -> list[str]:
         command.extend(['--case-time-budget-seconds', str(job_spec['case_time_budget_seconds'])])
     if job_spec.get('timeout_policy') is not None:
         command.extend(['--timeout-policy', job_spec['timeout_policy']])
+    if job_spec.get('dump_trajectories', False):
+        command.append('--dump-trajectories')
     return command
 
 

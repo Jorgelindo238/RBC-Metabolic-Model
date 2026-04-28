@@ -253,6 +253,7 @@ def build_eval_summary_payload(
                 'case_completion_status': case.get('case_completion_status', 'completed'),
                 'case_budget_seconds': case.get('case_budget_seconds'),
                 'case_time_budget_exceeded': case.get('case_time_budget_exceeded', False),
+                'trajectory_csv_path': case.get('trajectory_csv_path'),
             }
             for case in case_results
         ],
@@ -405,13 +406,14 @@ def compute_case_score(case_report: dict, scoring: dict):
     return score, score_breakdown
 
 
-def evaluate_case(case: dict, policy: dict, run_root: Path, scoring: dict):
+def evaluate_case(case: dict, policy: dict, run_root: Path, scoring: dict, dump_trajectories: bool = False):
     case_dir = run_root / case['name']
     run_kwargs = merge_run_config(policy, case.get('run_overrides', {}), case_dir)
     run_kwargs = apply_guardrails(run_kwargs, policy)
+    run_kwargs['dump_trajectories'] = dump_trajectories
 
     case_started_at = time.monotonic()
-    run_calibration(**run_kwargs)
+    _, _, trajectory_csv_path = run_calibration(**run_kwargs)
     elapsed_seconds = time.monotonic() - case_started_at
 
     report_path = case_dir / 'calibration_report.json'
@@ -432,6 +434,7 @@ def evaluate_case(case: dict, policy: dict, run_root: Path, scoring: dict):
         'effective_run_kwargs': run_kwargs,
         'elapsed_seconds': elapsed_seconds,
         'case_completion_status': 'completed',
+        'trajectory_csv_path': str(trajectory_csv_path) if trajectory_csv_path else None,
     }
 
 
@@ -462,6 +465,7 @@ def main():
     parser.add_argument('--time-budget-seconds', type=float, default=None)
     parser.add_argument('--case-time-budget-seconds', type=float, default=None)
     parser.add_argument('--timeout-policy', choices=TIMEOUT_POLICIES, default='stop_after_case')
+    parser.add_argument('--dump-trajectories', action='store_true', help='Dump metabolite trajectory CSVs for pure_ode_replay')
     args = parser.parse_args()
 
     if args.time_budget_seconds is not None and args.time_budget_seconds <= 0:
@@ -530,6 +534,7 @@ def main():
                 policy=policy,
                 run_root=run_root,
                 scoring=manifest.get('scoring', {}),
+                dump_trajectories=args.dump_trajectories,
             )
         except Exception as exc:
             completion_status = 'crashed'
