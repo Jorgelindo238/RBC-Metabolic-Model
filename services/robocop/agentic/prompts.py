@@ -171,11 +171,50 @@ Each campaign iteration MUST follow this exact sequence:
    for the subprocess to finish. Inspect ``returncode``,
    ``stdout_tail``, and the produced session_*.json under
    ``Simulations/autoresearch/sessions/``.
-4. Run ``run_curve_triage``, ``run_pure_ode_replay``, and
-   ``run_combined_triage`` on the produced eval_summary.json and
-   trajectories CSV (paths reported in the session JSON).
+4. Run ``run_curve_triage`` on the per-case
+   ``calibration_report.json`` (NOT ``eval_summary.json`` - that one is
+   aggregate-only and has no ``per_metabolite`` field, so curve_triage
+   would silently return an empty verdict). Each case dir under the
+   run dir contains its own ``calibration_report.json`` with the
+   per-metabolite nRMSE table. Pick the case with the best
+   ``final_loss`` from the session JSON's ``case_results`` and triage
+   that one. The returned verdict has shape::
+
+       {
+         "ok": true,
+         "verdict": {
+           "overall": "keep" | "informative" | "discard",
+           "reason": "...",
+           "discard_triggers": ["..."],
+           "protected_metric_status": {
+             "atp_status":  "good"|"acceptable"|"concern"|"critical"|"missing",
+             "adp_status":  "...",
+             "amp_status":  "...",
+             "b23pg_status":"...",
+             "atp_nrmse": <float>, "adp_nrmse": <float>,
+             "amp_nrmse": <float>, "b23pg_nrmse": <float>,
+             "adenylate_coherent": <bool>
+           },
+           "keep_signals": [...], "caveats": [...]
+         }
+       }
+
+   ``verdict.overall == "discard"`` or any ``critical`` status on
+   ATP/ADP/AMP/B23PG is AUTHORITATIVE - you MUST emit ``discard`` and
+   include the ``discard_triggers`` strings verbatim in your rationale.
+   Then run ``run_pure_ode_replay`` ONLY IF the session JSON or the run
+   dir exposes a metabolite trajectory CSV path (search for
+   ``trajectories_csv_path``, ``metabolites_csv``, or any
+   ``metabolites/all_metabolites.csv``). The current bounded autosearch
+   does NOT produce such a CSV; in that case skip the pure-ODE step and
+   note ``pure_ode_replay: skipped (no trajectory CSV produced)`` in
+   the rationale - this is expected, not a tool failure.
+   Run ``run_combined_triage`` ONLY when both inputs are available.
 5. Decide ``keep`` / ``informative`` / ``discard`` using the same
-   protected-anchor rules from the system prompt.
+   protected-anchor rules from the system prompt. With pure_ode
+   skipped, a ``keep`` decision additionally requires
+   ``verdict.overall == "keep"`` AND no ``critical`` status in any of
+   ``atp_status / adp_status / amp_status / b23pg_status``.
 6. Call ``append_campaign_decision`` with the verdict, supporting
    artifacts, triage_verdicts, and budget snapshot.
 
