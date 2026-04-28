@@ -26,6 +26,7 @@ Implemented capabilities:
 - worker-backed calibration execution
 - minimal RL triage environment
 - outbound Telegram alerts for long-running sessions
+- trajectory CSV dump from `run_calibration()` to enable `pure_ode_replay` from real autosearch runs (see "Trajectory CSV reachability" below)
 
 Production constraint:
 - the web path depends on `CALIBRATION_API_BASE_URL` and `CALIBRATION_API_SHARED_SECRET` pointing to the Hetzner worker.
@@ -171,6 +172,31 @@ Important lessons from recent campaigns:
 - Glucose/lactate pockets can saturate locally; repeated identical follow-ups should stop.
 - A phase-2 purine/adenylate seam can open gains after glucose basin saturation, but still needs pure-ODE survival.
 - Hybrid downstream seams are live but so far produce small true-ODE moves.
+
+## Trajectory CSV reachability
+
+`pure_ode_replay` and the supervisor's protected-anchor survival gate require
+`<run_dir>/<case>/metabolites/all_metabolites.csv`. As of branch `dev/next-phase`
+(commits `5609a541` + `6bddee10`, 2026-04-28):
+
+- `run_calibration(dump_trajectories=True)` writes the CSV after final evaluation.
+  The CSV has 200 timepoints across the full t_max horizon and one column per
+  ODE state. Names come from `BRODBAR_METABOLITE_MAP`; auxiliary states (e.g.
+  `PHI`) get `state_i` placeholders so `y.shape[0]` always matches.
+- The flag is plumbed through `scripts/run_calibration_eval.py`
+  (`--dump-trajectories`), `scripts/run_calibration_job.py`, and
+  `scripts/run_bounded_autosearch.py`. The bounded autosearch runner ALWAYS
+  emits `dump_trajectories: True` in its job spec, so any real autosearch run
+  produces a trajectory CSV.
+- `eval_summary.json` carries `trajectory_csv_path` per case, which the
+  DeepAgents supervisor uses to invoke `pure_ode_replay` against the
+  deterministic-runner artifacts.
+- `run_calibration()` now returns `(current_params, final_loss, trajectory_csv_path)`.
+  Callers that previously unpacked a 2-tuple must be updated; this is already
+  done for `apps/api/services/mm_calibration_adapter.py`.
+- The Path 3 subprocess hard timeout (`SUBPROCESS_HARD_TIMEOUT_SECONDS` in
+  `services/robocop/agentic/tools.py`) is 7200s, because the canonical Bordbar
+  manifest at policy-default `n_trials` routinely exceeds 60 min.
 
 ## Promotion rule
 

@@ -137,8 +137,23 @@ Path 3 autonomous campaign runner (2026-04-27):
 - best-effort token+USD accounting: `services/robocop/agentic/cost.py`. Pricing table covers gpt-5.4 / gpt-5.5 / gpt-4o-mini.
 - 18 new safety tests in `qa/robocop/test_agentic_autonomous.py` (mutation-gating, kill-switch, budget caps, ledger schema, anchor regression, ACL non-leak). qa total: 126 passing.
 
-Next:
-- Live autonomous-mode dry-run smoke: invoke `scripts/run_agentic_autosearch.py` with a tiny budget and operator instruction to use `dry_run=true` in the spec, so the subprocess exercises the plumbing without running scientific evaluation.
+Trajectory CSV plumbing (2026-04-28, branch `dev/next-phase`, commits `5609a541` + `6bddee10`):
+- `run_calibration()` in `src/MM_calibration.py` accepts `dump_trajectories=True` and writes `<run_dir>/<case>/metabolites/all_metabolites.csv` (200 timepoints x model state count, columns named via `BRODBAR_METABOLITE_MAP`; auxiliary states like `PHI` get `state_i` names).
+- The flag is plumbed through `scripts/run_calibration_eval.py` (`--dump-trajectories`), `scripts/run_calibration_job.py`, and `scripts/run_bounded_autosearch.py` (always `True` in the emitted job spec). `eval_summary.json` now carries `trajectory_csv_path` per case.
+- `apps/api/services/mm_calibration_adapter.py` was updated for the new 3-tuple return signature.
+- This unblocks `services/robocop/pure_ode_triage` (`pure_ode_replay`) from real autosearch runs - the supervisor can now apply the protected-anchor survival gate to deterministic-runner artifacts.
+- `services/robocop/agentic/tools.py::SUBPROCESS_HARD_TIMEOUT_SECONDS` was bumped from 3600 to 7200 because the canonical Bordbar manifest at policy-default `n_trials` routinely exceeds 60 min. Inner `loop_budget_seconds` (<= 1800) still caps the multi-iteration session.
+
+Path 3 real smoke `path3_real_smoke_v1` (2026-04-28, before the timeout bump):
+- iteration 1/1, wall 3664s, USD $0.30, tool calls 1
+- subprocess hit the 3600s outer timeout, returned `ok=false`, no artifacts
+- agent correctly REFUSED triage (no trajectory CSV, no calibration report) and emitted `informative` verdict with the correct open question ("why did the bounded subprocess exceed the outer 3600s timeout despite loop_budget_seconds=1788?")
+- ledger entry written cleanly to `Simulations/robocop_agentic/campaign_decisions.jsonl` with full structured `triage_verdicts` showing explicit `skipped` reasons per tool
+- this validated the FAILURE path of the Path 3 contract; the HAPPY path on real artifacts is still unobserved.
+
+Next future-session work (not blocking):
+- Re-run the real Path 3 campaign with the 7200s timeout to observe the FULL HAPPY PATH end-to-end (successful subprocess -> trajectory CSV -> `pure_ode_replay` -> curve triage -> promotion gate). Suggested args: `--campaign-id path3_real_smoke_v2 --max-iterations 1 --max-wall-seconds 9000 --max-usd 2.0 --max-tool-calls 30`.
+- Open scientific question: revoke or formally qualify Phase 4 lactate_balance "current best" status. Deterministic re-evaluation via `triage_pure_ode_csv` on `Simulations/brodbar_phase4_lac_bordbar/metabolites/all_metabolites.csv` reports overall=COLLAPSED with 3 critical floor breaches (B23PG 0.0088 mM vs floor 1.5; GSH 0.0158 mM vs floor 0.5; ADP below 0.05 mM floor). Phase 4 was promoted on aggregate-fit improvement BEFORE the pure-ODE survival gate became a promotion requirement, so under current rules it would NOT be promoted. Operator decision required: (a) qualify the durable memory entry as "best aggregate fit to date, does not survive pure-ODE gate", or (b) redo Phase 4 calibration under the stricter gate.
 - Run `compare_with_langgraph.py` against an existing autosearch decision JSON for the same Phase 5b seed and capture the parity report.
 - After several agreements with no `keep` vs non-`keep` blockers, consider widening the operator-allowed budget caps and exposing the runner as a scheduled job.
 

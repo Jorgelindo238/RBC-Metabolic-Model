@@ -151,7 +151,17 @@ decision explicitly promotes one.
 Do not move production to Python 3.14 until the scientific dependency stack is
 updated and validated. The old `numpy<2.0.0` constraint is the known blocker.
 
-### 30. AgentOps should remain a cockpit
+### 30. Trajectory CSVs are the contract for `pure_ode_replay`
+
+`services/robocop/pure_ode_triage` (and any DeepAgents triage that depends on
+it) requires `<run_dir>/<case>/metabolites/all_metabolites.csv`. Real autosearch
+runs must keep `dump_trajectories=True` plumbed through `run_calibration()` and
+the eval/job/autosearch scripts, and must keep `trajectory_csv_path` in
+`eval_summary.json`. If you change the column scheme, preserve the property
+that `len(columns) == y.shape[0]` and that protected anchors (ATP, ADP, AMP,
+IMP, B23PG, GSH, EGLC, ELAC, LAC) are reachable by name.
+
+### 31. AgentOps should remain a cockpit
 
 Use:
 - `Tasks.md` for active state
