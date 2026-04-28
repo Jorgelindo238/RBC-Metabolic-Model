@@ -56,7 +56,14 @@ CAMPAIGN_RUNS_ROOT = AGENTIC_SANDBOX_ROOT / "campaign_runs"
 # CampaignBudget caps and serve as a per-tool-call belt and braces.
 SUBPROCESS_MAX_ITERATIONS = 3
 SUBPROCESS_MAX_LOOP_BUDGET_SECONDS = 1800
-SUBPROCESS_HARD_TIMEOUT_SECONDS = SUBPROCESS_MAX_LOOP_BUDGET_SECONDS + 1800
+# Hard subprocess wall-clock cap. The canonical Bordbar calibration at
+# policy-default n_trials with the full manifest routinely exceeds 60 min,
+# so we allow up to 2 h (7200s) to give the subprocess room to complete
+# a full case sweep on real artifacts. The inner loop_budget_seconds
+# (<= SUBPROCESS_MAX_LOOP_BUDGET_SECONDS) still caps the session-level
+# multi-iteration loop; this outer timeout is belt-and-braces against
+# a runaway process.
+SUBPROCESS_HARD_TIMEOUT_SECONDS = 7200
 
 READABLE_ROOTS = (
     REPO_ROOT / "Simulations",
