@@ -607,6 +607,7 @@ def node_propose(state: SearchState) -> SearchState:
             "base_manifest_path": state["base_manifest_path"],
             "mutation_summary": mutation_summary,
         },
+        "dump_trajectories": True,
     }
     if state.get("time_budget_seconds") is not None:
         job_spec["time_budget_seconds"] = state.get("time_budget_seconds")

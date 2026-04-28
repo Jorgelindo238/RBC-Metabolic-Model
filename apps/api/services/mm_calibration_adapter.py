@@ -661,7 +661,7 @@ def _run_single_web_calibration(request) -> dict:
             load_params_path.write_text(json.dumps(initial_params, indent=2), encoding="utf-8")
 
         try:
-            current_params, final_loss = mm.run_calibration(
+            current_params, final_loss, _trajectory_csv_path = mm.run_calibration(
                 phases=[1, 2, 3],
                 n_trials=max(1, request.max_iterations),
                 global_trials=0,

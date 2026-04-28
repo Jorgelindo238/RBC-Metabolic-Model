@@ -3217,6 +3217,7 @@ def run_calibration(
     teacher_target_weights=None,
     teacher_focus_metabolites=None,
     teacher_focus_weight=DEFAULT_TEACHER_FOCUS_WEIGHT,
+    dump_trajectories=False,
 ):
     if phases is None:
         phases = [1, 2, 3]
@@ -3941,7 +3942,37 @@ def run_calibration(
     print(f"Final nRMSE: {final_loss:.4f}")
     print(f"{'=' * 70}")
 
-    return current_params, final_loss
+    trajectory_csv_path = None
+    if dump_trajectories:
+        print("\n[4/4] Dumping trajectory CSV...")
+        try:
+            sol = global_primary._cached_solve(current_params, mode="dense")
+            if sol.success:
+                y = np.maximum(sol.y, 0.0)
+                t = sol.t
+
+                # Map ODE state indices to metabolite names via BRODBAR_METABOLITE_MAP.
+                # Size the column list to the actual ODE state dimension (may exceed
+                # NUM_BASE_METABOLITES if auxiliary states like phi/volume are present).
+                n_states = y.shape[0]
+                metabolite_columns = [f"state_{i}" for i in range(n_states)]
+                for name, idx in BRODBAR_METABOLITE_MAP.items():
+                    if 0 <= idx < n_states:
+                        metabolite_columns[idx] = name
+                df_full_metabolites = pd.DataFrame(y.T, columns=metabolite_columns)
+                df_full_metabolites.insert(0, 'Time (days)', t)
+
+                metabolites_dir = resolved_out_dir / "metabolites"
+                metabolites_dir.mkdir(parents=True, exist_ok=True)
+                trajectory_csv_path = metabolites_dir / "all_metabolites.csv"
+                df_full_metabolites.to_csv(trajectory_csv_path, index=False)
+                print(f"  Trajectory CSV saved to: {trajectory_csv_path}")
+            else:
+                print(f"  WARNING: Failed to solve ODE for trajectory dump: {sol.message}")
+        except Exception as e:
+            print(f"  WARNING: Failed to dump trajectory CSV: {e}")
+
+    return current_params, final_loss, trajectory_csv_path
 
 
 # AGENT_EDITABLE_END: diagnostics_reporting
