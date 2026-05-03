@@ -16,12 +16,84 @@ Focus areas:
 
 ## Immediate next action
 
-- Finish the AgentOps simplification:
-  - keep `README.md`, `OperatingManual.md`, `Tasks.md`, `Memory.md`, `Playbooks.md`, `CalibrationOps.md`, and `Archive.md`
-  - remove superseded AgentOps files after their content is represented
-  - update stale references in root docs
-  - verify `rg` finds no references to deleted AgentOps filenames
-- Then review the diff and commit only if requested by the user.
+Run the **full canonical-Bordbar parity sweep** on Hetzner (or any
+unattended worker) and capture the verdict in `Archive.md`. The harness
+is built, smoke-tested, and the decision gate is wired; what's missing
+is a real-budget run.
+
+Command:
+
+```powershell
+python scripts/run_auto_param_scope_parity.py `
+  --dataset canonical-bordbar `
+  --n-trials 50 `
+  --t-max 42 `
+  --loss-tolerance-pct 0.10 `
+  --out-dir Simulations/auto_param_scope/parity_v1_full
+```
+
+Acceptance criteria (encoded in the harness):
+- `decision_gate == "green_light_phase_a"` → start Phase A (sensitivity
+  probe of the plan).
+- `decision_gate == "root_cause_phase0"` → fix Phase 0 (likely:
+  regulation-param identifiability gap, ki_/ka_ defaults too
+  aggressive, or kernel mis-tuned) before any Phase A work.
+- `decision_gate == "needs_review"` → inspect
+  `final_loss_delta_pct_of_curated` and `protected_anchor_comparison`;
+  small loss gap with equal-or-better anchors can be promoted to green
+  by widening tolerance after manual review.
+
+Then write a one-page summary into `Archive.md` (final losses,
+anchor verdicts, scope Jaccard, decision, follow-ups).
+
+### Status of the parity-sweep harness
+
+Landed and smoke-tested (2026-05-03):
+- `scripts/run_auto_param_scope_parity.py` (NEW): adapter-driven
+  (`run_web_calibration`), no duplicated Phase 0 logic. Three-state
+  decision gate. Dry-run mode for scope-only checks.
+- Smoke at `--n-trials 1` against the canonical Bordbar dataset wrote
+  `Simulations/auto_param_scope/parity_v1/result.json` (status
+  `completed`, decision `needs_review`).
+- Smoke is signal-poor for the Phase 0 verdict because both branches
+  report `improvement_pct=0.0` — at `n_trials=1` the optimiser barely
+  runs, so the 19.88% loss gap is a starting-defaults delta (auto-scope
+  injects 92 extra `PHASE_MAP` defaults vs curated's 6), not an
+  optimisation-quality delta. AMP is good-vs-critical but at this
+  budget that's noise.
+- The smoke validated the gate end-to-end and surfaced one real bug,
+  fixed in the same session.
+
+### Bug fix shipped alongside the harness
+
+`apps/api/services/pure_ode_runtime.py`: `_write_all_metabolites_csv`
+and `_write_reaction_fluxes_csv` were using `... or []` truthiness on
+values that the simulation engine sometimes returned as numpy arrays,
+which raised `ValueError: The truth value of an array with more than
+one element is ambiguous.` whenever the parity script ran the pure-ODE
+replay. Replaced with a `_sequence_values(...)` helper that tolerates
+None / `np.ndarray` / strings / arbitrary iterables; also added the
+`apps/api` directory to `sys.path` so script-driven callers resolve
+`services.*` the same way the FastAPI process does. Full qa suite
+stays green at 166/166. Consistent with Memory rule 17.
+
+### Follow-ups (small, non-blocking)
+
+- Add a regression test under `qa/api/` that drives
+  `_write_all_metabolites_csv` and `_write_reaction_fluxes_csv` with
+  numpy-array inputs so the truthiness bug cannot silently reappear.
+- Repair the pre-existing `PHASE2_PARAMS["vmax_VAMPD1"] = (0.538065,
+  0.001, 0.1)` default-out-of-bounds defect once a real campaign needs
+  it. Auto-scope clipping makes runtime safe for now.
+
+### Closed (kept for cockpit context)
+
+Previous "AgentOps simplification" close-out is complete:
+- only the 7 target files (`README`, `OperatingManual`, `Tasks`,
+  `Memory`, `Playbooks`, `CalibrationOps`, `Archive`) live under
+  `AgentOps/`
+- repo-wide `rg AgentOps/\w+\.md` finds 38 references across 14 files;
+  every single one resolves to a surviving file (no stale links)
 
 ## Active workstreams
 
@@ -99,6 +171,78 @@ Current state:
 
 Next:
 - run the next real bounded campaign only after production smoke and AgentOps cleanup are stable.
+
+### Auto-calibrate-all + ML flux-learning rollout
+
+Status: Phase 0 complete (paused 2026-04-28). Plan file:
+`C:/Users/Jorgelindo/.windsurf/plans/auto-calibrate-all-and-ml-flux-learning-179f0d.md`.
+
+Goal:
+- when a user uploads custom data, automatically pick a sensible calibration
+  scope from the uploaded metabolites' stoichiometric neighbourhood instead of
+  forcing the caller to enumerate `params_to_optimize` by hand
+- prepare the structural foundations for later phases (sensitivity pruning,
+  flux supervision, ML warmstart, hybrid structure learning).
+
+Phase 0 delivered (2026-04-28):
+- `src/rbc_stoichiometry.py` (NEW): source-driven structural parser of
+  `src/equadiff_brodbar.py`. Public API: `STOICHIOMETRY`, `REACTION_PARAMS`,
+  `REVERSE_INDEX`, `KNOWN_PARAM_UNIVERSE`, `ZERO_FLUX_REACTIONS`,
+  `reactions_for_metabolites`, `params_for_reactions`,
+  `params_for_metabolites`, `validate_consistency`. Drift in
+  `equadiff_brodbar.py` raises at import time (intentional fail-loud).
+- `src/MM_calibration.py`: `AUTO_SCOPE_KERNEL` (= `PHASE1_BASE_PARAMS` keys),
+  `DEFAULT_PARAM_BOUNDS`, `derive_auto_param_scope(...)`,
+  `auto_scope_with_bounds(...)`.
+- `apps/api/routers/calibration.py`: `params_to_optimize` defaults to `{}`,
+  new tri-state `auto_param_scope: Optional[bool]` field.
+- `apps/api/services/mm_calibration_adapter.py`:
+  `_resolve_auto_param_scope_decision`, `_maybe_apply_auto_param_scope`,
+  env kill switch `AIRBC_DISABLE_AUTO_PARAM_SCOPE`. Wired before the strict
+  allow-list check; allow-list now also admits `PARAM_CLASS_REGULATION`.
+  Response payload exposes `auto_param_scope_applied` and
+  `auto_param_scope_params`.
+- `qa/test_auto_param_scope.py`: 40 regression tests covering parser
+  invariants, scope reachability, tri-state, env kill switch, bounds
+  clipping, allow-list integration. Full qa suite stays green at 166
+  passing.
+
+Phase 0 deferred / explicitly out of scope:
+- Sensitivity-based pruning of "degenerate at canonical IC" parameters
+  (deferred to Phase E of the plan).
+- Hybrid structure parameters (`hybrid_*`, `kinetic_family_*`,
+  `transport_gate_*`) (deferred to Phase F).
+- Numerical parity benchmark of auto-scope vs the curated calibration
+  profile on the canonical Bordbar dataset (the structural anchor test in
+  `TestAutoParamScope0c` is in place; the full optimisation parity belongs
+  to a Phase A validation sweep).
+
+Pre-existing data defect surfaced (not fixed):
+- `PHASE2_PARAMS["vmax_VAMPD1"] = (0.538065, 0.001, 0.1)` — registered
+  default exceeds the upper bound. The auto-scope wrapper clips initial
+  seeds, so runtime is safe; track separately if a future calibration
+  campaign needs the default repaired.
+
+Parity-sweep harness landed (2026-05-03):
+- `scripts/run_auto_param_scope_parity.py` runs both branches through the
+  adapter (`run_web_calibration`) and emits a single JSON artifact with
+  scope diff, loss delta, protected-anchor severity comparison, and a
+  three-state decision gate (`green_light_phase_a` /
+  `root_cause_phase0` / `needs_review`). Smoke at `--n-trials 1` wrote
+  `Simulations/auto_param_scope/parity_v1/result.json` (status
+  `completed`, decision `needs_review`). Smoke is signal-poor for the
+  Phase 0 verdict because `improvement_pct=0.0` on both branches at
+  this budget; full Hetzner sweep at `--n-trials 50` is the gate.
+- Surfaced and fixed `apps/api/services/pure_ode_runtime.py`
+  truthiness-on-numpy-array bug in the same session.
+
+Next when work resumes (Phase A and beyond):
+- Run the full Hetzner parity sweep (see "Immediate next action" above)
+  and capture the verdict in `Archive.md`.
+- Phase A: sensitivity probe for canonical-IC degenerate parameters; prune
+  before passing to the optimiser. Gated on a green Hetzner sweep.
+- Phase B onwards: per the plan file (flux-supervision targets, ML warmstart,
+  hybrid structure-learning).
 
 ### DeepAgents RoBoCop supervisor
 

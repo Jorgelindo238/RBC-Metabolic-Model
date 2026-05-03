@@ -108,6 +108,53 @@ Avoid:
 - promoting fit-only wins without pure-ODE validation
 - rewriting ODE topology without a staged migration plan
 
+## Auto-param-scope (Phase 0)
+
+Source of truth for the per-reaction stoichiometry and parameter map used by
+auto-scope is `src/rbc_stoichiometry.py`. It parses
+`src/equadiff_brodbar.py` at import time; any drift in the ODE source raises
+loudly. Do not maintain a parallel hand-written reaction table.
+
+Calibration requests no longer have to enumerate `params_to_optimize`. When a
+custom-data request arrives with an empty `params_to_optimize` and uploaded
+experimental data, the worker derives a scope automatically:
+
+1. Find every reaction with non-zero stoichiometry on any uploaded metabolite
+   (`reactions_for_metabolites`).
+2. Pull the `vmax_*`, `km_*`, and regulation (`ki_*`/`ka_*`/`alpha_*`/`n_*`)
+   parameters of those reactions, intersected with the calibrator's
+   authoritative parameter universe (`mm.DEFAULT_PARAM_VALUES`).
+3. Always union with the auto-scope kernel = `PHASE1_BASE_PARAMS` keys.
+4. Return `{name: (initial, lo, hi)}` triples; initials are taken from
+   `request.base_params` if provided, otherwise from `PHASE_MAP` defaults,
+   then clipped into `[lo, hi]`.
+
+Tri-state on `request.auto_param_scope`:
+- `None` (default): auto-detect — enable when `params_to_optimize` is empty
+  AND custom experimental data is provided.
+- `True`: force-on — derive scope even if data is missing or partial.
+- `False`: force-off — preserve legacy strict behaviour where the caller
+  must supply `params_to_optimize`.
+
+Env kill switch:
+- `AIRBC_DISABLE_AUTO_PARAM_SCOPE=1` (or `true`/`yes`/`on`, case-insensitive)
+  on the worker disables the feature regardless of caller flags.
+
+Response payload visibility:
+- `auto_param_scope_applied: bool`
+- `auto_param_scope_params: list[str]` — the sorted names that were added.
+
+Hybrid kinetics structure parameters (`hybrid_*`, `kinetic_family_*`,
+`transport_gate_*`) are deliberately excluded from the default scope. Phase 0
+is structural reachability only; identifiability pruning and hybrid scope
+expansion are reserved for later phases of the plan
+(`C:/Users/Jorgelindo/.windsurf/plans/auto-calibrate-all-and-ml-flux-learning-179f0d.md`).
+
+Auto-scope is a *structural* claim, not an *identifiability* claim. It
+guarantees every returned name has a valid bounds triple and a reaction that
+touches the upload, but it does not assert that every parameter is
+identifiable from the data. Phase E (sensitivity pruning) will tighten this.
+
 ## Hybrid kinetics direction
 
 Hybrid kinetics may be useful, but must enter safely:

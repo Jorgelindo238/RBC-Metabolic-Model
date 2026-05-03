@@ -37,6 +37,16 @@ from equadiff_brodbar import (
 )
 from parse_initial_conditions import parse_initial_conditions
 
+# Phase 0: stoichiometric reachability for auto-param-scope. Imported defensively
+# so any parser drift in rbc_stoichiometry never breaks calibration; auto-scope
+# simply degrades to the existing curated profile when this import fails.
+try:
+    import rbc_stoichiometry as _rbc_stoichiometry  # type: ignore
+    _RBC_STOICHIOMETRY_AVAILABLE = True
+except Exception:  # pragma: no cover - defensive
+    _rbc_stoichiometry = None  # type: ignore[assignment]
+    _RBC_STOICHIOMETRY_AVAILABLE = False
+
 try:
     import optuna
     optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -702,6 +712,174 @@ DEFAULT_PARAM_VALUES = {
     for phase_params in PHASE_MAP.values()
     for pname, (default, _, _) in phase_params.items()
 }
+
+DEFAULT_PARAM_BOUNDS = {
+    pname: bounds
+    for phase_params in PHASE_MAP.values()
+    for pname, bounds in phase_params.items()
+}
+
+
+# =============================================================================
+# AUTO PARAM SCOPE (Phase 0 of the auto-calibrate-all + ML flux-learning plan)
+# =============================================================================
+#
+# Plan reference:
+#   C:/Users/Jorgelindo/.windsurf/plans/auto-calibrate-all-and-ml-flux-learning-179f0d.md
+#
+# Purpose: when a user uploads custom data with N metabolites (potentially with
+# no explicit `params_to_optimize`), automatically pick a sensible parameter
+# scope that covers every reaction stoichiometrically reachable from the
+# uploaded metabolites, intersected with the calibrator's known parameter
+# universe.
+#
+# Phase 0 deliberately keeps the scope to vmax + km parameters (plus the
+# regulation params already inside PHASE1_BASE_PARAMS as the "kernel"). Hybrid
+# structure parameters (Hill exponents, allosteric Ki/Ka/alpha) are only
+# included when ``include_hybrid=True`` — they are reserved for Phase F of the
+# plan after identifiability work lands. The "degenerate-at-canonical-IC"
+# pruning step described in the plan is also deferred to Phase E (Phase 0
+# returns the structurally-reachable set as-is).
+
+# The kernel is the always-included set of parameters that anchor the
+# physiological core of the calibration even when the upload has no
+# extracellular signals. Equal to PHASE1_BASE_PARAMS by design — when that
+# dict changes, the kernel changes with it.
+AUTO_SCOPE_KERNEL: frozenset = frozenset(PHASE1_BASE_PARAMS.keys())
+
+
+def _normalize_metabolite_name_set(names) -> set:
+    """Return a UPPER-cased, stripped set of names (or empty set)."""
+    if not names:
+        return set()
+    if isinstance(names, str):
+        names = [names]
+    return {str(n).strip().upper() for n in names if str(n).strip()}
+
+
+def derive_auto_param_scope(
+    uploaded_metabolites,
+    *,
+    always_include_kernel: bool = True,
+    include_kms: bool = True,
+    include_regulation: bool = True,
+    include_hybrid: bool = False,
+) -> list:
+    """Return a sorted list of calibratable parameter names whose reactions
+    affect the uploaded metabolites' stoichiometric neighbourhood.
+
+    The result is the union of:
+      1. Stoichiometrically-reachable parameters: every reaction with non-zero
+         stoichiometry on any uploaded metabolite contributes its vmax / km
+         (and optionally regulation / hybrid) parameters.
+      2. The auto-scope kernel (``PHASE1_BASE_PARAMS`` keys), included
+         unconditionally when ``always_include_kernel`` is True.
+
+    The result is always intersected with ``DEFAULT_PARAM_VALUES`` (the
+    calibrator's authoritative parameter universe), so every returned name has
+    a valid ``(default, lo, hi)`` triple in ``DEFAULT_PARAM_BOUNDS``.
+
+    Parameters
+    ----------
+    uploaded_metabolites
+        Iterable of metabolite names (case-insensitive). Names not recognised
+        by ``BRODBAR_METABOLITE_MAP`` are silently ignored — the caller is
+        expected to filter inputs upstream (the adapter does this).
+    always_include_kernel
+        If True (default), always include ``PHASE1_BASE_PARAMS`` keys.
+    include_kms
+        If False, drop ``km_*`` parameters (vmax-only auto-scope).
+    include_regulation
+        If True (default), keep ``ki_*`` / ``ka_*`` / ``alpha_*`` / ``n_*``
+        parameters when reachable. Phase 0 keeps these on because they shape
+        existing flux laws (e.g. PK F16BP allosteric activation).
+    include_hybrid
+        If True, also include ``hybrid_*`` / ``kinetic_family_*`` /
+        ``transport_gate_*`` parameters. Phase 0 default is False; structure
+        learning is deferred to Phase F of the plan.
+
+    Returns
+    -------
+    list[str]
+        Sorted list of parameter names suitable for use as keys of the web
+        adapter's ``params_to_optimize`` dict. Empty list if rbc_stoichiometry
+        is unavailable (defensive: the caller is expected to fall back to its
+        existing scope-resolution path in that case).
+    """
+    if not _RBC_STOICHIOMETRY_AVAILABLE or _rbc_stoichiometry is None:
+        return []
+
+    uploaded = _normalize_metabolite_name_set(uploaded_metabolites)
+    candidates: set = set()
+
+    if uploaded:
+        try:
+            reachable = _rbc_stoichiometry.params_for_metabolites(
+                uploaded,
+                include_hybrid=include_hybrid,
+                include_regulation=include_regulation,
+                include_degradation=False,
+            )
+        except Exception:
+            reachable = frozenset()
+        candidates.update(reachable)
+
+    if always_include_kernel:
+        candidates.update(AUTO_SCOPE_KERNEL)
+
+    if not include_kms:
+        candidates = {n for n in candidates if not n.startswith("km_")}
+
+    # Final filter: only return parameters that have a registered
+    # (default, lo, hi) triple — guarantees the caller can safely ask the
+    # optimiser to vary every returned name.
+    filtered = {n for n in candidates if n in DEFAULT_PARAM_VALUES}
+
+    return sorted(filtered)
+
+
+def auto_scope_with_bounds(
+    uploaded_metabolites,
+    *,
+    base_params=None,
+    always_include_kernel: bool = True,
+    include_kms: bool = True,
+    include_regulation: bool = True,
+    include_hybrid: bool = False,
+) -> dict:
+    """Convenience wrapper: ``{name: (initial, lo, hi)}`` for the auto-scope.
+
+    The ``initial`` value is taken from ``base_params`` when provided,
+    otherwise from the ``PHASE_MAP`` default. Lower / upper bounds always
+    come from ``DEFAULT_PARAM_BOUNDS`` so the optimiser sees a consistent
+    feasible region regardless of the user's seed.
+    """
+    names = derive_auto_param_scope(
+        uploaded_metabolites,
+        always_include_kernel=always_include_kernel,
+        include_kms=include_kms,
+        include_regulation=include_regulation,
+        include_hybrid=include_hybrid,
+    )
+
+    base_params = base_params or {}
+    out: dict = {}
+    for name in names:
+        bounds = DEFAULT_PARAM_BOUNDS.get(name)
+        if bounds is None:
+            continue
+        default, lo, hi = bounds
+        initial = base_params.get(name, default)
+        try:
+            initial_f = float(initial)
+        except (TypeError, ValueError):
+            initial_f = float(default)
+        # Clip the initial guess into the bounds so downstream samplers don't
+        # immediately reject it.
+        initial_clipped = float(min(max(initial_f, lo), hi))
+        out[name] = (initial_clipped, float(lo), float(hi))
+    return out
+
 
 TRANSPORT_ONLY_PARAM_NAMES = {
     "vmax_VEGLC",

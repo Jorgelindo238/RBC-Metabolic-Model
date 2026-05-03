@@ -161,7 +161,31 @@ the eval/job/autosearch scripts, and must keep `trajectory_csv_path` in
 that `len(columns) == y.shape[0]` and that protected anchors (ATP, ADP, AMP,
 IMP, B23PG, GSH, EGLC, ELAC, LAC) are reachable by name.
 
-### 31. AgentOps should remain a cockpit
+### 31. Auto-param-scope is structural, not identifiability
+
+Phase 0 auto-param-scope (`mm.derive_auto_param_scope` /
+`mm.auto_scope_with_bounds`) returns the stoichiometric neighbourhood of the
+uploaded metabolites unioned with the `PHASE1_BASE_PARAMS` kernel, filtered
+against `mm.DEFAULT_PARAM_VALUES`. It does NOT prove every returned
+parameter is identifiable from the data. Do not treat a successful
+auto-scope expansion as a license to promote a candidate; the pure-ODE
+survival gate and protected-anchor triage still apply. Sensitivity-based
+pruning lives in Phase E of the plan and has not landed yet. When scope
+feels too wide, the right fix is to run the probe, not to silently prune.
+
+### 32. `src/rbc_stoichiometry.py` is the single source of reaction truth
+
+The stoichiometry table, reverse index, per-reaction parameter map, and
+zero-flux deletions are derived by parsing `src/equadiff_brodbar.py` at
+import time. Do not maintain a parallel hand-written reaction table for
+auto-scope, curve triage, or the agentic planner. If the ODE source drifts,
+`rbc_stoichiometry` will raise loudly on import; fix the parser (or the ODE
+source) rather than shadow the drift with a hardcoded lookup. Hybrid flux
+dispatches (`_compute_*_flux(...)`) must keep their call sites parseable by
+the paren-balanced accumulator — if new multi-line forms are introduced,
+extend the parser, not the override list.
+
+### 33. AgentOps should remain a cockpit
 
 Use:
 - `Tasks.md` for active state

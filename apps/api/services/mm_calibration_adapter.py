@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 import json
 import logging
+import os
 from functools import lru_cache
 import tempfile
 import traceback
@@ -164,6 +165,118 @@ def _build_initial_params(request) -> Dict[str, float]:
         if bounds:
             params[str(name)] = float(bounds[0])
     return params
+
+
+# ---------------------------------------------------------------------------
+# Phase 0: auto-param-scope expansion
+# ---------------------------------------------------------------------------
+#
+# Plan reference:
+#   C:/Users/Jorgelindo/.windsurf/plans/auto-calibrate-all-and-ml-flux-learning-179f0d.md
+#
+# When a custom-data calibration arrives without an explicit
+# `params_to_optimize` mapping, derive a stoichiometric-reachability scope
+# from the uploaded metabolites and seed the request with it. The behaviour
+# is tri-state on `request.auto_param_scope` (None=auto, True=force-on,
+# False=force-off) plus an env-level kill switch.
+
+_AUTO_PARAM_SCOPE_KILL_SWITCH_ENV = "AIRBC_DISABLE_AUTO_PARAM_SCOPE"
+
+
+def _is_auto_param_scope_killed_by_env() -> bool:
+    """Return True iff the operator has set the kill-switch env var to a truthy value."""
+    raw = os.environ.get(_AUTO_PARAM_SCOPE_KILL_SWITCH_ENV, "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
+def _resolve_auto_param_scope_decision(
+    request,
+    *,
+    user_selected_params: List[str],
+    has_experimental_data: bool,
+) -> bool:
+    """Decide whether to apply auto-param-scope expansion for this request.
+
+    Tri-state semantics:
+      * ``request.auto_param_scope is False`` -> always off (caller opt-out).
+      * ``request.auto_param_scope is True``  -> always on (caller opt-in).
+      * ``request.auto_param_scope is None``  -> auto-detect: enable when
+        ``params_to_optimize`` is empty AND custom experimental data is
+        provided.
+
+    The env-level kill switch (``AIRBC_DISABLE_AUTO_PARAM_SCOPE``) wins over
+    every code-level decision so an operator can disable Phase 0 on a single
+    worker without redeploying the web layer.
+    """
+    if _is_auto_param_scope_killed_by_env():
+        return False
+
+    requested = getattr(request, "auto_param_scope", None)
+    if requested is False:
+        return False
+    if requested is True:
+        return True
+    # None / unset → auto-detect
+    return (not user_selected_params) and has_experimental_data
+
+
+def _maybe_apply_auto_param_scope(
+    request,
+    *,
+    user_selected_params: List[str],
+    target_metabolites: List[str],
+) -> tuple[bool, List[str]]:
+    """Apply the Phase 0 auto-param-scope to ``request`` if eligible.
+
+    On apply, mutates ``request.params_to_optimize`` in place with a fresh
+    dict of the form ``{name: [initial, lo, hi]}`` derived from
+    :func:`mm.auto_scope_with_bounds`. The caller is expected to re-read
+    ``request.params_to_optimize.keys()`` after this returns.
+
+    Returns
+    -------
+    tuple[bool, list[str]]
+        ``(applied, added_params)`` — ``applied`` is True iff at least one
+        parameter was added; ``added_params`` is the sorted list of names
+        that were added by auto-scope. The latter is useful for response
+        payload visibility and for downstream logging.
+    """
+    has_experimental_data = bool(getattr(request, "exp_data", None))
+    decision = _resolve_auto_param_scope_decision(
+        request,
+        user_selected_params=user_selected_params,
+        has_experimental_data=has_experimental_data,
+    )
+    if not decision:
+        return False, []
+
+    # Auto-scope is only meaningful when params_to_optimize is empty. If the
+    # caller explicitly asked for auto-scope=True alongside a non-empty
+    # params_to_optimize, we respect the caller's explicit list and do not
+    # overwrite it.
+    if user_selected_params:
+        return False, []
+
+    try:
+        derived = mm.auto_scope_with_bounds(
+            target_metabolites,
+            base_params=getattr(request, "base_params", None),
+        )
+    except Exception:
+        # Defensive: any failure in the auto-scope pipeline must not break
+        # the calibration request. Fall through to the legacy strict path,
+        # which will raise an HTTPException with a clearer message.
+        traceback.print_exc()
+        return False, []
+
+    if not derived:
+        return False, []
+
+    request.params_to_optimize = {
+        name: [float(initial), float(lo), float(hi)]
+        for name, (initial, lo, hi) in derived.items()
+    }
+    return True, sorted(derived.keys())
 
 
 def _strategy_label(value: str) -> str:
@@ -571,10 +684,35 @@ def _build_combined_triage_safely(
 
 
 def _run_single_web_calibration(request) -> dict:
+    # Phase 0 (auto-param-scope): derive target_metabolites FIRST so the
+    # auto-scope resolver can pass them to
+    # mm.auto_scope_with_bounds(...) before we enforce the strict
+    # allow-list. Order matters here: if params_to_optimize is empty and
+    # auto-scope is eligible (tri-state on request.auto_param_scope), we
+    # mutate request.params_to_optimize in place, then fall through to the
+    # existing strict check which will pass by construction (every
+    # auto-derived name is guaranteed to be in DEFAULT_PARAM_VALUES).
+    target_metabolites = _normalize_names(request.target_metabolites) or _normalize_names(list(request.exp_data.keys()))
+
     user_selected_params = list(request.params_to_optimize.keys())
+    auto_param_scope_applied, auto_param_scope_params = _maybe_apply_auto_param_scope(
+        request,
+        user_selected_params=user_selected_params,
+        target_metabolites=target_metabolites,
+    )
+    if auto_param_scope_applied:
+        user_selected_params = list(request.params_to_optimize.keys())
+
     selected_params = list(user_selected_params)
     allowed_params = set(mm.build_parameter_taxonomy()["classes"].get(mm.PARAM_CLASS_VMAX, [])) | set(
         mm.build_parameter_taxonomy()["classes"].get(mm.PARAM_CLASS_KM, [])
+    )
+    # Phase 0 surfaces regulation params (ki_*, ka_*, alpha_*, n_*) through
+    # auto-scope as well, because they shape existing flux laws and live in
+    # PHASE1_BASE_PARAMS. Admit the REGULATION class into the allow-list too
+    # so the strict check continues to pass for every auto-derived name.
+    allowed_params |= set(
+        mm.build_parameter_taxonomy()["classes"].get(mm.PARAM_CLASS_REGULATION, [])
     )
     unknown_params = [name for name in selected_params if name not in allowed_params]
     if unknown_params:
@@ -586,7 +724,6 @@ def _run_single_web_calibration(request) -> dict:
             ),
         )
 
-    target_metabolites = _normalize_names(request.target_metabolites) or _normalize_names(list(request.exp_data.keys()))
     experimental_payload = _build_experimental_payload(request)
     initial_params = _build_initial_params(request)
     calibration_profile = mm.infer_custom_data_calibration_profile(target_metabolites)
@@ -780,6 +917,8 @@ def _run_single_web_calibration(request) -> dict:
                 "calibration_profile_rationale": calibration_profile["rationale"],
                 "calibration_profile_signals": calibration_profile["signals"],
                 "calibration_profile_parameter_additions": profile_additions,
+                "auto_param_scope_applied": bool(auto_param_scope_applied),
+                "auto_param_scope_params": list(auto_param_scope_params),
                 "calibration_status": "completed",
                 "calibration_completed": True,
                 "calibration_failed": False,
