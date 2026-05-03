@@ -16,12 +16,11 @@ Focus areas:
 
 ## Immediate next action
 
-Run the **full canonical-Bordbar parity sweep** on Hetzner (or any
-unattended worker) and capture the verdict in `Archive.md`. The harness
-is built, smoke-tested, and the decision gate is wired; what's missing
-is a real-budget run.
+Root-cause **Phase 0 auto-param-scope EGLC preservation** before starting
+Phase A. The full canonical-Bordbar parity sweep completed on Hetzner and
+the gate returned `root_cause_phase0`.
 
-Command:
+Full sweep command that produced the result:
 
 ```powershell
 python scripts/run_auto_param_scope_parity.py `
@@ -32,7 +31,37 @@ python scripts/run_auto_param_scope_parity.py `
   --out-dir Simulations/auto_param_scope/parity_v1_full
 ```
 
-Acceptance criteria (encoded in the harness):
+Full sweep result:
+- `decision_gate`: `root_cause_phase0`
+- auto-scope final loss: `6.8191`
+- curated-profile final loss: `12.7488`
+- auto loss delta vs curated: `-46.5%` (auto-scope fits much better)
+- scope Jaccard: `0.0612` (`98` auto params vs `6` curated params)
+- pure-ODE: both branches `collapsed`
+- root-cause trigger: `EGLC` only (`auto=concern`, `curated=good`)
+
+Interpretation:
+- This is not a broad loss failure. Auto-scope is fit-superior and reduces
+  the pure-ODE critical count from 7 to 5.
+- The blocker is glucose-side physiology: auto-scope leaves EGLC nearly flat
+  in pure-ODE replay (`-0.9%`, expected at least `5%` depletion), while the
+  curated branch depletes EGLC by `7.0%`.
+
+Next implementation target:
+- Add an EGLC-preservation/root-cause probe before Phase A. Candidate fixes:
+  - constrain or stage glucose transport/commitment params
+    (`vmax_VEGLC`, `km_EGLC`, `km_GLC_transport`, `vmax_VHK`,
+    `vmax_VPFK`, `vmax_VPK`, lower-glycolysis companions)
+  - add a pure-ODE EGLC depletion gate to candidate acceptance before
+    promoting auto-scope results
+  - run a targeted rescue sweep that keeps the auto-scope fit gain while
+    requiring EGLC depletion >= 5%
+
+Do not start Phase A until the same parity harness returns either
+`green_light_phase_a` or `needs_review` with no protected anchor worse than
+curated.
+
+Historical acceptance criteria (encoded in the harness):
 - `decision_gate == "green_light_phase_a"` → start Phase A (sensitivity
   probe of the plan).
 - `decision_gate == "root_cause_phase0"` → fix Phase 0 (likely:
@@ -43,8 +72,8 @@ Acceptance criteria (encoded in the harness):
   small loss gap with equal-or-better anchors can be promoted to green
   by widening tolerance after manual review.
 
-Then write a one-page summary into `Archive.md` (final losses,
-anchor verdicts, scope Jaccard, decision, follow-ups).
+Archive summary added in `AgentOps/Archive.md` under the
+2026-05-03 parity-sweep entry.
 
 ### Status of the parity-sweep harness
 
@@ -63,6 +92,8 @@ Landed and smoke-tested (2026-05-03):
   budget that's noise.
 - The smoke validated the gate end-to-end and surfaced one real bug,
   fixed in the same session.
+- Full Hetzner sweep at `--n-trials 50` completed with
+  `decision_gate=root_cause_phase0`; see `Archive.md` for the summary.
 
 ### Bug fix shipped alongside the harness
 
@@ -75,11 +106,12 @@ replay. Replaced with a `_sequence_values(...)` helper that tolerates
 None / `np.ndarray` / strings / arbitrary iterables; also added the
 `apps/api` directory to `sys.path` so script-driven callers resolve
 `services.*` the same way the FastAPI process does. Full qa suite
-stays green at 166/166. Consistent with Memory rule 17.
+stays green at 167/167 after adding the regression test. Consistent
+with Memory rule 17.
 
 ### Follow-ups (small, non-blocking)
 
-- Add a regression test under `qa/api/` that drives
+- Done: add a regression test under `qa/api/` that drives
   `_write_all_metabolites_csv` and `_write_reaction_fluxes_csv` with
   numpy-array inputs so the truthiness bug cannot silently reappear.
 - Repair the pre-existing `PHASE2_PARAMS["vmax_VAMPD1"] = (0.538065,
