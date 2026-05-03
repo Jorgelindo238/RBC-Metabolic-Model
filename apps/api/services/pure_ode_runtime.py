@@ -15,10 +15,11 @@ from typing import Any, Dict, Iterable
 
 _THIS_FILE = Path(__file__).resolve()
 _PROJECT_ROOT = _THIS_FILE.parents[3]
+_API = _THIS_FILE.parents[1]
 _STREAMLIT_APP = _PROJECT_ROOT / "streamlit_app"
 _SRC = _PROJECT_ROOT / "src"
 
-for _path in (_STREAMLIT_APP, _SRC):
+for _path in (_API, _STREAMLIT_APP, _SRC):
     _path_str = str(_path)
     if _path_str not in sys.path:
         sys.path.insert(0, _path_str)
@@ -31,6 +32,21 @@ from core.simulation_engine import SimulationEngine
 
 def _normalize_metabolite_name(name: Any) -> str:
     return str(name).strip().upper()
+
+
+def _sequence_values(value: Any) -> list[Any]:
+    """Return list-like simulation outputs without relying on truthiness."""
+
+    if value is None:
+        return []
+    if hasattr(value, "tolist"):
+        value = value.tolist()
+    if isinstance(value, (str, bytes)):
+        return [value]
+    try:
+        return list(value)
+    except TypeError:
+        return [value]
 
 
 def build_active_dataset_from_request(request: Any) -> dict[str, Any] | None:
@@ -58,9 +74,9 @@ def build_active_dataset_from_request(request: Any) -> dict[str, Any] | None:
 
 
 def _write_all_metabolites_csv(result: dict[str, Any], csv_path: Path) -> None:
-    metabolite_names = [str(name) for name in result.get("metabolite_names") or []]
-    timepoints = [float(value) for value in result.get("t") or []]
-    trajectories = result.get("x") or []
+    metabolite_names = [str(name) for name in _sequence_values(result.get("metabolite_names"))]
+    timepoints = [float(value) for value in _sequence_values(result.get("t"))]
+    trajectories = _sequence_values(result.get("x"))
 
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     with csv_path.open("w", newline="", encoding="utf-8") as handle:
@@ -72,10 +88,15 @@ def _write_all_metabolites_csv(result: dict[str, Any], csv_path: Path) -> None:
 
 
 def _write_reaction_fluxes_csv(result: dict[str, Any], csv_path: Path) -> None:
-    flux_data = result.get("flux_data") or {}
-    times = [float(value) for value in flux_data.get("times") or []]
-    fluxes = flux_data.get("fluxes") or {}
+    flux_data = result.get("flux_data")
+    if not isinstance(flux_data, dict):
+        flux_data = {}
+    times = [float(value) for value in _sequence_values(flux_data.get("times"))]
+    fluxes = flux_data.get("fluxes")
+    if not isinstance(fluxes, dict):
+        fluxes = {}
     reaction_names = sorted(str(name) for name in fluxes.keys())
+    flux_series = {reaction_name: _sequence_values(fluxes.get(reaction_name)) for reaction_name in reaction_names}
 
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     with csv_path.open("w", newline="", encoding="utf-8") as handle:
@@ -86,8 +107,8 @@ def _write_reaction_fluxes_csv(result: dict[str, Any], csv_path: Path) -> None:
                 [
                     timepoint,
                     *[
-                        float((fluxes.get(reaction_name) or [0.0])[index])
-                        if index < len(fluxes.get(reaction_name) or [])
+                        float(flux_series[reaction_name][index])
+                        if index < len(flux_series[reaction_name])
                         else 0.0
                         for reaction_name in reaction_names
                     ],

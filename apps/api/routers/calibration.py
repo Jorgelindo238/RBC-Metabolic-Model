@@ -19,7 +19,26 @@ class CalibrationRequest(BaseModel):
         ..., description="Experimental data {metabolite: [values]}"
     )
     params_to_optimize: Dict[str, List[float]] = Field(
-        ..., description="Parameters to optimise: {name: [initial, lower_bound, upper_bound]}"
+        default_factory=dict,
+        description=(
+            "Parameters to optimise: {name: [initial, lower_bound, upper_bound]}. "
+            "May be empty when auto_param_scope is enabled (default behaviour for "
+            "custom data uploads): the worker derives a stoichiometric reachability "
+            "scope and seeds bounds from PHASE_MAP automatically."
+        ),
+    )
+    auto_param_scope: Optional[bool] = Field(
+        None,
+        description=(
+            "Phase 0 auto-calibrate-all toggle. Tri-state: None (default) = "
+            "auto-detect (enabled when params_to_optimize is empty AND custom "
+            "experimental data is provided); True = force-on (always derive "
+            "scope from uploaded metabolites' stoichiometric neighbourhood); "
+            "False = force-off (preserve legacy strict behaviour where "
+            "params_to_optimize must be supplied by the caller). Overridable "
+            "by the AIRBC_DISABLE_AUTO_PARAM_SCOPE environment variable on the "
+            "worker."
+        ),
     )
     base_params: Optional[Dict[str, float]] = Field(
         None, description="Base simulation parameters (all vmax/km values)"
