@@ -3,6 +3,54 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-04 gated parity sweep green-light
+
+Full canonical-Bordbar parity sweep was rerun on Hetzner from
+`origin/dev/next-phase` commit `8f5475e` after the EGLC-depletion gate patch:
+
+```bash
+python scripts/run_auto_param_scope_parity.py \
+  --dataset canonical-bordbar \
+  --n-trials 50 \
+  --t-max 42 \
+  --loss-tolerance-pct 0.10 \
+  --out-dir Simulations/auto_param_scope/parity_v1_full_gate
+```
+
+Result:
+- `decision_gate`: `green_light_phase_a`
+- auto-scope final loss: `7.0872`
+- curated-profile final loss: `12.7488`
+- auto loss delta vs curated: `-44.4%`
+- scope Jaccard: `0.0612` (`98` auto params vs `6` curated params)
+- pure-ODE status: both branches `collapsed`
+- auto-scope critical count: 5
+- curated-profile critical count: 7
+- protected anchors worse than curated: none
+
+Protected-anchor details:
+- `EGLC`: auto `good`, depleted `5.9%`; curated `good`, depleted `7.0%`.
+- `ELAC`: good in both branches.
+- `LAC`: tracked/rising in both branches.
+- `AMP`: auto good, curated critical.
+- `ATP`, `ADP`, `B23PG`, `GSH`: critical in both branches.
+
+The new gate rejected the Km-stage fit-improving candidate that would have
+flattened `EGLC`:
+- candidate `EGLC 25.3400 -> 25.1227`, depletion `0.9%`
+- required depletion `>=5.0%`
+
+Interpretation:
+- Phase 0 parity is green. Auto-scope keeps a large fit advantage without
+  making any protected anchor worse than curated.
+- Pure-ODE survival is still globally collapsed for both branches; ATP/ADP,
+  B23PG, and GSH remain downstream scientific rescue targets.
+- Phase A sensitivity probing is now unblocked.
+
+Artifacts copied locally:
+- `Simulations/auto_param_scope/parity_v1_full_gate_result.json`
+- `Simulations/auto_param_scope/parity_v1_full_gate_run.log`
+
 ## 2026-05-04 Phase 0 EGLC-depletion gate patch
 
 After the 2026-05-03 parity sweep returned `root_cause_phase0`, the
@@ -28,10 +76,9 @@ Validation:
 - dry-run smoke wrote
   `Simulations/auto_param_scope/parity_v1_dry_gate_smoke/result.json`.
 
-Next:
-- rerun the same full Hetzner parity sweep from updated `origin/dev/next-phase`
-- Phase A remains blocked until the harness returns `green_light_phase_a` or
-  `needs_review` with no protected anchor worse than curated.
+Follow-up completed:
+- the full gated Hetzner sweep returned `green_light_phase_a`; see the
+  2026-05-04 gated parity sweep green-light entry above.
 
 ## 2026-05-03 auto-param-scope parity sweep
 
