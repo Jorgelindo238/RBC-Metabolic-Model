@@ -3,6 +3,38 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-04 Phase A sensitivity harness scaffold
+
+Added `scripts/run_auto_param_scope_sensitivity.py` as the Phase A harness
+after the gated parity sweep returned `green_light_phase_a`.
+
+Harness contract:
+- dataset loader reuses the parity harness semantics (`canonical-bordbar`,
+  JSON, or CSV)
+- `--baseline-mode auto-defaults` probes around auto-scope initial values for
+  quick smoke checks
+- `--baseline-mode calibrate` first regenerates a gated auto-scope calibration
+  baseline through the product-plane adapter, then probes around the optimized
+  parameter set
+- one-at-a-time up/down perturbations are bounded by `DEFAULT_PARAM_BOUNDS`
+- classifications: low-sensitivity prune candidates, high/moderate keeps,
+  EGLC-gate-sensitive guarded keeps, loss-regression guarded keeps, and
+  unstable review params
+- output artifact: `result.json`; baseline params: `baseline_params.json`
+
+Validation:
+- `python -m py_compile scripts/run_auto_param_scope_sensitivity.py`
+- `python -m pytest qa/test_auto_param_scope_sensitivity.py -q` -> `5 passed`
+- `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_sensitivity.py -q` -> `49 passed`
+- local smoke with `--baseline-mode auto-defaults --t-max 2 --max-params 2`
+  wrote `Simulations/auto_param_scope/sensitivity_v1_smoke/result.json`.
+
+Next:
+- run the full Hetzner command from `AgentOps/Tasks.md` using
+  `--baseline-mode calibrate --baseline-n-trials 50 --t-max 42`
+- use the resulting `recommended_pruned_params`, `guarded_params`, and
+  `top_sensitive_params` to decide the Phase A pruning rule.
+
 ## 2026-05-04 gated parity sweep green-light
 
 Full canonical-Bordbar parity sweep was rerun on Hetzner from

@@ -16,8 +16,9 @@ Focus areas:
 
 ## Immediate next action
 
-Start **Phase A: auto-param-scope sensitivity probe**. The Phase 0 parity gate
-is now green after adding the EGLC-depletion acceptance gate.
+Run the full **Phase A: auto-param-scope sensitivity probe** on Hetzner. The
+Phase 0 parity gate is green and the Phase A harness has been scaffolded and
+smoke-tested locally.
 
 Phase A objective:
 - estimate local sensitivity for the broad auto-scope parameter set around the
@@ -29,8 +30,42 @@ Phase A objective:
 - emit a compact artifact under `Simulations/auto_param_scope/sensitivity_v1/`
   with ranked parameter effects and a recommended pruned scope
 
-Build the harness first, then run a small smoke locally before scheduling the
-full probe on Hetzner.
+Harness status:
+- `scripts/run_auto_param_scope_sensitivity.py` was added.
+- It supports `--baseline-mode auto-defaults` for fast structural smoke and
+  `--baseline-mode calibrate` for the real run around a regenerated gated
+  auto-scope baseline.
+- It writes `result.json` and `baseline_params.json` under the selected
+  `Simulations/auto_param_scope/sensitivity_v1*` output directory.
+- Local validation:
+  - `python -m py_compile scripts/run_auto_param_scope_sensitivity.py`
+  - `python -m pytest qa/test_auto_param_scope_sensitivity.py -q` -> `5 passed`
+  - `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_sensitivity.py -q` -> `49 passed`
+  - smoke:
+    `python scripts/run_auto_param_scope_sensitivity.py --dataset canonical-bordbar --baseline-mode auto-defaults --t-max 2 --max-params 2 --out-dir Simulations/auto_param_scope/sensitivity_v1_smoke`
+
+Full Hetzner command:
+
+```bash
+cd /opt/airbc/experiments/auto-scope-parity
+git fetch origin
+git checkout -f origin/dev/next-phase
+
+mkdir -p Simulations/auto_param_scope/sensitivity_v1_full
+
+nohup /opt/airbc/app/apps/calibration-worker/.venv/bin/python -u scripts/run_auto_param_scope_sensitivity.py \
+  --dataset canonical-bordbar \
+  --baseline-mode calibrate \
+  --baseline-n-trials 50 \
+  --t-max 42 \
+  --step-frac 0.05 \
+  --eglc-min-depletion-frac 0.05 \
+  --out-dir Simulations/auto_param_scope/sensitivity_v1_full \
+  > Simulations/auto_param_scope/sensitivity_v1_full/run.log 2>&1 &
+
+echo "PID=$!"
+tail -f Simulations/auto_param_scope/sensitivity_v1_full/run.log
+```
 
 ### Phase 0 gate status
 
