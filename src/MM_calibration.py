@@ -120,6 +120,7 @@ DEFAULT_TEACHER_DENSE_POINTS = 200
 DEFAULT_TEACHER_STUDENT_WEIGHT = 0.0
 DEFAULT_TEACHER_FOCUS_WEIGHT = 1.0
 DEFAULT_TRANSPORT_TEACHER_FOCUS_METABOLITES = ["EGLC", "ELAC", "LAC"]
+DEFAULT_EGLC_MIN_DEPLETION_FRAC = 0.05
 
 EXP_TO_MODEL = {
     "GLC": 0, "G6P": 1, "F6P": 2, "GO6P": 4,
@@ -1663,6 +1664,7 @@ def normalize_stage_config(stage, default_cfg):
     stage.setdefault("teacher_focus_weight", default_cfg["teacher_focus_weight"])
     stage.setdefault("reject_eglc_final_increase_frac", default_cfg.get("reject_eglc_final_increase_frac"))
     stage.setdefault("reject_elac_final_drop_frac", default_cfg.get("reject_elac_final_drop_frac"))
+    stage.setdefault("min_eglc_depletion_frac", default_cfg.get("min_eglc_depletion_frac"))
 
     stage["phases"] = [int(p) for p in stage["phases"]]
     stage["parameter_classes"] = normalize_name_list(stage.get("parameter_classes"))
@@ -1687,6 +1689,8 @@ def normalize_stage_config(stage, default_cfg):
         stage["reject_eglc_final_increase_frac"] = float(stage["reject_eglc_final_increase_frac"])
     if stage.get("reject_elac_final_drop_frac") is not None:
         stage["reject_elac_final_drop_frac"] = float(stage["reject_elac_final_drop_frac"])
+    if stage.get("min_eglc_depletion_frac") is not None:
+        stage["min_eglc_depletion_frac"] = float(stage["min_eglc_depletion_frac"])
 
     return stage
 
@@ -1720,6 +1724,7 @@ def resolve_stage_plan(
     teacher_focus_weight=DEFAULT_TEACHER_FOCUS_WEIGHT,
     reject_eglc_final_increase_frac=None,
     reject_elac_final_drop_frac=None,
+    min_eglc_depletion_frac=None,
     stage_plan=None,
 ):
     default_cfg = {
@@ -1751,6 +1756,7 @@ def resolve_stage_plan(
         "teacher_focus_weight": float(teacher_focus_weight),
         "reject_eglc_final_increase_frac": reject_eglc_final_increase_frac,
         "reject_elac_final_drop_frac": reject_elac_final_drop_frac,
+        "min_eglc_depletion_frac": min_eglc_depletion_frac,
     }
 
     if stage_plan is None:
@@ -3114,10 +3120,40 @@ def evaluate_monitor_metrics(primary_objective, monitor_objectives, params):
             for metabolite_name in ("EGLC", "ELAC", "ATP", "LAC", "GLC"):
                 metabolite_idx = EXP_TO_MODEL.get(metabolite_name)
                 if metabolite_idx is not None and metabolite_idx < y.shape[0]:
+                    initial_value = float(primary_objective.x0[metabolite_idx])
+                    final_value = float(y[metabolite_idx, -1])
+                    metrics[f"initial_{metabolite_name}"] = initial_value
+                    metrics[f"delta_{metabolite_name}"] = final_value - initial_value
                     metrics[f"final_{metabolite_name}"] = float(y[metabolite_idx, -1])
+                    if metabolite_name == "EGLC" and initial_value > 1e-12:
+                        metrics["eglc_depletion_frac"] = (initial_value - final_value) / initial_value
     for scope_name, scope_objective in monitor_objectives.items():
         metrics[scope_name] = float(scope_objective.fit_loss(params))
     return metrics
+
+
+def _evaluate_eglc_depletion_gate(candidate_metrics, min_eglc_depletion_frac=None):
+    if min_eglc_depletion_frac is None:
+        return None
+
+    candidate_initial = candidate_metrics.get("initial_EGLC")
+    candidate_final = candidate_metrics.get("final_EGLC")
+    values = (candidate_initial, candidate_final)
+    if not all(isinstance(v, (int, float)) and np.isfinite(v) for v in values):
+        return None
+    if candidate_initial <= 1e-12:
+        return None
+
+    required_depletion_frac = float(min_eglc_depletion_frac)
+    candidate_depletion_frac = (candidate_initial - candidate_final) / candidate_initial
+    if candidate_depletion_frac + 1e-12 < required_depletion_frac:
+        return (
+            "rejected by EGLC depletion gate "
+            f"(EGLC {candidate_initial:.4f}->{candidate_final:.4f}, "
+            f"depletion {candidate_depletion_frac*100:.1f}%; "
+            f"required >= {required_depletion_frac*100:.1f}%)"
+        )
+    return None
 
 
 def _evaluate_extracellular_final_gate(
@@ -3125,7 +3161,15 @@ def _evaluate_extracellular_final_gate(
     candidate_metrics,
     max_eglc_final_increase_frac=None,
     max_elac_final_drop_frac=None,
+    min_eglc_depletion_frac=None,
 ):
+    eglc_depletion_reason = _evaluate_eglc_depletion_gate(
+        candidate_metrics,
+        min_eglc_depletion_frac=min_eglc_depletion_frac,
+    )
+    if eglc_depletion_reason is not None:
+        return eglc_depletion_reason
+
     if max_eglc_final_increase_frac is None or max_elac_final_drop_frac is None:
         return None
 
@@ -3163,6 +3207,7 @@ def accept_monitor_metrics(
     max_endpoint_regression=0.15,
     max_eglc_final_increase_frac=None,
     max_elac_final_drop_frac=None,
+    min_eglc_depletion_frac=None,
 ):
     fit_delta = candidate_metrics["target"] - incumbent_metrics["target"]
     if fit_delta > 1e-9:
@@ -3173,6 +3218,7 @@ def accept_monitor_metrics(
         candidate_metrics,
         max_eglc_final_increase_frac=max_eglc_final_increase_frac,
         max_elac_final_drop_frac=max_elac_final_drop_frac,
+        min_eglc_depletion_frac=min_eglc_depletion_frac,
     )
     if gate_reason is not None:
         return False, gate_reason
@@ -3395,6 +3441,7 @@ def run_calibration(
     teacher_target_weights=None,
     teacher_focus_metabolites=None,
     teacher_focus_weight=DEFAULT_TEACHER_FOCUS_WEIGHT,
+    min_eglc_depletion_frac=None,
     dump_trajectories=False,
 ):
     if phases is None:
@@ -3432,6 +3479,7 @@ def run_calibration(
         teacher_target_weights=teacher_target_weights,
         teacher_focus_metabolites=teacher_focus_metabolites,
         teacher_focus_weight=teacher_focus_weight,
+        min_eglc_depletion_frac=min_eglc_depletion_frac,
         stage_plan=stage_plan,
     )
     teacher_weight_cfg = resolve_teacher_loss_weights(
@@ -3667,6 +3715,8 @@ def run_calibration(
         print(f"  Identifiability: {stage_identifiability or 'all'}")
         print(f"  Trials per phase: {stage_n_trials}")
         print(f"  Global refinement trials: {stage_global_trials}")
+        if stage.get("min_eglc_depletion_frac") is not None:
+            print(f"  EGLC depletion gate: >= {stage['min_eglc_depletion_frac'] * 100:.1f}%")
         print(f"{'#' * 70}")
 
         for phase_num in stage["phases"]:
@@ -3723,6 +3773,7 @@ def run_calibration(
                 monitor_regression_limits=global_monitor_regression_limits,
                 max_eglc_final_increase_frac=stage.get("reject_eglc_final_increase_frac"),
                 max_elac_final_drop_frac=stage.get("reject_elac_final_drop_frac"),
+                min_eglc_depletion_frac=stage.get("min_eglc_depletion_frac"),
             )
 
             if accepted:
@@ -3844,6 +3895,7 @@ def run_calibration(
                 monitor_regression_limits=global_monitor_regression_limits,
                 max_eglc_final_increase_frac=stage.get("reject_eglc_final_increase_frac"),
                 max_elac_final_drop_frac=stage.get("reject_elac_final_drop_frac"),
+                min_eglc_depletion_frac=stage.get("min_eglc_depletion_frac"),
             )
 
             if accepted:
@@ -3936,6 +3988,7 @@ def run_calibration(
                 "teacher_flux_weight": stage.get("teacher_flux_weight", teacher_flux_weight),
                 "reject_eglc_final_increase_frac": stage.get("reject_eglc_final_increase_frac"),
                 "reject_elac_final_drop_frac": stage.get("reject_elac_final_drop_frac"),
+                "min_eglc_depletion_frac": stage.get("min_eglc_depletion_frac"),
                 "start_loss": stage_start_loss,
                 "end_loss": stage_end_loss,
                 "accepted": bool(stage["selected_param_names"]) and stage_end_loss <= stage_start_loss + 1e-12,
@@ -4016,6 +4069,7 @@ def run_calibration(
     has_extracellular_final_gate = any(
         stage.get("reject_eglc_final_increase_frac") is not None
         or stage.get("reject_elac_final_drop_frac") is not None
+        or stage.get("min_eglc_depletion_frac") is not None
         for stage in resolved_stage_plan
     )
 
@@ -4065,8 +4119,8 @@ def run_calibration(
                         else "rank_loss = fit_loss"
                     ),
                     "acceptance_policy": (
-                        "pure-fit acceptance with optional EGLC/ELAC final-state rejection gate; candidates are kept when fit improves "
-                        "or ties with a better rank_loss, unless the configured final-state gate rejects them; regularization and "
+                        "pure-fit acceptance with optional extracellular final-state gates; candidates are kept when fit improves "
+                        "or ties with a better rank_loss, unless a configured EGLC/ELAC or EGLC-depletion gate rejects them; regularization and "
                         "physiological penalties are still reported but no longer drive ranking"
                         if has_extracellular_final_gate
                         else "pure-fit acceptance; candidates are kept when fit improves or ties with a better rank_loss; "

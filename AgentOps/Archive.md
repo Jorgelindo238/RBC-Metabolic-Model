@@ -3,6 +3,36 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-04 Phase 0 EGLC-depletion gate patch
+
+After the 2026-05-03 parity sweep returned `root_cause_phase0`, the
+scientific issue was narrowed to one protected anchor: auto-scope fit was much
+better than curated, but pure-ODE `EGLC` depletion was only `0.9%` instead of
+the expected `>=5%`.
+
+Patch:
+- `src/MM_calibration.py` now records initial/final extracellular diagnostics
+  in monitor metrics and supports `min_eglc_depletion_frac` in candidate
+  acceptance.
+- `apps/api/services/mm_calibration_adapter.py` enables a 5% EGLC-depletion
+  gate automatically for Phase 0 auto-scope requests that include `EGLC`.
+- Manual curated-profile and explicit-parameter runs remain unchanged unless a
+  caller explicitly supplies the gate in a stage plan.
+- Regression coverage was added in `qa/test_auto_param_scope.py`.
+
+Validation:
+- `python -m py_compile src/MM_calibration.py apps/api/services/mm_calibration_adapter.py`
+- `python -m pytest qa/test_auto_param_scope.py -q` -> `44 passed`
+- `python -m pytest qa/api/test_pure_ode_runtime.py -q` -> `1 passed`
+- `python -m pytest qa -q` -> `171 passed`
+- dry-run smoke wrote
+  `Simulations/auto_param_scope/parity_v1_dry_gate_smoke/result.json`.
+
+Next:
+- rerun the same full Hetzner parity sweep from updated `origin/dev/next-phase`
+- Phase A remains blocked until the harness returns `green_light_phase_a` or
+  `needs_review` with no protected anchor worse than curated.
+
 ## 2026-05-03 auto-param-scope parity sweep
 
 Full canonical-Bordbar parity sweep ran on the Hetzner worker from

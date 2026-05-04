@@ -181,6 +181,7 @@ def _build_initial_params(request) -> Dict[str, float]:
 # False=force-off) plus an env-level kill switch.
 
 _AUTO_PARAM_SCOPE_KILL_SWITCH_ENV = "AIRBC_DISABLE_AUTO_PARAM_SCOPE"
+_AUTO_PARAM_SCOPE_EGLC_MIN_DEPLETION_FRAC = 0.05
 
 
 def _is_auto_param_scope_killed_by_env() -> bool:
@@ -341,35 +342,45 @@ def _build_strategy_stage_plan(
     selected_params: List[str],
     optimization_strategy: str,
     max_iterations: int,
+    *,
+    protect_eglc_depletion: bool = False,
+    eglc_min_depletion_frac: float = _AUTO_PARAM_SCOPE_EGLC_MIN_DEPLETION_FRAC,
 ) -> List[dict]:
     selected_params = [name for name in selected_params if name]
     if not selected_params:
         raise HTTPException(status_code=400, detail="Select at least one parameter to optimise.")
 
+    def _apply_auto_scope_eglc_gate(stage: dict) -> dict:
+        if protect_eglc_depletion:
+            stage["min_eglc_depletion_frac"] = float(eglc_min_depletion_frac)
+        return stage
+
     if optimization_strategy == "legacy":
         return [
-            {
-                "name": "legacy",
-                "phases": [1, 2, 3],
-                "param_scope": "all",
-                "target_scope": "all",
-                "include_params": selected_params,
-                "exclude_params": None,
-                "n_trials": max(1, max_iterations),
-                "global_trials": 0,
-                "seed": 42,
-                "atp_focus": False,
-                "atp_floor": 0.15,
-                "adp_floor": 0.05,
-                "amp_floor": 0.04,
-                "imp_floor": 0.02,
-                "adenylate_target": 0.65,
-                "atp_penalty_weight": 10.0,
-                "amp_penalty_weight": 6.0,
-                "imp_penalty_weight": 5.0,
-                "pool_penalty_weight": 12.0,
-                "curve_fit_strength": 0.0,
-            }
+            _apply_auto_scope_eglc_gate(
+                {
+                    "name": "legacy",
+                    "phases": [1, 2, 3],
+                    "param_scope": "all",
+                    "target_scope": "all",
+                    "include_params": selected_params,
+                    "exclude_params": None,
+                    "n_trials": max(1, max_iterations),
+                    "global_trials": 0,
+                    "seed": 42,
+                    "atp_focus": False,
+                    "atp_floor": 0.15,
+                    "adp_floor": 0.05,
+                    "amp_floor": 0.04,
+                    "imp_floor": 0.02,
+                    "adenylate_target": 0.65,
+                    "atp_penalty_weight": 10.0,
+                    "amp_penalty_weight": 6.0,
+                    "imp_penalty_weight": 5.0,
+                    "pool_penalty_weight": 12.0,
+                    "curve_fit_strength": 0.0,
+                }
+            )
         ]
 
     raw_template = mm.OPTIMIZATION_STRATEGY_TEMPLATES.get(optimization_strategy)
@@ -390,6 +401,7 @@ def _build_strategy_stage_plan(
         stage["n_trials"] = 1
         stage["global_trials"] = 0
         stage.setdefault("seed", 42)
+        _apply_auto_scope_eglc_gate(stage)
         resolved_stages.append(stage)
 
     if not resolved_stages:
@@ -768,6 +780,10 @@ def _run_single_web_calibration(request) -> dict:
     else:
         target_scope = calibration_profile["target_scope"]
         atp_focus = bool(calibration_profile["atp_focus"])
+    auto_param_scope_eglc_gate_applied = bool(
+        auto_param_scope_applied
+        and "EGLC" in {str(name).upper() for name in target_metabolites}
+    )
     atp_floor = float(calibration_profile["atp_floor"])
     adp_floor = float(calibration_profile["adp_floor"])
     amp_floor = float(calibration_profile["amp_floor"])
@@ -825,6 +841,7 @@ def _run_single_web_calibration(request) -> dict:
                     selected_params,
                     optimization_strategy,
                     request.max_iterations,
+                    protect_eglc_depletion=auto_param_scope_eglc_gate_applied,
                 ),
                 target_metabolites=target_metabolites,
                 experimental_data=experimental_payload,
@@ -919,6 +936,12 @@ def _run_single_web_calibration(request) -> dict:
                 "calibration_profile_parameter_additions": profile_additions,
                 "auto_param_scope_applied": bool(auto_param_scope_applied),
                 "auto_param_scope_params": list(auto_param_scope_params),
+                "auto_param_scope_eglc_gate_applied": bool(auto_param_scope_eglc_gate_applied),
+                "auto_param_scope_eglc_min_depletion_frac": (
+                    _AUTO_PARAM_SCOPE_EGLC_MIN_DEPLETION_FRAC
+                    if auto_param_scope_eglc_gate_applied
+                    else None
+                ),
                 "calibration_status": "completed",
                 "calibration_completed": True,
                 "calibration_failed": False,

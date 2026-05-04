@@ -16,11 +16,14 @@ Focus areas:
 
 ## Immediate next action
 
-Root-cause **Phase 0 auto-param-scope EGLC preservation** before starting
-Phase A. The full canonical-Bordbar parity sweep completed on Hetzner and
-the gate returned `root_cause_phase0`.
+Re-run the **Phase 0 auto-param-scope parity sweep** on Hetzner after the
+EGLC-depletion acceptance gate patch. The previous full canonical-Bordbar
+sweep completed and returned `root_cause_phase0`; the patch now requires
+auto-scope candidates that target `EGLC` to preserve at least 5% EGLC
+depletion under the candidate ODE replay before they can be accepted.
 
-Full sweep command that produced the result:
+Use the same full sweep command, preferably in a fresh or force-updated
+`origin/dev/next-phase` worktree:
 
 ```powershell
 python scripts/run_auto_param_scope_parity.py `
@@ -31,7 +34,7 @@ python scripts/run_auto_param_scope_parity.py `
   --out-dir Simulations/auto_param_scope/parity_v1_full
 ```
 
-Full sweep result:
+Previous full sweep result:
 - `decision_gate`: `root_cause_phase0`
 - auto-scope final loss: `6.8191`
 - curated-profile final loss: `12.7488`
@@ -47,15 +50,24 @@ Interpretation:
   in pure-ODE replay (`-0.9%`, expected at least `5%` depletion), while the
   curated branch depletes EGLC by `7.0%`.
 
-Next implementation target:
-- Add an EGLC-preservation/root-cause probe before Phase A. Candidate fixes:
-  - constrain or stage glucose transport/commitment params
-    (`vmax_VEGLC`, `km_EGLC`, `km_GLC_transport`, `vmax_VHK`,
-    `vmax_VPFK`, `vmax_VPK`, lower-glycolysis companions)
-  - add a pure-ODE EGLC depletion gate to candidate acceptance before
-    promoting auto-scope results
-  - run a targeted rescue sweep that keeps the auto-scope fit gain while
-    requiring EGLC depletion >= 5%
+Patch landed locally (2026-05-04):
+- `src/MM_calibration.py`: candidate acceptance now supports
+  `min_eglc_depletion_frac`; the gate rejects a fit-improving candidate if
+  candidate `EGLC` depletion is below the configured threshold.
+- `apps/api/services/mm_calibration_adapter.py`: Phase 0 auto-scope enables
+  the gate automatically when uploaded/target metabolites include `EGLC`.
+  Manual parameter selections and curated-profile runs stay unchanged.
+- `qa/test_auto_param_scope.py`: regression coverage verifies the adapter
+  stage-plan wiring and direct accept/reject behavior.
+- Validation: `python -m pytest qa -q` -> `171 passed`.
+
+Rerun objective:
+- keep the auto-scope fit gain while requiring `EGLC` depletion >= 5%
+- if the gate returns `green_light_phase_a`, start Phase A
+- if it still returns `root_cause_phase0`, constrain or stage glucose
+  transport/commitment params next (`vmax_VEGLC`, `km_EGLC`,
+  `km_GLC_transport`, `vmax_VHK`, `vmax_VPFK`, `vmax_VPK`,
+  lower-glycolysis companions)
 
 Do not start Phase A until the same parity harness returns either
 `green_light_phase_a` or `needs_review` with no protected anchor worse than
@@ -77,7 +89,7 @@ Archive summary added in `AgentOps/Archive.md` under the
 
 ### Status of the parity-sweep harness
 
-Landed and smoke-tested (2026-05-03):
+Landed and smoke-tested (2026-05-03; EGLC gate patch 2026-05-04):
 - `scripts/run_auto_param_scope_parity.py` (NEW): adapter-driven
   (`run_web_calibration`), no duplicated Phase 0 logic. Three-state
   decision gate. Dry-run mode for scope-only checks.
@@ -94,6 +106,8 @@ Landed and smoke-tested (2026-05-03):
   fixed in the same session.
 - Full Hetzner sweep at `--n-trials 50` completed with
   `decision_gate=root_cause_phase0`; see `Archive.md` for the summary.
+- EGLC depletion gate patch added after the red result; dry-run smoke wrote
+  `Simulations/auto_param_scope/parity_v1_dry_gate_smoke/result.json`.
 
 ### Bug fix shipped alongside the harness
 
@@ -106,7 +120,8 @@ replay. Replaced with a `_sequence_values(...)` helper that tolerates
 None / `np.ndarray` / strings / arbitrary iterables; also added the
 `apps/api` directory to `sys.path` so script-driven callers resolve
 `services.*` the same way the FastAPI process does. Full qa suite
-stays green at 167/167 after adding the regression test. Consistent
+stays green at 171/171 after adding the regression test and the EGLC gate
+coverage. Consistent
 with Memory rule 17.
 
 ### Follow-ups (small, non-blocking)

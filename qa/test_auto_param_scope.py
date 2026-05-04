@@ -519,3 +519,64 @@ class TestAutoScopeAllowListIntegration:
             f"allow-list would reject — the adapter PHASE 0 wiring would "
             f"fail with 400."
         )
+
+
+class TestAutoScopeEglcProtection:
+    """Regression coverage for the Phase 0 root-cause found by the full
+    canonical-Bordbar parity sweep: auto-scope improved fit but allowed EGLC
+    to remain too flat under pure-ODE replay.
+    """
+
+    def test_auto_scope_stage_plan_adds_eglc_depletion_gate_when_requested(self):
+        selected_params = ["vmax_VEGLC", "vmax_VELAC", "km_EGLC", "km_LAC"]
+
+        stages = adapter._build_strategy_stage_plan(
+            selected_params,
+            "vmax_then_km",
+            max_iterations=10,
+            protect_eglc_depletion=True,
+        )
+
+        assert stages
+        for stage in stages:
+            assert stage["min_eglc_depletion_frac"] == pytest.approx(0.05)
+
+    def test_manual_stage_plan_does_not_gain_eglc_depletion_gate_by_default(self):
+        stages = adapter._build_strategy_stage_plan(
+            ["vmax_VEGLC", "km_EGLC"],
+            "vmax_then_km",
+            max_iterations=10,
+        )
+
+        assert stages
+        assert all("min_eglc_depletion_frac" not in stage for stage in stages)
+
+    def test_eglc_depletion_gate_rejects_fit_gain_with_flat_eglc(self):
+        accepted, reason = mm.accept_monitor_metrics(
+            {"target": 10.0, "joint": 10.0},
+            {
+                "target": 9.0,
+                "joint": 9.0,
+                "initial_EGLC": 25.0,
+                "final_EGLC": 24.8,
+            },
+            min_eglc_depletion_frac=0.05,
+        )
+
+        assert accepted is False
+        assert "EGLC depletion gate" in reason
+
+    def test_eglc_depletion_gate_allows_fit_gain_with_sufficient_depletion(self):
+        accepted, reason = mm.accept_monitor_metrics(
+            {"target": 10.0, "joint": 10.0},
+            {
+                "target": 9.0,
+                "joint": 9.0,
+                "initial_EGLC": 25.0,
+                "final_EGLC": 23.5,
+            },
+            min_eglc_depletion_frac=0.05,
+        )
+
+        assert accepted is True
+        assert "accepted on pure fit objective" in reason
