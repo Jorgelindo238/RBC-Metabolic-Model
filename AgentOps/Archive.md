@@ -3,6 +3,130 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-04 gated parity sweep green-light
+
+Full canonical-Bordbar parity sweep was rerun on Hetzner from
+`origin/dev/next-phase` commit `8f5475e` after the EGLC-depletion gate patch:
+
+```bash
+python scripts/run_auto_param_scope_parity.py \
+  --dataset canonical-bordbar \
+  --n-trials 50 \
+  --t-max 42 \
+  --loss-tolerance-pct 0.10 \
+  --out-dir Simulations/auto_param_scope/parity_v1_full_gate
+```
+
+Result:
+- `decision_gate`: `green_light_phase_a`
+- auto-scope final loss: `7.0872`
+- curated-profile final loss: `12.7488`
+- auto loss delta vs curated: `-44.4%`
+- scope Jaccard: `0.0612` (`98` auto params vs `6` curated params)
+- pure-ODE status: both branches `collapsed`
+- auto-scope critical count: 5
+- curated-profile critical count: 7
+- protected anchors worse than curated: none
+
+Protected-anchor details:
+- `EGLC`: auto `good`, depleted `5.9%`; curated `good`, depleted `7.0%`.
+- `ELAC`: good in both branches.
+- `LAC`: tracked/rising in both branches.
+- `AMP`: auto good, curated critical.
+- `ATP`, `ADP`, `B23PG`, `GSH`: critical in both branches.
+
+The new gate rejected the Km-stage fit-improving candidate that would have
+flattened `EGLC`:
+- candidate `EGLC 25.3400 -> 25.1227`, depletion `0.9%`
+- required depletion `>=5.0%`
+
+Interpretation:
+- Phase 0 parity is green. Auto-scope keeps a large fit advantage without
+  making any protected anchor worse than curated.
+- Pure-ODE survival is still globally collapsed for both branches; ATP/ADP,
+  B23PG, and GSH remain downstream scientific rescue targets.
+- Phase A sensitivity probing is now unblocked.
+
+Artifacts copied locally:
+- `Simulations/auto_param_scope/parity_v1_full_gate_result.json`
+- `Simulations/auto_param_scope/parity_v1_full_gate_run.log`
+
+## 2026-05-04 Phase 0 EGLC-depletion gate patch
+
+After the 2026-05-03 parity sweep returned `root_cause_phase0`, the
+scientific issue was narrowed to one protected anchor: auto-scope fit was much
+better than curated, but pure-ODE `EGLC` depletion was only `0.9%` instead of
+the expected `>=5%`.
+
+Patch:
+- `src/MM_calibration.py` now records initial/final extracellular diagnostics
+  in monitor metrics and supports `min_eglc_depletion_frac` in candidate
+  acceptance.
+- `apps/api/services/mm_calibration_adapter.py` enables a 5% EGLC-depletion
+  gate automatically for Phase 0 auto-scope requests that include `EGLC`.
+- Manual curated-profile and explicit-parameter runs remain unchanged unless a
+  caller explicitly supplies the gate in a stage plan.
+- Regression coverage was added in `qa/test_auto_param_scope.py`.
+
+Validation:
+- `python -m py_compile src/MM_calibration.py apps/api/services/mm_calibration_adapter.py`
+- `python -m pytest qa/test_auto_param_scope.py -q` -> `44 passed`
+- `python -m pytest qa/api/test_pure_ode_runtime.py -q` -> `1 passed`
+- `python -m pytest qa -q` -> `171 passed`
+- dry-run smoke wrote
+  `Simulations/auto_param_scope/parity_v1_dry_gate_smoke/result.json`.
+
+Follow-up completed:
+- the full gated Hetzner sweep returned `green_light_phase_a`; see the
+  2026-05-04 gated parity sweep green-light entry above.
+
+## 2026-05-03 auto-param-scope parity sweep
+
+Full canonical-Bordbar parity sweep ran on the Hetzner worker from
+`origin/dev/next-phase` commit `268d077`:
+
+```bash
+python scripts/run_auto_param_scope_parity.py \
+  --dataset canonical-bordbar \
+  --n-trials 50 \
+  --t-max 42 \
+  --loss-tolerance-pct 0.10 \
+  --out-dir Simulations/auto_param_scope/parity_v1_full
+```
+
+Result:
+- `decision_gate`: `root_cause_phase0`
+- auto-scope final loss: `6.8191`
+- curated-profile final loss: `12.7488`
+- auto loss delta vs curated: `-46.5%`
+- scope Jaccard: `0.0612` (`98` auto params vs `6` curated params)
+- pure-ODE status: both branches `collapsed`
+- auto-scope reduced pure-ODE critical count from 7 to 5
+- root-cause trigger: `EGLC` only (`auto=concern`, `curated=good`)
+
+Protected-anchor details:
+- `EGLC`: auto depleted only `0.9%` in pure-ODE replay, below the expected
+  `5%` depletion threshold; curated depleted `7.0%`.
+- `ELAC`: good in both branches.
+- `LAC`: tracked/rising in both branches.
+- `ATP`, `ADP`, `B23PG`, `GSH`: critical in both branches.
+- `AMP`: auto good, curated critical.
+
+Interpretation:
+- Phase 0 is not loss-limited; auto-scope fits the Bordbar panel much better
+  than the curated branch at this budget.
+- The blocker is glucose-side physiology. Auto-scope keeps extracellular
+  glucose too flat during pure-ODE replay, likely via transport/commitment
+  degrees of freedom (`vmax_VEGLC`, `km_EGLC`, `km_GLC_transport`,
+  `vmax_VHK`, `vmax_VPFK`, `vmax_VPK`, lower-glycolysis companions).
+
+Follow-up:
+- Do not start Phase A yet.
+- Add an EGLC-preservation/root-cause probe or gate, then rerun the same
+  parity harness.
+- Green path is `green_light_phase_a` or `needs_review` with no protected
+  anchor worse than curated.
+
 ## 2026-04-23 AgentOps alignment checkpoint
 
 - Branch cleanup aligned the repo around a clean `main` base.

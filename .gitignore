@@ -57,6 +57,7 @@ Simulations/brodbar/**
 !Simulations/brodbar/calibration/best_params.json
 !Simulations/brodbar/calibration/calibration_report.json
 Simulations/brodbar_phase*/
+Simulations/auto_param_scope/
 
 # Agentic supervisor runtime sandbox - all writes by services/robocop/agentic
 # and scripts/run_agentic_autosearch land here. Never tracked.

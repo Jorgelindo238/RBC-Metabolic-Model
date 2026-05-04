@@ -16,12 +16,25 @@ Focus areas:
 
 ## Immediate next action
 
-Run the **full canonical-Bordbar parity sweep** on Hetzner (or any
-unattended worker) and capture the verdict in `Archive.md`. The harness
-is built, smoke-tested, and the decision gate is wired; what's missing
-is a real-budget run.
+Start **Phase A: auto-param-scope sensitivity probe**. The Phase 0 parity gate
+is now green after adding the EGLC-depletion acceptance gate.
 
-Command:
+Phase A objective:
+- estimate local sensitivity for the broad auto-scope parameter set around the
+  green gated baseline
+- identify no-op, degenerate, or dangerous parameters before future optimizer
+  campaigns widen the search space further
+- keep the current scientific promotion gates active: pure-ODE triage,
+  protected-anchor comparison, and `EGLC` depletion >= 5%
+- emit a compact artifact under `Simulations/auto_param_scope/sensitivity_v1/`
+  with ranked parameter effects and a recommended pruned scope
+
+Build the harness first, then run a small smoke locally before scheduling the
+full probe on Hetzner.
+
+### Phase 0 gate status
+
+Full gated sweep command:
 
 ```powershell
 python scripts/run_auto_param_scope_parity.py `
@@ -29,26 +42,56 @@ python scripts/run_auto_param_scope_parity.py `
   --n-trials 50 `
   --t-max 42 `
   --loss-tolerance-pct 0.10 `
-  --out-dir Simulations/auto_param_scope/parity_v1_full
+  --out-dir Simulations/auto_param_scope/parity_v1_full_gate
 ```
 
-Acceptance criteria (encoded in the harness):
-- `decision_gate == "green_light_phase_a"` → start Phase A (sensitivity
-  probe of the plan).
-- `decision_gate == "root_cause_phase0"` → fix Phase 0 (likely:
-  regulation-param identifiability gap, ki_/ka_ defaults too
-  aggressive, or kernel mis-tuned) before any Phase A work.
-- `decision_gate == "needs_review"` → inspect
-  `final_loss_delta_pct_of_curated` and `protected_anchor_comparison`;
-  small loss gap with equal-or-better anchors can be promoted to green
-  by widening tolerance after manual review.
+Gated sweep result:
+- `decision_gate`: `green_light_phase_a`
+- auto-scope final loss: `7.0872`
+- curated-profile final loss: `12.7488`
+- auto loss delta vs curated: `-44.4%` (auto-scope still fits much better)
+- scope Jaccard: `0.0612` (`98` auto params vs `6` curated params)
+- pure-ODE: both branches `collapsed`
+- auto-scope pure-ODE critical count: 5
+- curated-profile pure-ODE critical count: 7
+- protected anchors worse than curated: none
+- `EGLC`: auto `good` (`-5.9%` depletion), curated `good` (`-7.0%`)
+- `ELAC`: good in both
+- `AMP`: auto `good`, curated `critical`
+- `ATP`, `ADP`, `B23PG`, `GSH`: critical in both
 
-Then write a one-page summary into `Archive.md` (final losses,
-anchor verdicts, scope Jaccard, decision, follow-ups).
+The gated run intentionally rejected the Km-stage candidate that flattened
+`EGLC`:
+- rejected candidate: `EGLC 25.3400 -> 25.1227`, depletion `0.9%`
+- required: `>=5.0%`
+
+Interpretation:
+- Phase 0 is now scientifically admissible for Phase A: auto-scope keeps its
+  fit advantage without making any protected anchor worse than curated.
+- Pure-ODE survival is still not solved globally; ATP/ADP/B23PG/GSH remain
+  critical in both branches. That becomes a downstream calibration/scientific
+  rescue problem, not a Phase 0 parity blocker.
+
+Patch that unblocked the gate (2026-05-04):
+- `src/MM_calibration.py`: candidate acceptance now supports
+  `min_eglc_depletion_frac`; the gate rejects a fit-improving candidate if
+  candidate `EGLC` depletion is below the configured threshold.
+- `apps/api/services/mm_calibration_adapter.py`: Phase 0 auto-scope enables
+  the gate automatically when uploaded/target metabolites include `EGLC`.
+  Manual parameter selections and curated-profile runs stay unchanged.
+- `qa/test_auto_param_scope.py`: regression coverage verifies the adapter
+  stage-plan wiring and direct accept/reject behavior.
+- Validation: `python -m pytest qa -q` -> `171 passed`.
+- Artifact copies:
+  - `Simulations/auto_param_scope/parity_v1_full_gate_result.json`
+  - `Simulations/auto_param_scope/parity_v1_full_gate_run.log`
+
+Archive summaries live in `AgentOps/Archive.md` under the 2026-05-03 and
+2026-05-04 parity entries.
 
 ### Status of the parity-sweep harness
 
-Landed and smoke-tested (2026-05-03):
+Landed and smoke-tested (2026-05-03; EGLC gate patch 2026-05-04):
 - `scripts/run_auto_param_scope_parity.py` (NEW): adapter-driven
   (`run_web_calibration`), no duplicated Phase 0 logic. Three-state
   decision gate. Dry-run mode for scope-only checks.
@@ -63,6 +106,12 @@ Landed and smoke-tested (2026-05-03):
   budget that's noise.
 - The smoke validated the gate end-to-end and surfaced one real bug,
   fixed in the same session.
+- Full Hetzner sweep at `--n-trials 50` completed with
+  `decision_gate=root_cause_phase0`; see `Archive.md` for the summary.
+- EGLC depletion gate patch added after the red result; dry-run smoke wrote
+  `Simulations/auto_param_scope/parity_v1_dry_gate_smoke/result.json`.
+- Full gated Hetzner rerun completed with `decision_gate=green_light_phase_a`;
+  Phase A is now unblocked.
 
 ### Bug fix shipped alongside the harness
 
@@ -75,11 +124,13 @@ replay. Replaced with a `_sequence_values(...)` helper that tolerates
 None / `np.ndarray` / strings / arbitrary iterables; also added the
 `apps/api` directory to `sys.path` so script-driven callers resolve
 `services.*` the same way the FastAPI process does. Full qa suite
-stays green at 166/166. Consistent with Memory rule 17.
+stays green at 171/171 after adding the regression test and the EGLC gate
+coverage. Consistent
+with Memory rule 17.
 
 ### Follow-ups (small, non-blocking)
 
-- Add a regression test under `qa/api/` that drives
+- Done: add a regression test under `qa/api/` that drives
   `_write_all_metabolites_csv` and `_write_reaction_fluxes_csv` with
   numpy-array inputs so the truthiness bug cannot silently reappear.
 - Repair the pre-existing `PHASE2_PARAMS["vmax_VAMPD1"] = (0.538065,
@@ -237,10 +288,8 @@ Parity-sweep harness landed (2026-05-03):
   truthiness-on-numpy-array bug in the same session.
 
 Next when work resumes (Phase A and beyond):
-- Run the full Hetzner parity sweep (see "Immediate next action" above)
-  and capture the verdict in `Archive.md`.
 - Phase A: sensitivity probe for canonical-IC degenerate parameters; prune
-  before passing to the optimiser. Gated on a green Hetzner sweep.
+  before passing to the optimiser. The green Hetzner sweep gate is complete.
 - Phase B onwards: per the plan file (flux-supervision targets, ML warmstart,
   hybrid structure-learning).
 
