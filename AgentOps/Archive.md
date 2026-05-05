@@ -3,6 +3,48 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-05 Phase B wide flux smoke
+
+Widened the Phase B model-flux smoke conservatively after the direct
+`VEGLC`/`VELAC`/`VLDH` gate passed.
+
+Added:
+- `scripts/run_phase_b_flux_smoke.py --preset wide`
+  - keeps `VEGLC`, `VELAC`, `VLDH`, and `VHK` as the first widened tracked
+    reaction panel
+  - separates the wide feature metabolite panel from the minimal inference
+    metabolite panel so `ATP`/`ADP` cannot create false singleton balances for
+    `VHK`
+- `--discover-identifiable`
+  - scans reactions touching the selected measured metabolite panel
+  - compares inferred fluxes against `FluxTracker`
+  - promotes only reactions that are singleton-identifiable and pass NRMSE
+    tolerance
+- `qa/test_phase_b_flux_smoke_script.py`
+  - covers direct and wide script contracts
+  - verifies `VHK` is discovered and gated in the wide smoke
+
+Local wide smoke:
+- command: `python scripts/run_phase_b_flux_smoke.py --preset wide --discover-identifiable --out-dir Simulations/auto_param_scope/phase_b_wide_flux_smoke --t-max 7 --timepoints 25`
+- status: `passed`
+- artifact: `Simulations/auto_param_scope/phase_b_wide_flux_smoke/result.json`
+- discovery scanned `38` candidate reactions
+- discovery accepted exactly `VEGLC`, `VELAC`, `VLDH`, `VHK`
+- `VEGLC` nRMSE vs model flux: `0.00032` (tolerance `0.02`)
+- `VELAC` nRMSE vs model flux: `0.00068` (tolerance `0.03`)
+- `VLDH` nRMSE vs model flux: `0.01453` (tolerance `0.08`)
+- `VHK` nRMSE vs model flux: `0.01689` (tolerance `0.05`)
+- feature count: `244`
+
+Validation:
+- `python -m pytest qa/test_phase_b_flux_inference.py qa/test_phase_b_flux_smoke_script.py -q` -> `5 passed`
+- `python -m pytest qa -q` -> `189 passed`
+
+Interpretation:
+- Phase B now has a cautious direct + wide tracked-flux gate.
+- The next scientific implementation step is Phase C: offline ML warm-start
+  scaffolding on top of the stable `phase_b_v1` feature payload.
+
 ## 2026-05-05 Phase B model-flux smoke
 
 Added `scripts/run_phase_b_flux_smoke.py` and QA coverage for the first

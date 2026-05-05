@@ -16,8 +16,8 @@ Focus areas:
 
 ## Immediate next action
 
-Widen the **Phase B - online flux inference and feature extraction** reaction
-panel after the first model-flux smoke passed.
+Start **Phase C - ML warm-start scaffolding** now that Phase B has a cautious
+tracked-flux gate for the first direct and wide reaction panels.
 
 Phase B goal:
 - turn user uploaded `exp_data` into flux estimates and fixed-length features
@@ -47,23 +47,36 @@ Model-flux smoke landed:
 - `scripts/run_phase_b_flux_smoke.py`
   - solves the Brodbar ODE
   - replays the solved states through `FluxTracker`
-  - infers `VEGLC`, `VELAC`, and `VLDH` from simulated `EGLC`, `ELAC`, and
-    `LAC`
+  - supports `--preset direct` for `VEGLC`, `VELAC`, and `VLDH`
+  - supports `--preset wide --discover-identifiable` for the cautious widened
+    panel `VEGLC`, `VELAC`, `VLDH`, `VHK`
+  - keeps the wide feature panel separate from the minimal inference panel so
+    `ATP`/`ADP` do not create false singleton balances for `VHK`
   - writes `Simulations/auto_param_scope/phase_b_model_flux_smoke/result.json`
 - `qa/test_phase_b_flux_smoke_script.py`
-  - runs a fast `t_max=2` script smoke and verifies JSON shape/tolerances
+  - runs fast `t_max=2` direct and wide script smokes and verifies JSON
+    shape/tolerances/discovery output
 - local full smoke (`t_max=7`, 25 points) passed:
   - `VEGLC` nRMSE vs model flux: `0.00032`
   - `VELAC` nRMSE vs model flux: `0.00068`
   - `VLDH` nRMSE vs model flux: `0.01453`
   - feature count: `78`
+- local wide smoke (`t_max=7`, 25 points) passed:
+  - artifact: `Simulations/auto_param_scope/phase_b_wide_flux_smoke/result.json`
+  - `VEGLC` nRMSE vs model flux: `0.00032`
+  - `VELAC` nRMSE vs model flux: `0.00068`
+  - `VLDH` nRMSE vs model flux: `0.01453`
+  - `VHK` nRMSE vs model flux: `0.01689`
+  - discovery scanned `38` candidate reactions and accepted only `VEGLC`,
+    `VELAC`, `VLDH`, `VHK`
+  - feature count: `244`
 
-Next Phase B step:
-- widen the direct-anchor panel beyond `VEGLC`/`VELAC`/`VLDH`
-- prioritize reactions whose flux can be structurally identified from measured
-  singleton or near-singleton balances before attempting wide underdetermined
-  least-squares inference
-- once the panel is stable, start Phase C ML warm-start scaffolding
+Next Phase C step:
+- build a minimal deterministic trainer harness that consumes Phase B
+  `phase_b_v1` feature payloads and predicts a first safe subset of warm-start
+  parameters
+- keep it offline/experimental first; no worker/API contract change until it
+  beats the no-ML baseline on tracked artifacts
 
 ### Phase 0 gate status
 
@@ -281,7 +294,8 @@ Next:
 
 ### Auto-calibrate-all + ML flux-learning rollout
 
-Status: Phase 0 + Phase A/A2 complete; Phase B is next. Plan file:
+Status: Phase 0 + Phase A/A2 complete; Phase B direct/wide smoke gates
+complete; Phase C is next. Plan file:
 `C:/Users/Jorgelindo/.windsurf/plans/auto-calibrate-all-and-ml-flux-learning-179f0d.md`.
 
 Goal:
@@ -354,12 +368,10 @@ Phase A/A2 closed (2026-05-05):
   curated
 
 Next when work resumes:
-- Phase B: widen from the direct Bordbar/model anchors to a larger reaction
-  feature panel and keep every widened reaction behind tracked-flux smoke
-  tolerances
-- Phase C onward stays deferred until Phase B feature vectors are stable:
-  ML warm-start, optional flux-balance loss, identifiability regularisation,
-  and hybrid structure-learning
+- Phase C: build the first offline ML warm-start scaffold on top of the
+  `phase_b_v1` feature payload and the tracked-flux smoke artifacts
+- keep optional flux-balance loss, identifiability regularisation, and hybrid
+  structure-learning deferred until the minimal warm-start baseline is measured
 
 ### DeepAgents RoBoCop supervisor
 

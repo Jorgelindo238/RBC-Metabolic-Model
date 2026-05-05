@@ -51,3 +51,29 @@ def test_phase_b_model_flux_smoke_writes_result_json(tmp_path):
         assert comparison["nrmse_vs_model_flux"] <= comparison["tolerance"]
         assert len(result["tracked_fluxes"][reaction]) == 8
         assert len(result["inferred_fluxes"][reaction]) == 8
+
+
+def test_phase_b_wide_flux_smoke_discovers_vhk(tmp_path):
+    payload = phase_b_smoke.run_smoke(
+        out_dir=tmp_path,
+        preset="wide",
+        discover_identifiable=True,
+        t_max=2.0,
+        timepoints=8,
+        tolerances={"VEGLC": 0.08, "VELAC": 0.08, "VLDH": 0.15, "VHK": 0.08},
+    )
+
+    result = json.loads((tmp_path / "result.json").read_text(encoding="utf-8"))
+
+    assert payload["status"] == "passed"
+    assert result["preset"] == "wide"
+    assert result["target_metabolites"] == list(phase_b_smoke.WIDE_METABOLITES)
+    assert result["reactions"] == ["VEGLC", "VELAC", "VLDH", "VHK"]
+    assert result["feature_payload"]["metadata"]["metabolite_count"] == len(phase_b_smoke.WIDE_METABOLITES)
+    assert result["feature_payload"]["metadata"]["reaction_count"] == len(phase_b_smoke.WIDE_REACTIONS)
+    assert result["feature_payload"]["metadata"]["feature_count"] == 244
+
+    assert result["comparisons"]["VHK"]["passed"] is True
+    assert "VHK" in result["discovery"]["accepted_reactions"]
+    assert result["discovery"]["candidate_count"] >= len(phase_b_smoke.WIDE_REACTIONS)
+    assert result["discovery"]["accepted_count"] >= 4
