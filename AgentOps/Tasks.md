@@ -16,9 +16,8 @@ Focus areas:
 
 ## Immediate next action
 
-Validate and extend the **Phase B - online flux inference and feature
-extraction** first slice for the auto-calibrate-all + ML flux-learning
-workstream.
+Widen the **Phase B - online flux inference and feature extraction** reaction
+panel after the first model-flux smoke passed.
 
 Phase B goal:
 - turn user uploaded `exp_data` into flux estimates and fixed-length features
@@ -44,13 +43,27 @@ First slice landed:
   - verifies stable finite feature payloads
   - verifies missing series are explicit zero-presence features
 
+Model-flux smoke landed:
+- `scripts/run_phase_b_flux_smoke.py`
+  - solves the Brodbar ODE
+  - replays the solved states through `FluxTracker`
+  - infers `VEGLC`, `VELAC`, and `VLDH` from simulated `EGLC`, `ELAC`, and
+    `LAC`
+  - writes `Simulations/auto_param_scope/phase_b_model_flux_smoke/result.json`
+- `qa/test_phase_b_flux_smoke_script.py`
+  - runs a fast `t_max=2` script smoke and verifies JSON shape/tolerances
+- local full smoke (`t_max=7`, 25 points) passed:
+  - `VEGLC` nRMSE vs model flux: `0.00032`
+  - `VELAC` nRMSE vs model flux: `0.00068`
+  - `VLDH` nRMSE vs model flux: `0.01453`
+  - feature count: `78`
+
 Next Phase B step:
-- add a model-generated synthetic smoke that solves the ODE with flux tracking,
-  feeds selected concentration curves back into `infer_user_fluxes`, and checks
-  inferred `VEGLC`/`VELAC`/`VLDH` against tracked model fluxes within a
-  realistic tolerance
-- only after that, widen the reaction panel used for feature extraction toward
-  the synthetic ML training library
+- widen the direct-anchor panel beyond `VEGLC`/`VELAC`/`VLDH`
+- prioritize reactions whose flux can be structurally identified from measured
+  singleton or near-singleton balances before attempting wide underdetermined
+  least-squares inference
+- once the panel is stable, start Phase C ML warm-start scaffolding
 
 ### Phase 0 gate status
 
@@ -341,8 +354,9 @@ Phase A/A2 closed (2026-05-05):
   curated
 
 Next when work resumes:
-- Phase B: validate the first slice against model-generated tracked fluxes,
-  then widen from the direct Bordbar anchors to a larger reaction feature panel
+- Phase B: widen from the direct Bordbar/model anchors to a larger reaction
+  feature panel and keep every widened reaction behind tracked-flux smoke
+  tolerances
 - Phase C onward stays deferred until Phase B feature vectors are stable:
   ML warm-start, optional flux-balance loss, identifiability regularisation,
   and hybrid structure-learning

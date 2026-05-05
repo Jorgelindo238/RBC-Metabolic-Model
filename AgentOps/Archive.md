@@ -3,6 +3,36 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-05 Phase B model-flux smoke
+
+Added `scripts/run_phase_b_flux_smoke.py` and QA coverage for the first
+model-grounded Phase B gate.
+
+Script contract:
+- solve the Brodbar ODE on a fixed grid
+- replay solved states through `FluxTracker`
+- infer `VEGLC`, `VELAC`, and `VLDH` from simulated `EGLC`, `ELAC`, and `LAC`
+- compare inferred fluxes against tracked model fluxes
+- write `Simulations/auto_param_scope/phase_b_model_flux_smoke/result.json`
+
+Local full smoke:
+- command: `python scripts/run_phase_b_flux_smoke.py --out-dir Simulations/auto_param_scope/phase_b_model_flux_smoke --t-max 7 --timepoints 25`
+- status: `passed`
+- `VEGLC` nRMSE vs model flux: `0.00032` (tolerance `0.02`)
+- `VELAC` nRMSE vs model flux: `0.00068` (tolerance `0.03`)
+- `VLDH` nRMSE vs model flux: `0.01453` (tolerance `0.08`)
+- feature count: `78`
+
+Validation:
+- `python -m py_compile scripts/run_phase_b_flux_smoke.py src/flux_inference.py src/ml_features.py`
+- `python -m pytest qa/test_phase_b_flux_inference.py qa/test_phase_b_flux_smoke_script.py -q` -> `4 passed`
+
+Interpretation:
+- Phase B first slice is now validated against both Bordbar PCHIP teacher
+  derivatives and model-tracked fluxes.
+- Next Phase B step is to widen the reaction panel conservatively, preferring
+  reactions with identifiable singleton/near-singleton balances.
+
 ## 2026-05-05 Phase B flux inference first slice
 
 Started Phase B of the auto-calibrate-all + ML flux-learning workstream.
