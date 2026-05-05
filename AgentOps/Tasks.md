@@ -16,74 +16,64 @@ Focus areas:
 
 ## Immediate next action
 
-Run the full **Phase A2: pruning-validation ablation sweep** on Hetzner.
-Phase A is complete: the sensitivity artifact says only `vmax_VAMPD1` and
-`vmax_Vnucleo2` are locally sensitive around the green gated baseline, but
-local flatness is not enough evidence to prune the optimizer scope directly.
+Run the **final pruned parity sweep** on Hetzner after pulling
+`origin/dev/next-phase`. Phase A2 accepted only one conservative pruning rule:
+drop the seven low-sensitivity regulation params from default auto-scope.
 
-Phase A2 objective:
-- validate pruned scopes by rerunning calibration, not just perturbing the
-  final baseline locally
-- keep pruned parameters seeded at auto-scope defaults while optimizing only
-  each candidate include-list
-- require the same scientific gate: `EGLC` depletion >= 5%
-- accept a pruned scope only if final loss stays within 10% of the full gated
-  auto-scope baseline (`7.0872`) and the `EGLC` gate passes
+Implemented pruning rule:
+- `AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS` in `src/MM_calibration.py`
+- default auto-scope excludes:
+  - `alpha_F16BP_PK`
+  - `ka_F16BP_PK`
+  - `ki_ATP_PK`
+  - `ki_PYR_PK`
+  - `km_ADP_ATP`
+  - `km_NADH_NAD`
+  - `km_NAD_NADH`
+- explicit user selections remain allowed and are not overwritten by
+  auto-scope
 
-Harness status:
-- `scripts/run_auto_param_scope_pruning_validation.py` was added.
-- It reads the Phase A `sensitivity_v1_full/result.json` artifact and builds
-  candidate scopes:
-  - `sensitive_only` (2 params)
-  - `near_threshold` (13 params at effect >= 0.1% or explicit keep)
-  - `top_k` (12 most sensitive params by local effect)
-  - `core_plus_sensitive` (25 params: sensitive + core + protected tokens)
-  - `drop_low_regulation` (91 params)
-  - `drop_low_caution_transport` (88 params)
-- Local validation:
-  - `python -m py_compile scripts/run_auto_param_scope_pruning_validation.py`
-  - `python -m pytest qa/test_auto_param_scope_pruning_validation.py -q` -> `5 passed`
-  - `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_sensitivity.py qa/test_auto_param_scope_pruning_validation.py -q` -> `54 passed`
-  - dry-run built the six candidate scopes from
-    `Simulations/auto_param_scope/sensitivity_v1_full_result.json`
-  - smoke calibration with `--n-trials 1 --t-max 2 --max-candidates 1`
-    completed and correctly rejected `sensitive_only` when the `EGLC` gate
-    failed
+Phase A2 result:
+- compact scopes all rejected:
+  - `sensitive_only` (2 params): final loss `15.2925`
+  - `near_threshold` (13 params): final loss `14.5531`
+  - `core_plus_sensitive` (25 params): final loss `12.0202`
+- broad scopes:
+  - `drop_low_regulation` (91 params): `accept_pruned_scope`, final loss
+    `7.0872`
+  - `drop_low_caution_transport` (88 params): `needs_review`, final loss
+    `8.1238`
 
-First Hetzner A2 command (meaningful pruned scopes only):
+Validation after implementation:
+- `python -m py_compile src/MM_calibration.py`
+- `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_pruning_validation.py -q` -> `52 passed`
+
+Final Hetzner command:
 
 ```bash
 cd /opt/airbc/experiments/auto-scope-parity
 git fetch origin
 git checkout -f origin/dev/next-phase
 
-mkdir -p Simulations/auto_param_scope/pruning_v1_full
+mkdir -p Simulations/auto_param_scope/parity_v1_pruned_final
 
-nohup /opt/airbc/app/apps/calibration-worker/.venv/bin/python -u scripts/run_auto_param_scope_pruning_validation.py \
+nohup /opt/airbc/app/apps/calibration-worker/.venv/bin/python -u scripts/run_auto_param_scope_parity.py \
   --dataset canonical-bordbar \
-  --sensitivity-result Simulations/auto_param_scope/sensitivity_v1_full/result.json \
   --n-trials 50 \
   --t-max 42 \
-  --eglc-min-depletion-frac 0.05 \
   --loss-tolerance-pct 0.10 \
-  --review-loss-tolerance-pct 0.25 \
-  --near-effect-frac 0.001 \
-  --top-k 12 \
-  --candidates sensitive_only,near_threshold,core_plus_sensitive \
-  --out-dir Simulations/auto_param_scope/pruning_v1_full \
-  > Simulations/auto_param_scope/pruning_v1_full/run.log 2>&1 &
+  --out-dir Simulations/auto_param_scope/parity_v1_pruned_final \
+  > Simulations/auto_param_scope/parity_v1_pruned_final/run.log 2>&1 &
 
 echo "PID=$!"
-tail -f Simulations/auto_param_scope/pruning_v1_full/run.log
+tail -f Simulations/auto_param_scope/parity_v1_pruned_final/run.log
 ```
 
-Decision after A2:
-- if `recommended_candidate` exists, implement that pruned scope as the next
-  auto-scope candidate and rerun parity
-- if all three compact scopes reject, run the broad ablations
-  `drop_low_regulation,drop_low_caution_transport`
-- if only `needs_review` scopes exist, inspect the loss-vs-param-count tradeoff
-  before changing production behavior
+Decision after final parity:
+- `green_light_phase_a` with no worse protected anchors -> Phase A/A2 closed;
+  proceed to Phase B.
+- any regression or worse protected anchor -> keep the constant but gate it
+  behind a feature flag before production exposure.
 
 ### Phase 0 gate status
 

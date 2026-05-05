@@ -3,6 +3,44 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-05 Phase A2 broad pruning result
+
+Phase A2 compact and broad pruning validations ran on Hetzner from
+`origin/dev/next-phase`.
+
+Compact result:
+- `sensitive_only` (2 params): rejected, final loss `15.2925`
+- `near_threshold` (13 params): rejected, final loss `14.5531`
+- `core_plus_sensitive` (25 params): rejected, final loss `12.0202`
+
+Broad result:
+- `drop_low_regulation` (91 params): `accept_pruned_scope`, final loss
+  `7.0872`
+- `drop_low_caution_transport` (88 params): `needs_review`, final loss
+  `8.1238`
+- recommended candidate: `drop_low_regulation`
+
+Implemented default auto-scope pruning:
+- `AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS` in `src/MM_calibration.py`
+- excluded by default:
+  - `alpha_F16BP_PK`
+  - `ka_F16BP_PK`
+  - `ki_ATP_PK`
+  - `ki_PYR_PK`
+  - `km_ADP_ATP`
+  - `km_NADH_NAD`
+  - `km_NAD_NADH`
+- manual explicit `params_to_optimize` selections remain allowed
+
+Validation:
+- `python -m py_compile src/MM_calibration.py`
+- `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_pruning_validation.py -q` -> `52 passed`
+
+Next:
+- run final parity with default pruned auto-scope (`91` params) using the
+  command in `AgentOps/Tasks.md`
+- if final parity is green, Phase A/A2 closes and Phase B can begin
+
 ## 2026-05-05 Phase A complete and A2 pruning harness scaffold
 
 Full Phase A sensitivity probe completed on Hetzner and artifacts were copied

@@ -738,15 +738,32 @@ DEFAULT_PARAM_BOUNDS = {
 # regulation params already inside PHASE1_BASE_PARAMS as the "kernel"). Hybrid
 # structure parameters (Hill exponents, allosteric Ki/Ka/alpha) are only
 # included when ``include_hybrid=True`` — they are reserved for Phase F of the
-# plan after identifiability work lands. The "degenerate-at-canonical-IC"
-# pruning step described in the plan is also deferred to Phase E (Phase 0
-# returns the structurally-reachable set as-is).
+# plan after identifiability work lands. Phase A2 later validated one safe
+# pruning rule: remove a small set of low-sensitivity regulation parameters
+# from the automatic scope, while still allowing manual explicit selection.
 
 # The kernel is the always-included set of parameters that anchor the
 # physiological core of the calibration even when the upload has no
 # extracellular signals. Equal to PHASE1_BASE_PARAMS by design — when that
 # dict changes, the kernel changes with it.
 AUTO_SCOPE_KERNEL: frozenset = frozenset(PHASE1_BASE_PARAMS.keys())
+
+# Phase A2 pruning validation (canonical Bordbar, gated auto-scope baseline)
+# accepted the "drop_low_regulation" ablation: final loss stayed at 7.0872
+# while EGLC depletion remained above the 5% gate. Keep this as a named,
+# conservative allow-by-default exclusion rather than silently removing broad
+# parameter classes. Explicit user selections are still accepted by the API.
+AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS: frozenset = frozenset(
+    {
+        "alpha_F16BP_PK",
+        "ka_F16BP_PK",
+        "ki_ATP_PK",
+        "ki_PYR_PK",
+        "km_ADP_ATP",
+        "km_NADH_NAD",
+        "km_NAD_NADH",
+    }
+)
 
 
 def _normalize_metabolite_name_set(names) -> set:
@@ -765,6 +782,7 @@ def derive_auto_param_scope(
     include_kms: bool = True,
     include_regulation: bool = True,
     include_hybrid: bool = False,
+    apply_phase_a2_pruning: bool = True,
 ) -> list:
     """Return a sorted list of calibratable parameter names whose reactions
     affect the uploaded metabolites' stoichiometric neighbourhood.
@@ -798,6 +816,11 @@ def derive_auto_param_scope(
         If True, also include ``hybrid_*`` / ``kinetic_family_*`` /
         ``transport_gate_*`` parameters. Phase 0 default is False; structure
         learning is deferred to Phase F of the plan.
+    apply_phase_a2_pruning
+        If True (default), remove the conservative Phase A2
+        ``AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS`` set from automatic
+        scope derivation. This affects only automatic scope expansion; manual
+        ``params_to_optimize`` selections remain valid upstream.
 
     Returns
     -------
@@ -831,6 +854,9 @@ def derive_auto_param_scope(
     if not include_kms:
         candidates = {n for n in candidates if not n.startswith("km_")}
 
+    if apply_phase_a2_pruning:
+        candidates.difference_update(AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS)
+
     # Final filter: only return parameters that have a registered
     # (default, lo, hi) triple — guarantees the caller can safely ask the
     # optimiser to vary every returned name.
@@ -847,6 +873,7 @@ def auto_scope_with_bounds(
     include_kms: bool = True,
     include_regulation: bool = True,
     include_hybrid: bool = False,
+    apply_phase_a2_pruning: bool = True,
 ) -> dict:
     """Convenience wrapper: ``{name: (initial, lo, hi)}`` for the auto-scope.
 
@@ -861,6 +888,7 @@ def auto_scope_with_bounds(
         include_kms=include_kms,
         include_regulation=include_regulation,
         include_hybrid=include_hybrid,
+        apply_phase_a2_pruning=apply_phase_a2_pruning,
     )
 
     base_params = base_params or {}
