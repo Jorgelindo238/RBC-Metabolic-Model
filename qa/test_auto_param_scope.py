@@ -5,8 +5,8 @@ Plan reference:
 
 Covers:
     * Stoichiometry parser invariants (rbc_stoichiometry).
-    * mm.derive_auto_param_scope sanity (kernel inclusion, reachability,
-      bounds validity).
+    * mm.derive_auto_param_scope sanity (pruned kernel inclusion,
+      reachability, bounds validity).
     * mm.auto_scope_with_bounds shape and clipping behaviour.
     * Adapter-level tri-state decision logic and env kill switch.
     * Adapter wiring: empty params_to_optimize triggers auto-scope and the
@@ -203,16 +203,33 @@ class TestAutoParamScope0a:
     )
     def test_returns_at_least_kernel(self, metabolites: List[str]):
         scope = mm.derive_auto_param_scope(metabolites)
-        assert len(scope) >= len(mm.AUTO_SCOPE_KERNEL), (
-            f"Auto-scope must always cover the kernel "
-            f"(got {len(scope)} params, kernel={len(mm.AUTO_SCOPE_KERNEL)})"
+        expected_kernel = mm.AUTO_SCOPE_KERNEL - mm.AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS
+        assert len(scope) >= len(expected_kernel), (
+            f"Auto-scope must always cover the pruned kernel "
+            f"(got {len(scope)} params, kernel={len(expected_kernel)})"
         )
-        # Every kernel member must be present.
-        for kernel_name in mm.AUTO_SCOPE_KERNEL:
+        # Every non-pruned kernel member must be present.
+        for kernel_name in expected_kernel:
             assert kernel_name in scope, (
                 f"Kernel parameter {kernel_name!r} missing from auto-scope for "
                 f"metabolites={metabolites}"
             )
+
+    def test_phase_a2_pruned_regulation_params_are_excluded_by_default(self):
+        scope = set(mm.derive_auto_param_scope(EXTRACELLULAR_METABOLITES + ENERGY_METABOLITES))
+
+        assert mm.AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS
+        assert scope.isdisjoint(mm.AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS)
+
+    def test_phase_a2_pruned_regulation_can_be_restored_for_experiments(self):
+        scope = set(
+            mm.derive_auto_param_scope(
+                EXTRACELLULAR_METABOLITES + ENERGY_METABOLITES,
+                apply_phase_a2_pruning=False,
+            )
+        )
+
+        assert mm.AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS <= scope
 
     def test_every_returned_name_has_bounds(self):
         scope = mm.derive_auto_param_scope(ENERGY_METABOLITES)
@@ -251,7 +268,8 @@ class TestAutoParamScope0a:
         # Junk names must not crash; they simply contribute no reachable
         # reactions. The kernel must still be present.
         scope = mm.derive_auto_param_scope(["UNOBTAINIUM", "QUUX"])
-        assert mm.AUTO_SCOPE_KERNEL <= set(scope)
+        expected_kernel = mm.AUTO_SCOPE_KERNEL - mm.AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS
+        assert expected_kernel <= set(scope)
 
 
 # ---------------------------------------------------------------------------
@@ -272,7 +290,7 @@ class TestAutoParamScope0b:
             target_metabolites=ENERGY_METABOLITES,
         )
         assert applied is True
-        assert len(added) >= len(mm.AUTO_SCOPE_KERNEL)
+        assert not (set(added) & mm.AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS)
         assert request.params_to_optimize, (
             "params_to_optimize should be populated in-place after auto-scope applies"
         )
@@ -319,6 +337,26 @@ class TestAutoParamScope0b:
         assert added == []
         assert list(request.params_to_optimize.keys()) == ["vmax_VHK"]
 
+    def test_explicit_pruned_params_are_preserved_when_selected_manually(self):
+        explicit_params = {
+            "ki_ATP_PK": [2.5, 0.5, 10.0],
+            "km_ADP_ATP": [1.0, 0.05, 10.0],
+        }
+        request = _make_request(
+            params_to_optimize=explicit_params,
+            auto_param_scope=True,
+        )
+
+        applied, added = adapter._maybe_apply_auto_param_scope(
+            request,
+            user_selected_params=list(explicit_params.keys()),
+            target_metabolites=ENERGY_METABOLITES,
+        )
+
+        assert applied is False
+        assert added == []
+        assert request.params_to_optimize == explicit_params
+
 
 # ---------------------------------------------------------------------------
 # Test 0c: parity vs curated profile on the canonical Bordbar dataset
@@ -326,7 +364,7 @@ class TestAutoParamScope0b:
 
 
 class TestAutoParamScope0c:
-    """0c: auto-scope on the full Bordbar set covers the curated profile.
+    """0c: auto-scope on the full Bordbar set covers the pruned curated profile.
 
     The plan calls for a numerical parity check ("within ±X% on the canonical
     Bordbar dataset"). At Phase 0 we don't run the full optimisation in this
@@ -351,7 +389,8 @@ class TestAutoParamScope0c:
             "km_GLC_HK", "km_F6P", "km_PEP", "km_PYR", "km_LAC",
             "ki_ATP_PK", "ki_PYR_PK",
         }
-        missing = curated_anchors - scope
+        expected_anchors = curated_anchors - mm.AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS
+        missing = expected_anchors - scope
         assert not missing, (
             f"Auto-scope on the canonical Bordbar set is missing curated "
             f"glycolysis anchors: {sorted(missing)}"
@@ -464,7 +503,7 @@ class TestAutoScopeWithBounds:
     def test_returns_dict_of_triples(self):
         bounds = mm.auto_scope_with_bounds(ENERGY_METABOLITES)
         assert isinstance(bounds, dict)
-        assert len(bounds) >= len(mm.AUTO_SCOPE_KERNEL)
+        assert not (set(bounds) & mm.AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS)
         for name, triple in bounds.items():
             assert isinstance(triple, tuple)
             assert len(triple) == 3

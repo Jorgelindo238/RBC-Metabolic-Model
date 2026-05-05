@@ -3,6 +3,246 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-05 Phase B wide flux smoke
+
+Widened the Phase B model-flux smoke conservatively after the direct
+`VEGLC`/`VELAC`/`VLDH` gate passed.
+
+Added:
+- `scripts/run_phase_b_flux_smoke.py --preset wide`
+  - keeps `VEGLC`, `VELAC`, `VLDH`, and `VHK` as the first widened tracked
+    reaction panel
+  - separates the wide feature metabolite panel from the minimal inference
+    metabolite panel so `ATP`/`ADP` cannot create false singleton balances for
+    `VHK`
+- `--discover-identifiable`
+  - scans reactions touching the selected measured metabolite panel
+  - compares inferred fluxes against `FluxTracker`
+  - promotes only reactions that are singleton-identifiable and pass NRMSE
+    tolerance
+- `qa/test_phase_b_flux_smoke_script.py`
+  - covers direct and wide script contracts
+  - verifies `VHK` is discovered and gated in the wide smoke
+
+Local wide smoke:
+- command: `python scripts/run_phase_b_flux_smoke.py --preset wide --discover-identifiable --out-dir Simulations/auto_param_scope/phase_b_wide_flux_smoke --t-max 7 --timepoints 25`
+- status: `passed`
+- artifact: `Simulations/auto_param_scope/phase_b_wide_flux_smoke/result.json`
+- discovery scanned `38` candidate reactions
+- discovery accepted exactly `VEGLC`, `VELAC`, `VLDH`, `VHK`
+- `VEGLC` nRMSE vs model flux: `0.00032` (tolerance `0.02`)
+- `VELAC` nRMSE vs model flux: `0.00068` (tolerance `0.03`)
+- `VLDH` nRMSE vs model flux: `0.01453` (tolerance `0.08`)
+- `VHK` nRMSE vs model flux: `0.01689` (tolerance `0.05`)
+- feature count: `244`
+
+Validation:
+- `python -m pytest qa/test_phase_b_flux_inference.py qa/test_phase_b_flux_smoke_script.py -q` -> `5 passed`
+- `python -m pytest qa -q` -> `189 passed`
+
+Interpretation:
+- Phase B now has a cautious direct + wide tracked-flux gate.
+- The next scientific implementation step is Phase C: offline ML warm-start
+  scaffolding on top of the stable `phase_b_v1` feature payload.
+
+## 2026-05-05 Phase B model-flux smoke
+
+Added `scripts/run_phase_b_flux_smoke.py` and QA coverage for the first
+model-grounded Phase B gate.
+
+Script contract:
+- solve the Brodbar ODE on a fixed grid
+- replay solved states through `FluxTracker`
+- infer `VEGLC`, `VELAC`, and `VLDH` from simulated `EGLC`, `ELAC`, and `LAC`
+- compare inferred fluxes against tracked model fluxes
+- write `Simulations/auto_param_scope/phase_b_model_flux_smoke/result.json`
+
+Local full smoke:
+- command: `python scripts/run_phase_b_flux_smoke.py --out-dir Simulations/auto_param_scope/phase_b_model_flux_smoke --t-max 7 --timepoints 25`
+- status: `passed`
+- `VEGLC` nRMSE vs model flux: `0.00032` (tolerance `0.02`)
+- `VELAC` nRMSE vs model flux: `0.00068` (tolerance `0.03`)
+- `VLDH` nRMSE vs model flux: `0.01453` (tolerance `0.08`)
+- feature count: `78`
+
+Validation:
+- `python -m py_compile scripts/run_phase_b_flux_smoke.py src/flux_inference.py src/ml_features.py`
+- `python -m pytest qa/test_phase_b_flux_inference.py qa/test_phase_b_flux_smoke_script.py -q` -> `4 passed`
+
+Interpretation:
+- Phase B first slice is now validated against both Bordbar PCHIP teacher
+  derivatives and model-tracked fluxes.
+- Next Phase B step is to widen the reaction panel conservatively, preferring
+  reactions with identifiable singleton/near-singleton balances.
+
+## 2026-05-05 Phase B flux inference first slice
+
+Started Phase B of the auto-calibrate-all + ML flux-learning workstream.
+
+Added:
+- `src/flux_inference.py`
+  - `infer_user_fluxes(exp_data, exp_time, stoichiometry)`
+  - PCHIP concentration interpolation and derivatives
+  - singleton stoichiometric balance propagation for directly identified
+    reactions
+  - bounded least-squares fallback for remaining local systems
+  - confidence metadata per reaction
+- `src/ml_features.py`
+  - stable `phase_b_v1` feature schema
+  - `build_features(...)`
+  - `build_feature_payload(...)`
+  - explicit zero-presence features for missing metabolites/reactions
+- `qa/test_phase_b_flux_inference.py`
+  - Bordbar PCHIP teacher anchors:
+    `EGLC -> VEGLC`, `ELAC -> VELAC`, `LAC + VELAC -> VLDH`
+  - finite stable feature payload checks
+  - missing-series behavior checks
+
+Validation:
+- `python -m py_compile src/flux_inference.py src/ml_features.py`
+- `python -m pytest qa/test_phase_b_flux_inference.py -q` -> `3 passed`
+
+Next:
+- add a model-generated ODE/flux-tracker smoke to compare inferred anchor
+  fluxes against tracked model fluxes before widening the reaction panel.
+
+## 2026-05-05 final pruned parity green-light
+
+The final canonical-Bordbar parity sweep was rerun on Hetzner from
+`origin/dev/next-phase` after the Phase A2 pruning rule landed in default
+auto-scope policy.
+
+Command summary:
+- `scripts/run_auto_param_scope_parity.py`
+- `--dataset canonical-bordbar`
+- `--n-trials 50`
+- `--t-max 42`
+- `--loss-tolerance-pct 0.10`
+- `--out-dir Simulations/auto_param_scope/parity_v1_pruned_final`
+
+Result:
+- status: `completed`
+- `decision_gate`: `green_light_phase_a`
+- auto-scope param count: `91`
+- curated-profile param count: `6`
+- auto-scope final loss: `7.0872`
+- curated-profile final loss: `12.7488`
+- auto loss delta vs curated: `-44.4%`
+- scope Jaccard: `0.0659`
+- pure-ODE status: both branches `collapsed`
+- protected anchors worse than curated: none
+
+Protected-anchor details:
+- `EGLC`: good in both branches.
+- `ELAC`: good in both branches.
+- `LAC`: tracked in both branches.
+- `AMP`: auto good, curated critical.
+- `ATP`, `ADP`, `B23PG`, `GSH`: critical in both branches.
+
+Artifacts copied locally:
+- `Simulations/auto_param_scope/parity_v1_pruned_final_result.json`
+- `Simulations/auto_param_scope/parity_v1_pruned_final_run.log`
+
+Interpretation:
+- Phase 0 + Phase A/A2 are now closed for the default auto-scope policy.
+- The conservative 91-param default scope keeps the same final loss as the
+  full gated auto-scope run while dropping seven low-sensitivity regulation
+  params from automatic selection.
+- Pure-ODE energy/redox collapse remains a downstream scientific rescue topic,
+  not a blocker for the auto-scope policy.
+- Next implementation phase is Phase B: online flux inference and fixed-length
+  feature extraction.
+
+## 2026-05-05 Phase A2 broad pruning result
+
+Phase A2 compact and broad pruning validations ran on Hetzner from
+`origin/dev/next-phase`.
+
+Compact result:
+- `sensitive_only` (2 params): rejected, final loss `15.2925`
+- `near_threshold` (13 params): rejected, final loss `14.5531`
+- `core_plus_sensitive` (25 params): rejected, final loss `12.0202`
+
+Broad result:
+- `drop_low_regulation` (91 params): `accept_pruned_scope`, final loss
+  `7.0872`
+- `drop_low_caution_transport` (88 params): `needs_review`, final loss
+  `8.1238`
+- recommended candidate: `drop_low_regulation`
+
+Implemented default auto-scope pruning:
+- `AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS` in `src/MM_calibration.py`
+- excluded by default:
+  - `alpha_F16BP_PK`
+  - `ka_F16BP_PK`
+  - `ki_ATP_PK`
+  - `ki_PYR_PK`
+  - `km_ADP_ATP`
+  - `km_NADH_NAD`
+  - `km_NAD_NADH`
+- manual explicit `params_to_optimize` selections remain allowed
+
+Validation:
+- `python -m py_compile src/MM_calibration.py`
+- `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_pruning_validation.py -q` -> `52 passed`
+
+Follow-up completed:
+- final parity with default pruned auto-scope (`91` params) returned
+  `green_light_phase_a`; see the 2026-05-05 final pruned parity entry above.
+
+## 2026-05-05 Phase A complete and A2 pruning harness scaffold
+
+Full Phase A sensitivity probe completed on Hetzner and artifacts were copied
+locally:
+- `Simulations/auto_param_scope/sensitivity_v1_full_result.json`
+- `Simulations/auto_param_scope/sensitivity_v1_full_run.log`
+- `Simulations/auto_param_scope/sensitivity_v1_full_baseline_params.json`
+
+Phase A result:
+- status: `completed`
+- baseline final loss: `7.0872`
+- baseline `EGLC` gate: pass, depletion `5.89%` vs required `5%`
+- probed params: `98/98`
+- classifications:
+  - `keep_high_sensitivity`: 1 (`vmax_VAMPD1`, effect `4.31%`)
+  - `keep_moderate_sensitivity`: 1 (`vmax_Vnucleo2`, effect `0.57%`)
+  - `candidate_prune_low_sensitivity`: 96
+  - guarded/review params: 0
+
+Interpretation:
+- Do not directly prune 96 params from production. The Phase A probe is local
+  around an optimized baseline; parameters can be locally flat after helping
+  the optimizer reach that basin.
+- Move to Phase A2: rerun calibrations with pruned include-lists and keep the
+  `EGLC` depletion gate active.
+
+Added `scripts/run_auto_param_scope_pruning_validation.py` as the Phase A2
+ablation harness.
+
+Candidate scopes:
+- `sensitive_only`: 2 params (`vmax_VAMPD1`, `vmax_Vnucleo2`)
+- `near_threshold`: 13 params
+- `top_k`: 12 params
+- `core_plus_sensitive`: 25 params
+- `drop_low_regulation`: 91 params
+- `drop_low_caution_transport`: 88 params
+
+Validation:
+- `python -m py_compile scripts/run_auto_param_scope_pruning_validation.py`
+- `python -m pytest qa/test_auto_param_scope_pruning_validation.py -q` -> `5 passed`
+- `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_sensitivity.py qa/test_auto_param_scope_pruning_validation.py -q` -> `54 passed`
+- dry-run wrote `Simulations/auto_param_scope/pruning_v1_dry/result.json`
+- smoke calibration wrote `Simulations/auto_param_scope/pruning_v1_smoke/result.json`
+  and correctly rejected `sensitive_only` when the `EGLC` gate failed
+
+Next:
+- run the first A2 Hetzner sweep from `AgentOps/Tasks.md` with
+  `sensitive_only,near_threshold,core_plus_sensitive`
+- if a compact pruned scope is accepted, implement it behind a conservative
+  gate and rerun parity
+- if compact scopes fail, run the broad ablations
+  `drop_low_regulation,drop_low_caution_transport`
+
 ## 2026-05-04 Phase A sensitivity harness scaffold
 
 Added `scripts/run_auto_param_scope_sensitivity.py` as the Phase A harness

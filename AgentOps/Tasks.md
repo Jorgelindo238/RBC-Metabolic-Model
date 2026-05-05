@@ -16,58 +16,92 @@ Focus areas:
 
 ## Immediate next action
 
-Run the full **Phase A: auto-param-scope sensitivity probe** on Hetzner. The
-Phase 0 parity gate is green and the Phase A harness has been scaffolded and
-smoke-tested locally.
+Start **Phase C - ML warm-start scaffolding** now that Phase B has a cautious
+tracked-flux gate for the first direct and wide reaction panels.
 
-Phase A objective:
-- estimate local sensitivity for the broad auto-scope parameter set around the
-  green gated baseline
-- identify no-op, degenerate, or dangerous parameters before future optimizer
-  campaigns widen the search space further
-- keep the current scientific promotion gates active: pure-ODE triage,
-  protected-anchor comparison, and `EGLC` depletion >= 5%
-- emit a compact artifact under `Simulations/auto_param_scope/sensitivity_v1/`
-  with ranked parameter effects and a recommended pruned scope
+Phase B goal:
+- turn user uploaded `exp_data` into flux estimates and fixed-length features
+  that later ML warm-start regressors can consume
+- keep this additive and non-production-changing at first; no worker/API
+  contract change until tests and smoke artifacts are green
 
-Harness status:
-- `scripts/run_auto_param_scope_sensitivity.py` was added.
-- It supports `--baseline-mode auto-defaults` for fast structural smoke and
-  `--baseline-mode calibrate` for the real run around a regenerated gated
-  auto-scope baseline.
-- It writes `result.json` and `baseline_params.json` under the selected
-  `Simulations/auto_param_scope/sensitivity_v1*` output directory.
-- Local validation:
-  - `python -m py_compile scripts/run_auto_param_scope_sensitivity.py`
-  - `python -m pytest qa/test_auto_param_scope_sensitivity.py -q` -> `5 passed`
-  - `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_sensitivity.py -q` -> `49 passed`
-  - smoke:
-    `python scripts/run_auto_param_scope_sensitivity.py --dataset canonical-bordbar --baseline-mode auto-defaults --t-max 2 --max-params 2 --out-dir Simulations/auto_param_scope/sensitivity_v1_smoke`
+First slice landed:
+- `src/flux_inference.py`
+  - `infer_user_fluxes(exp_data, exp_time, stoichiometry)`
+  - PCHIP-interpolates measured concentrations
+  - estimates `dC/dt`
+  - propagates singleton stoichiometric balances first
+  - solves remaining `S_observed * v_unknown ~= dC/dt` systems with bounded
+    least squares and confidence metadata
+- `src/ml_features.py`
+  - `build_features(curves, fluxes, time_grid)`
+  - `build_feature_payload(...)`
+  - stable `phase_b_v1` schema for concentration and flux features
+- `qa/test_phase_b_flux_inference.py`
+  - locks Bordbar `EGLC -> VEGLC`, `ELAC -> VELAC`, and
+    `LAC + VELAC -> VLDH`
+  - verifies stable finite feature payloads
+  - verifies missing series are explicit zero-presence features
 
-Full Hetzner command:
+Model-flux smoke landed:
+- `scripts/run_phase_b_flux_smoke.py`
+  - solves the Brodbar ODE
+  - replays the solved states through `FluxTracker`
+  - supports `--preset direct` for `VEGLC`, `VELAC`, and `VLDH`
+  - supports `--preset wide --discover-identifiable` for the cautious widened
+    panel `VEGLC`, `VELAC`, `VLDH`, `VHK`
+  - keeps the wide feature panel separate from the minimal inference panel so
+    `ATP`/`ADP` do not create false singleton balances for `VHK`
+  - writes `Simulations/auto_param_scope/phase_b_model_flux_smoke/result.json`
+- `qa/test_phase_b_flux_smoke_script.py`
+  - runs fast `t_max=2` direct and wide script smokes and verifies JSON
+    shape/tolerances/discovery output
+- local full smoke (`t_max=7`, 25 points) passed:
+  - `VEGLC` nRMSE vs model flux: `0.00032`
+  - `VELAC` nRMSE vs model flux: `0.00068`
+  - `VLDH` nRMSE vs model flux: `0.01453`
+  - feature count: `78`
+- local wide smoke (`t_max=7`, 25 points) passed:
+  - artifact: `Simulations/auto_param_scope/phase_b_wide_flux_smoke/result.json`
+  - `VEGLC` nRMSE vs model flux: `0.00032`
+  - `VELAC` nRMSE vs model flux: `0.00068`
+  - `VLDH` nRMSE vs model flux: `0.01453`
+  - `VHK` nRMSE vs model flux: `0.01689`
+  - discovery scanned `38` candidate reactions and accepted only `VEGLC`,
+    `VELAC`, `VLDH`, `VHK`
+  - feature count: `244`
 
-```bash
-cd /opt/airbc/experiments/auto-scope-parity
-git fetch origin
-git checkout -f origin/dev/next-phase
-
-mkdir -p Simulations/auto_param_scope/sensitivity_v1_full
-
-nohup /opt/airbc/app/apps/calibration-worker/.venv/bin/python -u scripts/run_auto_param_scope_sensitivity.py \
-  --dataset canonical-bordbar \
-  --baseline-mode calibrate \
-  --baseline-n-trials 50 \
-  --t-max 42 \
-  --step-frac 0.05 \
-  --eglc-min-depletion-frac 0.05 \
-  --out-dir Simulations/auto_param_scope/sensitivity_v1_full \
-  > Simulations/auto_param_scope/sensitivity_v1_full/run.log 2>&1 &
-
-echo "PID=$!"
-tail -f Simulations/auto_param_scope/sensitivity_v1_full/run.log
-```
+Next Phase C step:
+- build a minimal deterministic trainer harness that consumes Phase B
+  `phase_b_v1` feature payloads and predicts a first safe subset of warm-start
+  parameters
+- keep it offline/experimental first; no worker/API contract change until it
+  beats the no-ML baseline on tracked artifacts
 
 ### Phase 0 gate status
+
+Final pruned parity result (2026-05-05):
+- artifact copies:
+  - `Simulations/auto_param_scope/parity_v1_pruned_final_result.json`
+  - `Simulations/auto_param_scope/parity_v1_pruned_final_run.log`
+- `decision_gate`: `green_light_phase_a`
+- auto-scope default count: `91` params
+- curated-profile count: `6` params
+- auto-scope final loss: `7.0872`
+- curated-profile final loss: `12.7488`
+- auto loss delta vs curated: `-44.4%`
+- scope Jaccard: `0.0659`
+- pure-ODE status: both branches `collapsed`
+- protected anchors worse than curated: none
+- `EGLC` and `ELAC`: good in both branches
+- `AMP`: auto good, curated critical
+- `ATP`, `ADP`, `B23PG`, `GSH`: critical in both branches
+
+Phase 0 + Phase A/A2 are closed for the default auto-scope policy:
+- default auto-scope is now pruned from `98` to `91` params via
+  `AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS`
+- explicit user-selected pruned params remain allowed
+- Phase B is the next active scientific implementation step
 
 Full gated sweep command:
 
@@ -260,7 +294,8 @@ Next:
 
 ### Auto-calibrate-all + ML flux-learning rollout
 
-Status: Phase 0 complete (paused 2026-04-28). Plan file:
+Status: Phase 0 + Phase A/A2 complete; Phase B direct/wide smoke gates
+complete; Phase C is next. Plan file:
 `C:/Users/Jorgelindo/.windsurf/plans/auto-calibrate-all-and-ml-flux-learning-179f0d.md`.
 
 Goal:
@@ -322,11 +357,21 @@ Parity-sweep harness landed (2026-05-03):
 - Surfaced and fixed `apps/api/services/pure_ode_runtime.py`
   truthiness-on-numpy-array bug in the same session.
 
-Next when work resumes (Phase A and beyond):
-- Phase A: sensitivity probe for canonical-IC degenerate parameters; prune
-  before passing to the optimiser. The green Hetzner sweep gate is complete.
-- Phase B onwards: per the plan file (flux-supervision targets, ML warmstart,
-  hybrid structure-learning).
+Phase A/A2 closed (2026-05-05):
+- local sensitivity probe identified 2 locally sensitive params and 96 low
+  local sensitivity candidates; broad validation showed only the conservative
+  `drop_low_regulation` rule was safe enough for default policy
+- default auto-scope now prunes seven low-sensitivity regulation params and
+  keeps explicit user selections allowed
+- final pruned parity returned `green_light_phase_a`: 91-param auto-scope loss
+  `7.0872` vs curated loss `12.7488`, with no protected anchor worse than
+  curated
+
+Next when work resumes:
+- Phase C: build the first offline ML warm-start scaffold on top of the
+  `phase_b_v1` feature payload and the tracked-flux smoke artifacts
+- keep optional flux-balance loss, identifiability regularisation, and hybrid
+  structure-learning deferred until the minimal warm-start baseline is measured
 
 ### DeepAgents RoBoCop supervisor
 
