@@ -16,8 +16,9 @@ Focus areas:
 
 ## Immediate next action
 
-Start **Phase C - ML warm-start scaffolding** now that Phase B has a cautious
-tracked-flux gate for the first direct and wide reaction panels.
+Run the first **Phase C warm-start-vs-default calibration comparison** now that
+the offline warm-start scaffold can predict a safe four-parameter seed from
+`phase_b_v1` features.
 
 Phase B goal:
 - turn user uploaded `exp_data` into flux estimates and fixed-length features
@@ -71,12 +72,33 @@ Model-flux smoke landed:
     `VELAC`, `VLDH`, `VHK`
   - feature count: `244`
 
+Phase C scaffold landed:
+- `scripts/run_phase_c_warmstart_smoke.py`
+  - generates deterministic synthetic cases by perturbing `vmax_VEGLC`,
+    `vmax_VELAC`, `vmax_VLDH`, and `vmax_VHK`
+  - reuses Phase B `wide` feature extraction, preserving `feature_version:
+    phase_b_v1`
+  - trains a pure-NumPy standardized ridge model on log-parameter multipliers
+  - serializes the model coefficients plus validation metrics to
+    `Simulations/auto_param_scope/phase_c_warmstart_smoke/result.json`
+- `qa/test_phase_c_warmstart_smoke_script.py`
+  - locks the ridge helper math
+  - runs a short ODE-backed micro smoke and validates the JSON contract
+- local full smoke (`profile=smoke`, `t_max=2`, 8 points) passed:
+  - target params: `vmax_VEGLC`, `vmax_VELAC`, `vmax_VLDH`, `vmax_VHK`
+  - training cases: `11`
+  - validation cases: `3`
+  - validation mean log MAE: `0.01612`
+  - defaults baseline mean log MAE: `0.12595`
+  - improvement ratio: `0.12797`
+  - max abs log error: `0.10985`
+
 Next Phase C step:
-- build a minimal deterministic trainer harness that consumes Phase B
-  `phase_b_v1` feature payloads and predicts a first safe subset of warm-start
-  parameters
-- keep it offline/experimental first; no worker/API contract change until it
-  beats the no-ML baseline on tracked artifacts
+- build a comparison harness that applies the predicted warm-start seed to a
+  small calibration run and compares against default/no-ML initialization under
+  the same budget
+- keep this offline/experimental; do not wire it into worker/API until the
+  calibration-level comparison beats the no-ML baseline
 
 ### Phase 0 gate status
 
@@ -295,7 +317,7 @@ Next:
 ### Auto-calibrate-all + ML flux-learning rollout
 
 Status: Phase 0 + Phase A/A2 complete; Phase B direct/wide smoke gates
-complete; Phase C is next. Plan file:
+complete; Phase C warm-start scaffold started. Plan file:
 `C:/Users/Jorgelindo/.windsurf/plans/auto-calibrate-all-and-ml-flux-learning-179f0d.md`.
 
 Goal:
@@ -368,8 +390,8 @@ Phase A/A2 closed (2026-05-05):
   curated
 
 Next when work resumes:
-- Phase C: build the first offline ML warm-start scaffold on top of the
-  `phase_b_v1` feature payload and the tracked-flux smoke artifacts
+- Phase C: compare the predicted warm-start seed against default/no-ML
+  initialization in a small calibration run under the same budget
 - keep optional flux-balance loss, identifiability regularisation, and hybrid
   structure-learning deferred until the minimal warm-start baseline is measured
 

@@ -3,6 +3,47 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-05 Phase C warm-start scaffold
+
+Started Phase C with an offline, non-production warm-start harness built on the
+stable Phase B `phase_b_v1` feature payload.
+
+Added:
+- `scripts/run_phase_c_warmstart_smoke.py`
+  - generates deterministic synthetic cases from the Brodbar ODE
+  - perturbs `vmax_VEGLC`, `vmax_VELAC`, `vmax_VLDH`, and `vmax_VHK`
+  - extracts the Phase B `wide` feature vector (`feature_count=244`)
+  - trains a pure-NumPy standardized ridge model on log-parameter multipliers
+  - emits a serializable model artifact with feature schema, means/scales,
+    weights, target means, validation predictions, and gates
+- `qa/test_phase_c_warmstart_smoke_script.py`
+  - verifies ridge math on a tiny linear fixture
+  - runs an ODE-backed micro smoke and checks the JSON contract
+
+Local full smoke:
+- command: `python scripts/run_phase_c_warmstart_smoke.py --out-dir Simulations/auto_param_scope/phase_c_warmstart_smoke --profile smoke --t-max 2 --timepoints 8`
+- status: `passed`
+- artifact: `Simulations/auto_param_scope/phase_c_warmstart_smoke/result.json`
+- target params: `vmax_VEGLC`, `vmax_VELAC`, `vmax_VLDH`, `vmax_VHK`
+- training cases: `11`
+- validation cases: `3`
+- validation mean log MAE: `0.01612`
+- defaults baseline mean log MAE: `0.12595`
+- improvement ratio: `0.12797`
+- max abs log error: `0.10985`
+
+Validation:
+- `python -m py_compile scripts/run_phase_c_warmstart_smoke.py`
+- `python -m pytest qa/test_phase_c_warmstart_smoke_script.py -q` -> `2 passed`
+- `python -m pytest qa/test_phase_b_flux_inference.py qa/test_phase_b_flux_smoke_script.py qa/test_phase_c_warmstart_smoke_script.py -q` -> `7 passed`
+
+Interpretation:
+- This is a scaffold/gate, not production ML yet.
+- The next Phase C step is a calibration-level comparison: apply the predicted
+  warm-start seed versus default/no-ML initialization under the same small
+  budget and require the warm-start path to beat baseline before any worker/API
+  wiring.
+
 ## 2026-05-05 Phase B wide flux smoke
 
 Widened the Phase B model-flux smoke conservatively after the direct
