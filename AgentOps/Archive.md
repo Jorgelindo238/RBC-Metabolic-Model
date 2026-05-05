@@ -3,6 +3,59 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-05 Phase A complete and A2 pruning harness scaffold
+
+Full Phase A sensitivity probe completed on Hetzner and artifacts were copied
+locally:
+- `Simulations/auto_param_scope/sensitivity_v1_full_result.json`
+- `Simulations/auto_param_scope/sensitivity_v1_full_run.log`
+- `Simulations/auto_param_scope/sensitivity_v1_full_baseline_params.json`
+
+Phase A result:
+- status: `completed`
+- baseline final loss: `7.0872`
+- baseline `EGLC` gate: pass, depletion `5.89%` vs required `5%`
+- probed params: `98/98`
+- classifications:
+  - `keep_high_sensitivity`: 1 (`vmax_VAMPD1`, effect `4.31%`)
+  - `keep_moderate_sensitivity`: 1 (`vmax_Vnucleo2`, effect `0.57%`)
+  - `candidate_prune_low_sensitivity`: 96
+  - guarded/review params: 0
+
+Interpretation:
+- Do not directly prune 96 params from production. The Phase A probe is local
+  around an optimized baseline; parameters can be locally flat after helping
+  the optimizer reach that basin.
+- Move to Phase A2: rerun calibrations with pruned include-lists and keep the
+  `EGLC` depletion gate active.
+
+Added `scripts/run_auto_param_scope_pruning_validation.py` as the Phase A2
+ablation harness.
+
+Candidate scopes:
+- `sensitive_only`: 2 params (`vmax_VAMPD1`, `vmax_Vnucleo2`)
+- `near_threshold`: 13 params
+- `top_k`: 12 params
+- `core_plus_sensitive`: 25 params
+- `drop_low_regulation`: 91 params
+- `drop_low_caution_transport`: 88 params
+
+Validation:
+- `python -m py_compile scripts/run_auto_param_scope_pruning_validation.py`
+- `python -m pytest qa/test_auto_param_scope_pruning_validation.py -q` -> `5 passed`
+- `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_sensitivity.py qa/test_auto_param_scope_pruning_validation.py -q` -> `54 passed`
+- dry-run wrote `Simulations/auto_param_scope/pruning_v1_dry/result.json`
+- smoke calibration wrote `Simulations/auto_param_scope/pruning_v1_smoke/result.json`
+  and correctly rejected `sensitive_only` when the `EGLC` gate failed
+
+Next:
+- run the first A2 Hetzner sweep from `AgentOps/Tasks.md` with
+  `sensitive_only,near_threshold,core_plus_sensitive`
+- if a compact pruned scope is accepted, implement it behind a conservative
+  gate and rerun parity
+- if compact scopes fail, run the broad ablations
+  `drop_low_regulation,drop_low_caution_transport`
+
 ## 2026-05-04 Phase A sensitivity harness scaffold
 
 Added `scripts/run_auto_param_scope_sensitivity.py` as the Phase A harness

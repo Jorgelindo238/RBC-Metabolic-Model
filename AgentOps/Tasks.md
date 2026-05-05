@@ -16,56 +16,74 @@ Focus areas:
 
 ## Immediate next action
 
-Run the full **Phase A: auto-param-scope sensitivity probe** on Hetzner. The
-Phase 0 parity gate is green and the Phase A harness has been scaffolded and
-smoke-tested locally.
+Run the full **Phase A2: pruning-validation ablation sweep** on Hetzner.
+Phase A is complete: the sensitivity artifact says only `vmax_VAMPD1` and
+`vmax_Vnucleo2` are locally sensitive around the green gated baseline, but
+local flatness is not enough evidence to prune the optimizer scope directly.
 
-Phase A objective:
-- estimate local sensitivity for the broad auto-scope parameter set around the
-  green gated baseline
-- identify no-op, degenerate, or dangerous parameters before future optimizer
-  campaigns widen the search space further
-- keep the current scientific promotion gates active: pure-ODE triage,
-  protected-anchor comparison, and `EGLC` depletion >= 5%
-- emit a compact artifact under `Simulations/auto_param_scope/sensitivity_v1/`
-  with ranked parameter effects and a recommended pruned scope
+Phase A2 objective:
+- validate pruned scopes by rerunning calibration, not just perturbing the
+  final baseline locally
+- keep pruned parameters seeded at auto-scope defaults while optimizing only
+  each candidate include-list
+- require the same scientific gate: `EGLC` depletion >= 5%
+- accept a pruned scope only if final loss stays within 10% of the full gated
+  auto-scope baseline (`7.0872`) and the `EGLC` gate passes
 
 Harness status:
-- `scripts/run_auto_param_scope_sensitivity.py` was added.
-- It supports `--baseline-mode auto-defaults` for fast structural smoke and
-  `--baseline-mode calibrate` for the real run around a regenerated gated
-  auto-scope baseline.
-- It writes `result.json` and `baseline_params.json` under the selected
-  `Simulations/auto_param_scope/sensitivity_v1*` output directory.
+- `scripts/run_auto_param_scope_pruning_validation.py` was added.
+- It reads the Phase A `sensitivity_v1_full/result.json` artifact and builds
+  candidate scopes:
+  - `sensitive_only` (2 params)
+  - `near_threshold` (13 params at effect >= 0.1% or explicit keep)
+  - `top_k` (12 most sensitive params by local effect)
+  - `core_plus_sensitive` (25 params: sensitive + core + protected tokens)
+  - `drop_low_regulation` (91 params)
+  - `drop_low_caution_transport` (88 params)
 - Local validation:
-  - `python -m py_compile scripts/run_auto_param_scope_sensitivity.py`
-  - `python -m pytest qa/test_auto_param_scope_sensitivity.py -q` -> `5 passed`
-  - `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_sensitivity.py -q` -> `49 passed`
-  - smoke:
-    `python scripts/run_auto_param_scope_sensitivity.py --dataset canonical-bordbar --baseline-mode auto-defaults --t-max 2 --max-params 2 --out-dir Simulations/auto_param_scope/sensitivity_v1_smoke`
+  - `python -m py_compile scripts/run_auto_param_scope_pruning_validation.py`
+  - `python -m pytest qa/test_auto_param_scope_pruning_validation.py -q` -> `5 passed`
+  - `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_sensitivity.py qa/test_auto_param_scope_pruning_validation.py -q` -> `54 passed`
+  - dry-run built the six candidate scopes from
+    `Simulations/auto_param_scope/sensitivity_v1_full_result.json`
+  - smoke calibration with `--n-trials 1 --t-max 2 --max-candidates 1`
+    completed and correctly rejected `sensitive_only` when the `EGLC` gate
+    failed
 
-Full Hetzner command:
+First Hetzner A2 command (meaningful pruned scopes only):
 
 ```bash
 cd /opt/airbc/experiments/auto-scope-parity
 git fetch origin
 git checkout -f origin/dev/next-phase
 
-mkdir -p Simulations/auto_param_scope/sensitivity_v1_full
+mkdir -p Simulations/auto_param_scope/pruning_v1_full
 
-nohup /opt/airbc/app/apps/calibration-worker/.venv/bin/python -u scripts/run_auto_param_scope_sensitivity.py \
+nohup /opt/airbc/app/apps/calibration-worker/.venv/bin/python -u scripts/run_auto_param_scope_pruning_validation.py \
   --dataset canonical-bordbar \
-  --baseline-mode calibrate \
-  --baseline-n-trials 50 \
+  --sensitivity-result Simulations/auto_param_scope/sensitivity_v1_full/result.json \
+  --n-trials 50 \
   --t-max 42 \
-  --step-frac 0.05 \
   --eglc-min-depletion-frac 0.05 \
-  --out-dir Simulations/auto_param_scope/sensitivity_v1_full \
-  > Simulations/auto_param_scope/sensitivity_v1_full/run.log 2>&1 &
+  --loss-tolerance-pct 0.10 \
+  --review-loss-tolerance-pct 0.25 \
+  --near-effect-frac 0.001 \
+  --top-k 12 \
+  --candidates sensitive_only,near_threshold,core_plus_sensitive \
+  --out-dir Simulations/auto_param_scope/pruning_v1_full \
+  > Simulations/auto_param_scope/pruning_v1_full/run.log 2>&1 &
 
 echo "PID=$!"
-tail -f Simulations/auto_param_scope/sensitivity_v1_full/run.log
+tail -f Simulations/auto_param_scope/pruning_v1_full/run.log
 ```
+
+Decision after A2:
+- if `recommended_candidate` exists, implement that pruned scope as the next
+  auto-scope candidate and rerun parity
+- if all three compact scopes reject, run the broad ablations
+  `drop_low_regulation,drop_low_caution_transport`
+- if only `needs_review` scopes exist, inspect the loss-vs-param-count tradeoff
+  before changing production behavior
 
 ### Phase 0 gate status
 
@@ -322,11 +340,12 @@ Parity-sweep harness landed (2026-05-03):
 - Surfaced and fixed `apps/api/services/pure_ode_runtime.py`
   truthiness-on-numpy-array bug in the same session.
 
-Next when work resumes (Phase A and beyond):
-- Phase A: sensitivity probe for canonical-IC degenerate parameters; prune
-  before passing to the optimiser. The green Hetzner sweep gate is complete.
+Next when work resumes (Phase A2 and beyond):
+- Phase A2: validate pruning candidates with real calibration ablations before
+  changing the production auto-scope. Phase A local sensitivity is complete.
 - Phase B onwards: per the plan file (flux-supervision targets, ML warmstart,
-  hybrid structure-learning).
+  hybrid structure-learning) after A2 identifies a safe scope policy or proves
+  that pruning should wait.
 
 ### DeepAgents RoBoCop supervisor
 
