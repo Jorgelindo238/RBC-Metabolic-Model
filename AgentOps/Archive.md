@@ -3,6 +3,53 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-05 final pruned parity green-light
+
+The final canonical-Bordbar parity sweep was rerun on Hetzner from
+`origin/dev/next-phase` after the Phase A2 pruning rule landed in default
+auto-scope policy.
+
+Command summary:
+- `scripts/run_auto_param_scope_parity.py`
+- `--dataset canonical-bordbar`
+- `--n-trials 50`
+- `--t-max 42`
+- `--loss-tolerance-pct 0.10`
+- `--out-dir Simulations/auto_param_scope/parity_v1_pruned_final`
+
+Result:
+- status: `completed`
+- `decision_gate`: `green_light_phase_a`
+- auto-scope param count: `91`
+- curated-profile param count: `6`
+- auto-scope final loss: `7.0872`
+- curated-profile final loss: `12.7488`
+- auto loss delta vs curated: `-44.4%`
+- scope Jaccard: `0.0659`
+- pure-ODE status: both branches `collapsed`
+- protected anchors worse than curated: none
+
+Protected-anchor details:
+- `EGLC`: good in both branches.
+- `ELAC`: good in both branches.
+- `LAC`: tracked in both branches.
+- `AMP`: auto good, curated critical.
+- `ATP`, `ADP`, `B23PG`, `GSH`: critical in both branches.
+
+Artifacts copied locally:
+- `Simulations/auto_param_scope/parity_v1_pruned_final_result.json`
+- `Simulations/auto_param_scope/parity_v1_pruned_final_run.log`
+
+Interpretation:
+- Phase 0 + Phase A/A2 are now closed for the default auto-scope policy.
+- The conservative 91-param default scope keeps the same final loss as the
+  full gated auto-scope run while dropping seven low-sensitivity regulation
+  params from automatic selection.
+- Pure-ODE energy/redox collapse remains a downstream scientific rescue topic,
+  not a blocker for the auto-scope policy.
+- Next implementation phase is Phase B: online flux inference and fixed-length
+  feature extraction.
+
 ## 2026-05-05 Phase A2 broad pruning result
 
 Phase A2 compact and broad pruning validations ran on Hetzner from
@@ -36,10 +83,9 @@ Validation:
 - `python -m py_compile src/MM_calibration.py`
 - `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_pruning_validation.py -q` -> `52 passed`
 
-Next:
-- run final parity with default pruned auto-scope (`91` params) using the
-  command in `AgentOps/Tasks.md`
-- if final parity is green, Phase A/A2 closes and Phase B can begin
+Follow-up completed:
+- final parity with default pruned auto-scope (`91` params) returned
+  `green_light_phase_a`; see the 2026-05-05 final pruned parity entry above.
 
 ## 2026-05-05 Phase A complete and A2 pruning harness scaffold
 

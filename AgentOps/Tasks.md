@@ -16,66 +16,57 @@ Focus areas:
 
 ## Immediate next action
 
-Run the **final pruned parity sweep** on Hetzner after pulling
-`origin/dev/next-phase`. Phase A2 accepted only one conservative pruning rule:
-drop the seven low-sensitivity regulation params from default auto-scope.
+Start **Phase B - online flux inference and feature extraction** for the
+auto-calibrate-all + ML flux-learning workstream.
 
-Implemented pruning rule:
-- `AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS` in `src/MM_calibration.py`
-- default auto-scope excludes:
-  - `alpha_F16BP_PK`
-  - `ka_F16BP_PK`
-  - `ki_ATP_PK`
-  - `ki_PYR_PK`
-  - `km_ADP_ATP`
-  - `km_NADH_NAD`
-  - `km_NAD_NADH`
-- explicit user selections remain allowed and are not overwritten by
-  auto-scope
+Phase B goal:
+- turn user uploaded `exp_data` into flux estimates and fixed-length features
+  that later ML warm-start regressors can consume
+- keep this additive and non-production-changing at first; no worker/API
+  contract change until tests and smoke artifacts are green
 
-Phase A2 result:
-- compact scopes all rejected:
-  - `sensitive_only` (2 params): final loss `15.2925`
-  - `near_threshold` (13 params): final loss `14.5531`
-  - `core_plus_sensitive` (25 params): final loss `12.0202`
-- broad scopes:
-  - `drop_low_regulation` (91 params): `accept_pruned_scope`, final loss
-    `7.0872`
-  - `drop_low_caution_transport` (88 params): `needs_review`, final loss
-    `8.1238`
-
-Validation after implementation:
-- `python -m py_compile src/MM_calibration.py`
-- `python -m pytest qa/test_auto_param_scope.py qa/test_auto_param_scope_pruning_validation.py -q` -> `52 passed`
-
-Final Hetzner command:
-
-```bash
-cd /opt/airbc/experiments/auto-scope-parity
-git fetch origin
-git checkout -f origin/dev/next-phase
-
-mkdir -p Simulations/auto_param_scope/parity_v1_pruned_final
-
-nohup /opt/airbc/app/apps/calibration-worker/.venv/bin/python -u scripts/run_auto_param_scope_parity.py \
-  --dataset canonical-bordbar \
-  --n-trials 50 \
-  --t-max 42 \
-  --loss-tolerance-pct 0.10 \
-  --out-dir Simulations/auto_param_scope/parity_v1_pruned_final \
-  > Simulations/auto_param_scope/parity_v1_pruned_final/run.log 2>&1 &
-
-echo "PID=$!"
-tail -f Simulations/auto_param_scope/parity_v1_pruned_final/run.log
-```
-
-Decision after final parity:
-- `green_light_phase_a` with no worse protected anchors -> Phase A/A2 closed;
-  proceed to Phase B.
-- any regression or worse protected anchor -> keep the constant but gate it
-  behind a feature flag before production exposure.
+Concrete first slice:
+- add `src/flux_inference.py`
+  - `infer_user_fluxes(exp_data, exp_time, stoichiometry)`
+  - PCHIP-interpolate measured concentrations
+  - estimate `dC/dt`
+  - solve local `S_observed * v_unknown ~= dC/dt` systems with bounded,
+    confidence-scored reaction flux estimates
+- add `src/ml_features.py`
+  - `build_features(curves, fluxes, time_grid)`
+  - fixed schema for initial/final values, log-fold changes, slope features,
+    time-to-half, Hill-like shape statistics, and saturation proxies
+- add Phase B tests:
+  - Bordbar reference reproduces `VEGLC`, `VELAC`, and `VLDH` teacher fluxes
+    within tolerance on canonical baseline params
+  - feature vectors have a stable length and metadata schema
+  - missing/sparse metabolites degrade with explicit low confidence, not silent
+    fake precision
 
 ### Phase 0 gate status
+
+Final pruned parity result (2026-05-05):
+- artifact copies:
+  - `Simulations/auto_param_scope/parity_v1_pruned_final_result.json`
+  - `Simulations/auto_param_scope/parity_v1_pruned_final_run.log`
+- `decision_gate`: `green_light_phase_a`
+- auto-scope default count: `91` params
+- curated-profile count: `6` params
+- auto-scope final loss: `7.0872`
+- curated-profile final loss: `12.7488`
+- auto loss delta vs curated: `-44.4%`
+- scope Jaccard: `0.0659`
+- pure-ODE status: both branches `collapsed`
+- protected anchors worse than curated: none
+- `EGLC` and `ELAC`: good in both branches
+- `AMP`: auto good, curated critical
+- `ATP`, `ADP`, `B23PG`, `GSH`: critical in both branches
+
+Phase 0 + Phase A/A2 are closed for the default auto-scope policy:
+- default auto-scope is now pruned from `98` to `91` params via
+  `AUTO_PARAM_SCOPE_PRUNED_REGULATION_PARAMS`
+- explicit user-selected pruned params remain allowed
+- Phase B is the next active scientific implementation step
 
 Full gated sweep command:
 
@@ -268,7 +259,7 @@ Next:
 
 ### Auto-calibrate-all + ML flux-learning rollout
 
-Status: Phase 0 complete (paused 2026-04-28). Plan file:
+Status: Phase 0 + Phase A/A2 complete; Phase B is next. Plan file:
 `C:/Users/Jorgelindo/.windsurf/plans/auto-calibrate-all-and-ml-flux-learning-179f0d.md`.
 
 Goal:
@@ -330,12 +321,23 @@ Parity-sweep harness landed (2026-05-03):
 - Surfaced and fixed `apps/api/services/pure_ode_runtime.py`
   truthiness-on-numpy-array bug in the same session.
 
-Next when work resumes (Phase A2 and beyond):
-- Phase A2: validate pruning candidates with real calibration ablations before
-  changing the production auto-scope. Phase A local sensitivity is complete.
-- Phase B onwards: per the plan file (flux-supervision targets, ML warmstart,
-  hybrid structure-learning) after A2 identifies a safe scope policy or proves
-  that pruning should wait.
+Phase A/A2 closed (2026-05-05):
+- local sensitivity probe identified 2 locally sensitive params and 96 low
+  local sensitivity candidates; broad validation showed only the conservative
+  `drop_low_regulation` rule was safe enough for default policy
+- default auto-scope now prunes seven low-sensitivity regulation params and
+  keeps explicit user selections allowed
+- final pruned parity returned `green_light_phase_a`: 91-param auto-scope loss
+  `7.0872` vs curated loss `12.7488`, with no protected anchor worse than
+  curated
+
+Next when work resumes:
+- Phase B: implement online flux inference and feature extraction
+  (`src/flux_inference.py`, `src/ml_features.py`) with tests against Bordbar
+  `VEGLC`/`VELAC`/`VLDH` teacher fluxes
+- Phase C onward stays deferred until Phase B feature vectors are stable:
+  ML warm-start, optional flux-balance loss, identifiability regularisation,
+  and hybrid structure-learning
 
 ### DeepAgents RoBoCop supervisor
 
