@@ -16,8 +16,9 @@ Focus areas:
 
 ## Immediate next action
 
-Start **Phase B - online flux inference and feature extraction** for the
-auto-calibrate-all + ML flux-learning workstream.
+Validate and extend the **Phase B - online flux inference and feature
+extraction** first slice for the auto-calibrate-all + ML flux-learning
+workstream.
 
 Phase B goal:
 - turn user uploaded `exp_data` into flux estimates and fixed-length features
@@ -25,23 +26,31 @@ Phase B goal:
 - keep this additive and non-production-changing at first; no worker/API
   contract change until tests and smoke artifacts are green
 
-Concrete first slice:
-- add `src/flux_inference.py`
+First slice landed:
+- `src/flux_inference.py`
   - `infer_user_fluxes(exp_data, exp_time, stoichiometry)`
-  - PCHIP-interpolate measured concentrations
-  - estimate `dC/dt`
-  - solve local `S_observed * v_unknown ~= dC/dt` systems with bounded,
-    confidence-scored reaction flux estimates
-- add `src/ml_features.py`
+  - PCHIP-interpolates measured concentrations
+  - estimates `dC/dt`
+  - propagates singleton stoichiometric balances first
+  - solves remaining `S_observed * v_unknown ~= dC/dt` systems with bounded
+    least squares and confidence metadata
+- `src/ml_features.py`
   - `build_features(curves, fluxes, time_grid)`
-  - fixed schema for initial/final values, log-fold changes, slope features,
-    time-to-half, Hill-like shape statistics, and saturation proxies
-- add Phase B tests:
-  - Bordbar reference reproduces `VEGLC`, `VELAC`, and `VLDH` teacher fluxes
-    within tolerance on canonical baseline params
-  - feature vectors have a stable length and metadata schema
-  - missing/sparse metabolites degrade with explicit low confidence, not silent
-    fake precision
+  - `build_feature_payload(...)`
+  - stable `phase_b_v1` schema for concentration and flux features
+- `qa/test_phase_b_flux_inference.py`
+  - locks Bordbar `EGLC -> VEGLC`, `ELAC -> VELAC`, and
+    `LAC + VELAC -> VLDH`
+  - verifies stable finite feature payloads
+  - verifies missing series are explicit zero-presence features
+
+Next Phase B step:
+- add a model-generated synthetic smoke that solves the ODE with flux tracking,
+  feeds selected concentration curves back into `infer_user_fluxes`, and checks
+  inferred `VEGLC`/`VELAC`/`VLDH` against tracked model fluxes within a
+  realistic tolerance
+- only after that, widen the reaction panel used for feature extraction toward
+  the synthetic ML training library
 
 ### Phase 0 gate status
 
@@ -332,9 +341,8 @@ Phase A/A2 closed (2026-05-05):
   curated
 
 Next when work resumes:
-- Phase B: implement online flux inference and feature extraction
-  (`src/flux_inference.py`, `src/ml_features.py`) with tests against Bordbar
-  `VEGLC`/`VELAC`/`VLDH` teacher fluxes
+- Phase B: validate the first slice against model-generated tracked fluxes,
+  then widen from the direct Bordbar anchors to a larger reaction feature panel
 - Phase C onward stays deferred until Phase B feature vectors are stable:
   ML warm-start, optional flux-balance loss, identifiability regularisation,
   and hybrid structure-learning

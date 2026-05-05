@@ -3,6 +3,37 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-05 Phase B flux inference first slice
+
+Started Phase B of the auto-calibrate-all + ML flux-learning workstream.
+
+Added:
+- `src/flux_inference.py`
+  - `infer_user_fluxes(exp_data, exp_time, stoichiometry)`
+  - PCHIP concentration interpolation and derivatives
+  - singleton stoichiometric balance propagation for directly identified
+    reactions
+  - bounded least-squares fallback for remaining local systems
+  - confidence metadata per reaction
+- `src/ml_features.py`
+  - stable `phase_b_v1` feature schema
+  - `build_features(...)`
+  - `build_feature_payload(...)`
+  - explicit zero-presence features for missing metabolites/reactions
+- `qa/test_phase_b_flux_inference.py`
+  - Bordbar PCHIP teacher anchors:
+    `EGLC -> VEGLC`, `ELAC -> VELAC`, `LAC + VELAC -> VLDH`
+  - finite stable feature payload checks
+  - missing-series behavior checks
+
+Validation:
+- `python -m py_compile src/flux_inference.py src/ml_features.py`
+- `python -m pytest qa/test_phase_b_flux_inference.py -q` -> `3 passed`
+
+Next:
+- add a model-generated ODE/flux-tracker smoke to compare inferred anchor
+  fluxes against tracked model fluxes before widening the reaction panel.
+
 ## 2026-05-05 final pruned parity green-light
 
 The final canonical-Bordbar parity sweep was rerun on Hetzner from
