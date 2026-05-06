@@ -3,6 +3,47 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-05 Phase C warm-start calibration comparison
+
+Built the first calibration-level comparator for Phase C warm-start seeding.
+
+Added:
+- `scripts/run_phase_c_warmstart_compare.py`
+  - trains the offline warm-start ridge model on deterministic synthetic cases
+  - holds out one synthetic validation case
+  - creates a synthetic ODE dataset for that held-out case
+  - runs two identical `MM_calibration.run_calibration` branches:
+    `default_no_ml` starts from defaults, `warmstart` starts from the predicted
+    seed
+  - keeps target params, stage plan, optimizer seed, target data, target scope,
+    and `n_trials` identical between branches
+- `qa/test_phase_c_warmstart_compare_script.py`
+  - validates the warm-start-vs-default loss gate
+  - runs an ODE-backed micro comparison and verifies branch artifacts
+
+Local full comparison:
+- command: `python scripts/run_phase_c_warmstart_compare.py --out-dir Simulations/auto_param_scope/phase_c_warmstart_compare --profile smoke --t-max 2 --timepoints 8 --n-trials 1`
+- status: `passed`
+- artifact: `Simulations/auto_param_scope/phase_c_warmstart_compare/result.json`
+- target params: `vmax_VEGLC`, `vmax_VELAC`, `vmax_VLDH`, `vmax_VHK`
+- default/no-ML final loss: `0.05018`
+- warm-start final loss: `0.00667`
+- relative improvement: `0.86711`
+- warm-start seed log MAE vs true synthetic params: `0.04041`
+- decision gate: `warmstart_beats_default`
+
+Validation:
+- `python -m py_compile scripts/run_phase_c_warmstart_compare.py`
+- `python -m pytest qa/test_phase_c_warmstart_compare_script.py -q` -> `2 passed`
+- `python -m pytest qa/test_phase_b_flux_inference.py qa/test_phase_b_flux_smoke_script.py qa/test_phase_c_warmstart_smoke_script.py qa/test_phase_c_warmstart_compare_script.py -q` -> `9 passed`
+
+Interpretation:
+- Warm-start now wins at calibration level on one held-out synthetic case under
+  an equal one-trial seed-only budget.
+- This still stays offline/experimental. Next step: run the same comparison
+  across all held-out synthetic validation cases and require aggregate
+  superiority before considering any worker/API wiring.
+
 ## 2026-05-05 Phase C warm-start scaffold
 
 Started Phase C with an offline, non-production warm-start harness built on the

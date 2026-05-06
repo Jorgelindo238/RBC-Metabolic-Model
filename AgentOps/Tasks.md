@@ -16,9 +16,9 @@ Focus areas:
 
 ## Immediate next action
 
-Run the first **Phase C warm-start-vs-default calibration comparison** now that
-the offline warm-start scaffold can predict a safe four-parameter seed from
-`phase_b_v1` features.
+Run the next **Phase C multi-case warm-start comparison** now that the first
+calibration-level seed comparison beat default/no-ML under an equal one-trial
+budget.
 
 Phase B goal:
 - turn user uploaded `exp_data` into flux estimates and fixed-length features
@@ -93,12 +93,33 @@ Phase C scaffold landed:
   - improvement ratio: `0.12797`
   - max abs log error: `0.10985`
 
+Phase C calibration-level comparison landed:
+- `scripts/run_phase_c_warmstart_compare.py`
+  - trains the same offline Phase C warm-start model
+  - holds out one synthetic validation case
+  - runs two identical mini-calibrations with `MM_calibration.run_calibration`
+  - branch `default_no_ml` starts from default parameter values
+  - branch `warmstart` starts from the predicted warm-start seed
+  - both branches use the same target data, `stage_plan`, optimizer seed,
+    `n_trials`, target scope, and parameter set
+- `qa/test_phase_c_warmstart_compare_script.py`
+  - locks the loss-comparison gate
+  - runs an ODE-backed micro comparison and verifies branch artifacts
+- local full comparison (`profile=smoke`, `t_max=2`, 8 points, `n_trials=1`)
+  passed:
+  - artifact: `Simulations/auto_param_scope/phase_c_warmstart_compare/result.json`
+  - default/no-ML final loss: `0.05018`
+  - warm-start final loss: `0.00667`
+  - relative improvement: `0.86711`
+  - warm-start seed log MAE vs true synthetic params: `0.04041`
+  - decision gate: `warmstart_beats_default`
+
 Next Phase C step:
-- build a comparison harness that applies the predicted warm-start seed to a
-  small calibration run and compares against default/no-ML initialization under
-  the same budget
-- keep this offline/experimental; do not wire it into worker/API until the
-  calibration-level comparison beats the no-ML baseline
+- extend the comparator from one held-out synthetic case to all validation
+  cases and require aggregate warm-start superiority before considering any
+  worker/API integration
+- keep optional flux-balance loss, identifiability regularisation, and hybrid
+  structure-learning deferred until this multi-case gate is stable
 
 ### Phase 0 gate status
 
@@ -317,7 +338,7 @@ Next:
 ### Auto-calibrate-all + ML flux-learning rollout
 
 Status: Phase 0 + Phase A/A2 complete; Phase B direct/wide smoke gates
-complete; Phase C warm-start scaffold started. Plan file:
+complete; Phase C single-case warm-start comparison passed. Plan file:
 `C:/Users/Jorgelindo/.windsurf/plans/auto-calibrate-all-and-ml-flux-learning-179f0d.md`.
 
 Goal:
@@ -390,10 +411,10 @@ Phase A/A2 closed (2026-05-05):
   curated
 
 Next when work resumes:
-- Phase C: compare the predicted warm-start seed against default/no-ML
-  initialization in a small calibration run under the same budget
+- Phase C: extend the warm-start-vs-default comparison across every held-out
+  synthetic validation case and summarize aggregate win/loss statistics
 - keep optional flux-balance loss, identifiability regularisation, and hybrid
-  structure-learning deferred until the minimal warm-start baseline is measured
+  structure-learning deferred until the multi-case gate is stable
 
 ### DeepAgents RoBoCop supervisor
 
