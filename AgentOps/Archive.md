@@ -3,6 +3,137 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-05 Phase C aggregate warm-start comparison
+
+Extended the calibration-level Phase C comparator from a single held-out case
+to every held-out synthetic validation case.
+
+Updated:
+- `scripts/run_phase_c_warmstart_compare.py`
+  - added `--all-validation-cases`
+  - writes per-case branch artifacts under `cases/*/branches/*`
+  - keeps the legacy single-case output shape for existing callers
+  - adds an aggregate gate requiring configured case win-rate and mean relative
+    improvement before the run can pass
+- `qa/test_phase_c_warmstart_compare_script.py`
+  - locks aggregate win-rate behavior
+  - runs an ODE-backed micro all-validation comparison
+
+Local aggregate comparison:
+- command: `python scripts/run_phase_c_warmstart_compare.py --all-validation-cases --out-dir Simulations/auto_param_scope/phase_c_warmstart_compare_all --profile smoke --t-max 2 --timepoints 8 --n-trials 1`
+- status: `passed`
+- artifact: `Simulations/auto_param_scope/phase_c_warmstart_compare_all/result.json`
+- target params: `vmax_VEGLC`, `vmax_VELAC`, `vmax_VLDH`, `vmax_VHK`
+- held-out cases: `3`
+- passed cases: `3`
+- win rate: `1.0`
+- mean default/no-ML final loss: `0.05408`
+- mean warm-start final loss: `0.00293`
+- mean relative improvement: `0.94337`
+- observed relative improvement range: `0.86711` to `0.98588`
+- decision gate: `aggregate_warmstart_beats_default`
+
+Per-case summary:
+- `comparison_00`: default `0.05018`, warm-start `0.00667`, relative
+  improvement `0.86711`, seed log MAE `0.04041`
+- `comparison_01`: default `0.04880`, warm-start `0.00069`, relative
+  improvement `0.98588`, seed log MAE `0.00306`
+- `comparison_02`: default `0.06326`, warm-start `0.00145`, relative
+  improvement `0.97711`, seed log MAE `0.00489`
+
+Validation:
+- `python -m py_compile scripts/run_phase_c_warmstart_compare.py`
+- `python -m pytest qa/test_phase_c_warmstart_compare_script.py -q` -> `4 passed`
+
+Interpretation:
+- Warm-start now beats default/no-ML across all held-out synthetic cases under
+  equal one-trial seed-quality calibration.
+- Next gate should use a modest optimizer budget (`n_trials > 1`) before any
+  worker/API integration design. Production wiring remains out of scope until
+  that aggregate gate is stable and guarded behind a feature flag.
+
+## 2026-05-05 Phase C warm-start calibration comparison
+
+Built the first calibration-level comparator for Phase C warm-start seeding.
+
+Added:
+- `scripts/run_phase_c_warmstart_compare.py`
+  - trains the offline warm-start ridge model on deterministic synthetic cases
+  - holds out one synthetic validation case
+  - creates a synthetic ODE dataset for that held-out case
+  - runs two identical `MM_calibration.run_calibration` branches:
+    `default_no_ml` starts from defaults, `warmstart` starts from the predicted
+    seed
+  - keeps target params, stage plan, optimizer seed, target data, target scope,
+    and `n_trials` identical between branches
+- `qa/test_phase_c_warmstart_compare_script.py`
+  - validates the warm-start-vs-default loss gate
+  - runs an ODE-backed micro comparison and verifies branch artifacts
+
+Local full comparison:
+- command: `python scripts/run_phase_c_warmstart_compare.py --out-dir Simulations/auto_param_scope/phase_c_warmstart_compare --profile smoke --t-max 2 --timepoints 8 --n-trials 1`
+- status: `passed`
+- artifact: `Simulations/auto_param_scope/phase_c_warmstart_compare/result.json`
+- target params: `vmax_VEGLC`, `vmax_VELAC`, `vmax_VLDH`, `vmax_VHK`
+- default/no-ML final loss: `0.05018`
+- warm-start final loss: `0.00667`
+- relative improvement: `0.86711`
+- warm-start seed log MAE vs true synthetic params: `0.04041`
+- decision gate: `warmstart_beats_default`
+
+Validation:
+- `python -m py_compile scripts/run_phase_c_warmstart_compare.py`
+- `python -m pytest qa/test_phase_c_warmstart_compare_script.py -q` -> `2 passed`
+- `python -m pytest qa/test_phase_b_flux_inference.py qa/test_phase_b_flux_smoke_script.py qa/test_phase_c_warmstart_smoke_script.py qa/test_phase_c_warmstart_compare_script.py -q` -> `9 passed`
+
+Interpretation:
+- Warm-start now wins at calibration level on one held-out synthetic case under
+  an equal one-trial seed-only budget.
+- This still stays offline/experimental. Next step: run the same comparison
+  across all held-out synthetic validation cases and require aggregate
+  superiority before considering any worker/API wiring.
+
+## 2026-05-05 Phase C warm-start scaffold
+
+Started Phase C with an offline, non-production warm-start harness built on the
+stable Phase B `phase_b_v1` feature payload.
+
+Added:
+- `scripts/run_phase_c_warmstart_smoke.py`
+  - generates deterministic synthetic cases from the Brodbar ODE
+  - perturbs `vmax_VEGLC`, `vmax_VELAC`, `vmax_VLDH`, and `vmax_VHK`
+  - extracts the Phase B `wide` feature vector (`feature_count=244`)
+  - trains a pure-NumPy standardized ridge model on log-parameter multipliers
+  - emits a serializable model artifact with feature schema, means/scales,
+    weights, target means, validation predictions, and gates
+- `qa/test_phase_c_warmstart_smoke_script.py`
+  - verifies ridge math on a tiny linear fixture
+  - runs an ODE-backed micro smoke and checks the JSON contract
+
+Local full smoke:
+- command: `python scripts/run_phase_c_warmstart_smoke.py --out-dir Simulations/auto_param_scope/phase_c_warmstart_smoke --profile smoke --t-max 2 --timepoints 8`
+- status: `passed`
+- artifact: `Simulations/auto_param_scope/phase_c_warmstart_smoke/result.json`
+- target params: `vmax_VEGLC`, `vmax_VELAC`, `vmax_VLDH`, `vmax_VHK`
+- training cases: `11`
+- validation cases: `3`
+- validation mean log MAE: `0.01612`
+- defaults baseline mean log MAE: `0.12595`
+- improvement ratio: `0.12797`
+- max abs log error: `0.10985`
+
+Validation:
+- `python -m py_compile scripts/run_phase_c_warmstart_smoke.py`
+- `python -m pytest qa/test_phase_c_warmstart_smoke_script.py -q` -> `2 passed`
+- `python -m pytest qa/test_phase_b_flux_inference.py qa/test_phase_b_flux_smoke_script.py qa/test_phase_c_warmstart_smoke_script.py -q` -> `7 passed`
+
+Interpretation:
+- This is a scaffold/gate, not production ML yet.
+- The next Phase C step is a calibration-level comparison: apply the predicted
+  warm-start seed versus default/no-ML initialization under the same small
+  budget and require the warm-start path to beat baseline before any worker/API
+  wiring.
+
 ## 2026-05-05 Phase B wide flux smoke
 
 Widened the Phase B model-flux smoke conservatively after the direct
