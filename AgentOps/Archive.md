@@ -3,6 +3,55 @@
 Compact historical record. Do not read this file by default. Use it only when
 recovering context for an old decision, scientific run, or branch cleanup.
 
+## 2026-05-05 Phase C aggregate warm-start comparison
+
+Extended the calibration-level Phase C comparator from a single held-out case
+to every held-out synthetic validation case.
+
+Updated:
+- `scripts/run_phase_c_warmstart_compare.py`
+  - added `--all-validation-cases`
+  - writes per-case branch artifacts under `cases/*/branches/*`
+  - keeps the legacy single-case output shape for existing callers
+  - adds an aggregate gate requiring configured case win-rate and mean relative
+    improvement before the run can pass
+- `qa/test_phase_c_warmstart_compare_script.py`
+  - locks aggregate win-rate behavior
+  - runs an ODE-backed micro all-validation comparison
+
+Local aggregate comparison:
+- command: `python scripts/run_phase_c_warmstart_compare.py --all-validation-cases --out-dir Simulations/auto_param_scope/phase_c_warmstart_compare_all --profile smoke --t-max 2 --timepoints 8 --n-trials 1`
+- status: `passed`
+- artifact: `Simulations/auto_param_scope/phase_c_warmstart_compare_all/result.json`
+- target params: `vmax_VEGLC`, `vmax_VELAC`, `vmax_VLDH`, `vmax_VHK`
+- held-out cases: `3`
+- passed cases: `3`
+- win rate: `1.0`
+- mean default/no-ML final loss: `0.05408`
+- mean warm-start final loss: `0.00293`
+- mean relative improvement: `0.94337`
+- observed relative improvement range: `0.86711` to `0.98588`
+- decision gate: `aggregate_warmstart_beats_default`
+
+Per-case summary:
+- `comparison_00`: default `0.05018`, warm-start `0.00667`, relative
+  improvement `0.86711`, seed log MAE `0.04041`
+- `comparison_01`: default `0.04880`, warm-start `0.00069`, relative
+  improvement `0.98588`, seed log MAE `0.00306`
+- `comparison_02`: default `0.06326`, warm-start `0.00145`, relative
+  improvement `0.97711`, seed log MAE `0.00489`
+
+Validation:
+- `python -m py_compile scripts/run_phase_c_warmstart_compare.py`
+- `python -m pytest qa/test_phase_c_warmstart_compare_script.py -q` -> `4 passed`
+
+Interpretation:
+- Warm-start now beats default/no-ML across all held-out synthetic cases under
+  equal one-trial seed-quality calibration.
+- Next gate should use a modest optimizer budget (`n_trials > 1`) before any
+  worker/API integration design. Production wiring remains out of scope until
+  that aggregate gate is stable and guarded behind a feature flag.
+
 ## 2026-05-05 Phase C warm-start calibration comparison
 
 Built the first calibration-level comparator for Phase C warm-start seeding.

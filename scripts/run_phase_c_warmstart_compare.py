@@ -1,15 +1,16 @@
 """Compare Phase C warm-start seeding against default/no-ML calibration.
 
 This is the first calibration-level gate after the Phase C warm-start scaffold.
-It trains the offline warm-start model on deterministic synthetic cases, holds
-out one synthetic case, then runs two identical mini-calibrations:
+It trains the offline warm-start model on deterministic synthetic cases, then
+runs identical mini-calibrations on one or every held-out validation case:
 
 * ``default_no_ml`` starts from default parameter values
 * ``warmstart`` starts from the Phase C predicted parameter seed
 
 Both branches use the same stage plan, optimizer seed, target data, and trial
-budget. The script remains offline/experimental and does not touch the web,
-API, or worker contracts.
+budget. The aggregate mode requires warm-start superiority across held-out
+cases before this work can graduate toward worker/API integration. The script
+remains offline/experimental and does not touch production contracts.
 """
 
 from __future__ import annotations
@@ -257,6 +258,196 @@ def _predict_seed_for_case(
     return phase_c._params_from_prediction(predicted_log, target_params, defaults, bounds)
 
 
+def _warmstart_seed_log_mae(
+    *,
+    warmstart_seed: Mapping[str, float],
+    comparison_case: Mapping[str, Any],
+    target_params: Sequence[str],
+    defaults: Mapping[str, float],
+) -> float:
+    predicted_log = np.asarray(
+        [
+            math.log(float(warmstart_seed[name]) / float(defaults[name]))
+            for name in target_params
+        ],
+        dtype=float,
+    )
+    true_log = np.asarray(comparison_case["true_log_multipliers"], dtype=float)
+    return float(np.mean(np.abs(predicted_log - true_log)))
+
+
+def _run_case_comparison(
+    *,
+    case_id: str,
+    factor_index: int,
+    factors: Sequence[float],
+    trained: Mapping[str, Any],
+    target_params: Sequence[str],
+    preset: str,
+    t_max: float,
+    timepoints: int,
+    method: str,
+    rtol: float,
+    atol: float,
+    out_dir: Path,
+    n_trials: int,
+    seed: int,
+    target_scope: str,
+    min_relative_improvement: float,
+) -> Dict[str, Any]:
+    import run_phase_c_warmstart_smoke as phase_c
+
+    true_params = phase_c._params_from_factors(
+        factors,
+        target_params,
+        trained["defaults"],
+        trained["bounds"],
+    )
+    comparison_case = phase_c._build_case(
+        case_id=case_id,
+        factors=factors,
+        target_params=target_params,
+        defaults=trained["defaults"],
+        bounds=trained["bounds"],
+        preset=preset,
+        t_max=t_max,
+        timepoints=timepoints,
+        method=method,
+        rtol=rtol,
+        atol=atol,
+    )
+    warmstart_seed = _predict_seed_for_case(
+        model=trained["model"],
+        feature_payload=comparison_case["feature_payload"],
+        target_params=target_params,
+        defaults=trained["defaults"],
+        bounds=trained["bounds"],
+    )
+    default_seed = {name: float(trained["defaults"][name]) for name in target_params}
+    experimental_data = _phase_b_synthetic_dataset(
+        params=true_params,
+        preset=preset,
+        t_max=t_max,
+        timepoints=timepoints,
+        method=method,
+        rtol=rtol,
+        atol=atol,
+    )
+
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    default_branch = _run_calibration_branch(
+        branch_name="default_no_ml",
+        seed_params=default_seed,
+        target_params=target_params,
+        experimental_data=experimental_data,
+        out_dir=out_dir,
+        n_trials=n_trials,
+        t_max=t_max,
+        seed=seed,
+        target_scope=target_scope,
+        target_metabolites=experimental_data["metabolites"],
+    )
+    warmstart_branch = _run_calibration_branch(
+        branch_name="warmstart",
+        seed_params=warmstart_seed,
+        target_params=target_params,
+        experimental_data=experimental_data,
+        out_dir=out_dir,
+        n_trials=n_trials,
+        t_max=t_max,
+        seed=seed,
+        target_scope=target_scope,
+        target_metabolites=experimental_data["metabolites"],
+    )
+    comparison = _loss_comparison(
+        default_loss=float(default_branch["final_loss"]),
+        warmstart_loss=float(warmstart_branch["final_loss"]),
+        min_relative_improvement=float(min_relative_improvement),
+    )
+    return {
+        "case_id": comparison_case["case_id"],
+        "factor_index": int(factor_index),
+        "factors": tuple(float(value) for value in factors),
+        "true_params": true_params,
+        "default_seed": default_seed,
+        "warmstart_seed": warmstart_seed,
+        "warmstart_seed_log_mae": _warmstart_seed_log_mae(
+            warmstart_seed=warmstart_seed,
+            comparison_case=comparison_case,
+            target_params=target_params,
+            defaults=trained["defaults"],
+        ),
+        "branches": {
+            "default_no_ml": default_branch,
+            "warmstart": warmstart_branch,
+        },
+        "comparison": comparison,
+        "out_dir": str(out_dir),
+    }
+
+
+def _aggregate_case_comparisons(
+    cases: Sequence[Mapping[str, Any]],
+    *,
+    min_case_win_rate: float,
+    min_mean_relative_improvement: float,
+) -> Dict[str, Any]:
+    if not cases:
+        raise ValueError("at least one case comparison is required.")
+
+    improvements = np.asarray(
+        [float(case["comparison"]["relative_improvement"]) for case in cases],
+        dtype=float,
+    )
+    default_losses = np.asarray(
+        [float(case["comparison"]["default_final_loss"]) for case in cases],
+        dtype=float,
+    )
+    warmstart_losses = np.asarray(
+        [float(case["comparison"]["warmstart_final_loss"]) for case in cases],
+        dtype=float,
+    )
+    passed_case_ids = [
+        str(case["case_id"])
+        for case in cases
+        if bool(case["comparison"]["passed"])
+    ]
+    failed_case_ids = [
+        str(case["case_id"])
+        for case in cases
+        if not bool(case["comparison"]["passed"])
+    ]
+    case_count = len(cases)
+    passed_count = len(passed_case_ids)
+    win_rate = passed_count / max(case_count, 1)
+    mean_relative_improvement = float(np.mean(improvements))
+    passed = (
+        win_rate >= float(min_case_win_rate)
+        and mean_relative_improvement >= float(min_mean_relative_improvement)
+    )
+    return {
+        "case_count": case_count,
+        "passed_case_count": passed_count,
+        "failed_case_count": len(failed_case_ids),
+        "passed_case_ids": passed_case_ids,
+        "failed_case_ids": failed_case_ids,
+        "win_rate": float(win_rate),
+        "min_case_win_rate": float(min_case_win_rate),
+        "mean_relative_improvement": mean_relative_improvement,
+        "median_relative_improvement": float(np.median(improvements)),
+        "min_relative_improvement_observed": float(np.min(improvements)),
+        "max_relative_improvement_observed": float(np.max(improvements)),
+        "min_mean_relative_improvement": float(min_mean_relative_improvement),
+        "mean_default_final_loss": float(np.mean(default_losses)),
+        "mean_warmstart_final_loss": float(np.mean(warmstart_losses)),
+        "warmstart_minus_default_mean_loss": float(np.mean(warmstart_losses - default_losses)),
+        "all_cases_passed": passed_count == case_count,
+        "decision_gate": "aggregate_warmstart_beats_default" if passed else "needs_review",
+        "passed": bool(passed),
+    }
+
+
 def run_warmstart_comparison(
     *,
     out_dir: Path = DEFAULT_OUT_DIR,
@@ -274,6 +465,9 @@ def run_warmstart_comparison(
     regularization: float = 1.0,
     target_scope: str = "glycolysis_extracellular",
     min_relative_improvement: float = 0.0,
+    all_validation_cases: bool = False,
+    min_case_win_rate: float = 1.0,
+    min_mean_relative_improvement: float = 0.0,
 ) -> Dict[str, Any]:
     _configure_imports()
 
@@ -294,80 +488,52 @@ def run_warmstart_comparison(
     validation_factors = tuple(trained["validation_factors"])
     if not validation_factors:
         raise ValueError("profile produced no validation factors.")
-    factor_index = int(comparison_case_index) % len(validation_factors)
-    factors = validation_factors[factor_index]
-    true_params = phase_c._params_from_factors(
-        factors,
-        target_param_tuple,
-        trained["defaults"],
-        trained["bounds"],
-    )
-    comparison_case = phase_c._build_case(
-        case_id=f"comparison_{factor_index:02d}",
-        factors=factors,
-        target_params=target_param_tuple,
-        defaults=trained["defaults"],
-        bounds=trained["bounds"],
-        preset=preset,
-        t_max=t_max,
-        timepoints=timepoints,
-        method=method,
-        rtol=rtol,
-        atol=atol,
-    )
-    warmstart_seed = _predict_seed_for_case(
-        model=trained["model"],
-        feature_payload=comparison_case["feature_payload"],
-        target_params=target_param_tuple,
-        defaults=trained["defaults"],
-        bounds=trained["bounds"],
-    )
-    default_seed = {name: float(trained["defaults"][name]) for name in target_param_tuple}
-    experimental_data = _phase_b_synthetic_dataset(
-        params=true_params,
-        preset=preset,
-        t_max=t_max,
-        timepoints=timepoints,
-        method=method,
-        rtol=rtol,
-        atol=atol,
-    )
-
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    default_branch = _run_calibration_branch(
-        branch_name="default_no_ml",
-        seed_params=default_seed,
-        target_params=target_param_tuple,
-        experimental_data=experimental_data,
-        out_dir=out_dir,
-        n_trials=n_trials,
-        t_max=t_max,
-        seed=seed,
-        target_scope=target_scope,
-        target_metabolites=experimental_data["metabolites"],
-    )
-    warmstart_branch = _run_calibration_branch(
-        branch_name="warmstart",
-        seed_params=warmstart_seed,
-        target_params=target_param_tuple,
-        experimental_data=experimental_data,
-        out_dir=out_dir,
-        n_trials=n_trials,
-        t_max=t_max,
-        seed=seed,
-        target_scope=target_scope,
-        target_metabolites=experimental_data["metabolites"],
-    )
-    comparison = _loss_comparison(
-        default_loss=float(default_branch["final_loss"]),
-        warmstart_loss=float(warmstart_branch["final_loss"]),
-        min_relative_improvement=float(min_relative_improvement),
-    )
+
+    if all_validation_cases:
+        selected_cases = tuple(enumerate(validation_factors))
+    else:
+        factor_index = int(comparison_case_index) % len(validation_factors)
+        selected_cases = ((factor_index, validation_factors[factor_index]),)
+
+    cases = []
+    for factor_index, factors in selected_cases:
+        case_id = f"comparison_{factor_index:02d}"
+        case_out_dir = out_dir / "cases" / case_id if all_validation_cases else out_dir
+        cases.append(
+            _run_case_comparison(
+                case_id=case_id,
+                factor_index=factor_index,
+                factors=factors,
+                trained=trained,
+                target_params=target_param_tuple,
+                preset=preset,
+                t_max=t_max,
+                timepoints=timepoints,
+                method=method,
+                rtol=rtol,
+                atol=atol,
+                out_dir=case_out_dir,
+                n_trials=n_trials,
+                seed=seed,
+                target_scope=target_scope,
+                min_relative_improvement=min_relative_improvement,
+            )
+        )
+
+    if all_validation_cases:
+        comparison = _aggregate_case_comparisons(
+            cases,
+            min_case_win_rate=min_case_win_rate,
+            min_mean_relative_improvement=min_mean_relative_improvement,
+        )
+    else:
+        comparison = dict(cases[0]["comparison"])
 
     payload: Dict[str, Any] = {
         "contract_type": "phase_c_warmstart_calibration_compare_result",
-        "contract_version": 1,
+        "contract_version": 2,
         "status": "passed" if comparison["passed"] else "failed",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "feature_version": trained["feature_payload"]["feature_version"],
@@ -383,30 +549,13 @@ def run_warmstart_comparison(
             "seed": int(seed),
             "regularization": float(regularization),
             "target_scope": str(target_scope),
+            "all_validation_cases": bool(all_validation_cases),
+            "comparison_case_index": int(comparison_case_index),
+            "min_relative_improvement": float(min_relative_improvement),
+            "min_case_win_rate": float(min_case_win_rate),
+            "min_mean_relative_improvement": float(min_mean_relative_improvement),
         },
         "target_params": list(target_param_tuple),
-        "synthetic_case": {
-            "case_id": comparison_case["case_id"],
-            "factor_index": factor_index,
-            "factors": factors,
-            "true_params": true_params,
-            "default_seed": default_seed,
-            "warmstart_seed": warmstart_seed,
-            "warmstart_seed_log_mae": float(
-                np.mean(
-                    np.abs(
-                        np.asarray(
-                            [
-                                math.log(float(warmstart_seed[name]) / float(trained["defaults"][name]))
-                                for name in target_param_tuple
-                            ],
-                            dtype=float,
-                        )
-                        - np.asarray(comparison_case["true_log_multipliers"], dtype=float)
-                    )
-                )
-            ),
-        },
         "model": {
             "kind": trained["model"]["kind"],
             "regularization": trained["model"]["regularization"],
@@ -414,12 +563,21 @@ def run_warmstart_comparison(
             "feature_count": int(trained["feature_payload"]["metadata"]["feature_count"]),
             "target_params": list(target_param_tuple),
         },
-        "branches": {
-            "default_no_ml": default_branch,
-            "warmstart": warmstart_branch,
-        },
+        "cases": cases,
         "comparison": comparison,
     }
+    if not all_validation_cases:
+        single_case = cases[0]
+        payload["synthetic_case"] = {
+            "case_id": single_case["case_id"],
+            "factor_index": single_case["factor_index"],
+            "factors": single_case["factors"],
+            "true_params": single_case["true_params"],
+            "default_seed": single_case["default_seed"],
+            "warmstart_seed": single_case["warmstart_seed"],
+            "warmstart_seed_log_mae": single_case["warmstart_seed_log_mae"],
+        }
+        payload["branches"] = single_case["branches"]
 
     result_path = out_dir / "result.json"
     payload["out_path"] = str(result_path)
@@ -444,6 +602,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--regularization", type=float, default=1.0)
     parser.add_argument("--target-scope", default="glycolysis_extracellular")
     parser.add_argument("--min-relative-improvement", type=float, default=0.0)
+    parser.add_argument("--all-validation-cases", action="store_true")
+    parser.add_argument("--min-case-win-rate", type=float, default=1.0)
+    parser.add_argument("--min-mean-relative-improvement", type=float, default=0.0)
     return parser
 
 
@@ -471,17 +632,37 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         regularization=args.regularization,
         target_scope=args.target_scope,
         min_relative_improvement=args.min_relative_improvement,
+        all_validation_cases=args.all_validation_cases,
+        min_case_win_rate=args.min_case_win_rate,
+        min_mean_relative_improvement=args.min_mean_relative_improvement,
     )
+    comparison = payload["comparison"]
     summary = {
         "status": payload["status"],
         "out_path": payload["out_path"],
         "feature_version": payload["feature_version"],
         "target_params": payload["target_params"],
-        "default_final_loss": payload["comparison"]["default_final_loss"],
-        "warmstart_final_loss": payload["comparison"]["warmstart_final_loss"],
-        "relative_improvement": payload["comparison"]["relative_improvement"],
-        "decision_gate": payload["comparison"]["decision_gate"],
+        "decision_gate": comparison["decision_gate"],
     }
+    if args.all_validation_cases:
+        summary.update(
+            {
+                "case_count": comparison["case_count"],
+                "passed_case_count": comparison["passed_case_count"],
+                "win_rate": comparison["win_rate"],
+                "mean_relative_improvement": comparison["mean_relative_improvement"],
+                "mean_default_final_loss": comparison["mean_default_final_loss"],
+                "mean_warmstart_final_loss": comparison["mean_warmstart_final_loss"],
+            }
+        )
+    else:
+        summary.update(
+            {
+                "default_final_loss": comparison["default_final_loss"],
+                "warmstart_final_loss": comparison["warmstart_final_loss"],
+                "relative_improvement": comparison["relative_improvement"],
+            }
+        )
     print(json.dumps(_jsonable(summary), indent=2))
     return 0 if payload["status"] == "passed" else 1
 

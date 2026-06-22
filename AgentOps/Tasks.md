@@ -16,9 +16,10 @@ Focus areas:
 
 ## Immediate next action
 
-Run the next **Phase C multi-case warm-start comparison** now that the first
-calibration-level seed comparison beat default/no-ML under an equal one-trial
-budget.
+Run a modest-budget **Phase C aggregate warm-start comparison** now that the
+all-held-out one-trial seed gate passed. Use the same aggregate rule
+(`win_rate=1.0`) before designing any worker/API integration, and keep that
+future integration behind an explicit feature flag.
 
 Phase B goal:
 - turn user uploaded `exp_data` into flux estimates and fixed-length features
@@ -96,15 +97,20 @@ Phase C scaffold landed:
 Phase C calibration-level comparison landed:
 - `scripts/run_phase_c_warmstart_compare.py`
   - trains the same offline Phase C warm-start model
-  - holds out one synthetic validation case
+  - supports one synthetic validation case or every held-out validation case
   - runs two identical mini-calibrations with `MM_calibration.run_calibration`
   - branch `default_no_ml` starts from default parameter values
   - branch `warmstart` starts from the predicted warm-start seed
   - both branches use the same target data, `stage_plan`, optimizer seed,
     `n_trials`, target scope, and parameter set
+  - aggregate mode writes per-case branch artifacts under `cases/*/branches/*`
+    and requires warm-start superiority across all selected held-out cases
 - `qa/test_phase_c_warmstart_compare_script.py`
   - locks the loss-comparison gate
+  - locks the aggregate win-rate gate
   - runs an ODE-backed micro comparison and verifies branch artifacts
+  - runs an ODE-backed micro all-validation comparison and verifies branch
+    artifacts
 - local full comparison (`profile=smoke`, `t_max=2`, 8 points, `n_trials=1`)
   passed:
   - artifact: `Simulations/auto_param_scope/phase_c_warmstart_compare/result.json`
@@ -114,12 +120,28 @@ Phase C calibration-level comparison landed:
   - warm-start seed log MAE vs true synthetic params: `0.04041`
   - decision gate: `warmstart_beats_default`
 
+Phase C aggregate comparison landed:
+- command:
+  `python scripts/run_phase_c_warmstart_compare.py --all-validation-cases --out-dir Simulations/auto_param_scope/phase_c_warmstart_compare_all --profile smoke --t-max 2 --timepoints 8 --n-trials 1`
+- status: `passed`
+- artifact: `Simulations/auto_param_scope/phase_c_warmstart_compare_all/result.json`
+- held-out cases: `3`
+- passed cases: `3`
+- win rate: `1.0`
+- mean default/no-ML final loss: `0.05408`
+- mean warm-start final loss: `0.00293`
+- mean relative improvement: `0.94337`
+- observed relative improvement range: `0.86711` to `0.98588`
+- decision gate: `aggregate_warmstart_beats_default`
+
 Next Phase C step:
-- extend the comparator from one held-out synthetic case to all validation
-  cases and require aggregate warm-start superiority before considering any
-  worker/API integration
+- repeat the aggregate comparison with a modest optimization budget
+  (`n_trials > 1`) to ensure the warm-start advantage survives actual optimizer
+  movement, not only seed-quality evaluation
+- if that gate stays green, draft worker/API integration behind a disabled-by-
+  default feature flag; do not make warm-start production-active yet
 - keep optional flux-balance loss, identifiability regularisation, and hybrid
-  structure-learning deferred until this multi-case gate is stable
+  structure-learning deferred until the modest-budget aggregate gate is stable
 
 ### Phase 0 gate status
 
@@ -338,7 +360,8 @@ Next:
 ### Auto-calibrate-all + ML flux-learning rollout
 
 Status: Phase 0 + Phase A/A2 complete; Phase B direct/wide smoke gates
-complete; Phase C single-case warm-start comparison passed. Plan file:
+complete; Phase C single-case and aggregate warm-start comparisons passed.
+Plan file:
 `C:/Users/Jorgelindo/.windsurf/plans/auto-calibrate-all-and-ml-flux-learning-179f0d.md`.
 
 Goal:
@@ -411,10 +434,10 @@ Phase A/A2 closed (2026-05-05):
   curated
 
 Next when work resumes:
-- Phase C: extend the warm-start-vs-default comparison across every held-out
-  synthetic validation case and summarize aggregate win/loss statistics
+- Phase C: repeat the aggregate warm-start-vs-default comparison with
+  `n_trials > 1`; require aggregate superiority before any worker/API wiring
 - keep optional flux-balance loss, identifiability regularisation, and hybrid
-  structure-learning deferred until the multi-case gate is stable
+  structure-learning deferred until the modest-budget aggregate gate is stable
 
 ### DeepAgents RoBoCop supervisor
 
