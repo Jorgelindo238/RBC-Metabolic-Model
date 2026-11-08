@@ -1,0 +1,17 @@
+{
+  "parent_archive": "output/agentic_vmax_pilot_2026_11_04",
+  "network": "gem_corrected",
+  "fit_days": [4, 8, 11, 15],
+  "critical_pointwise_pools": ["PEP", "G6P", "F6P", "AMP"],
+  "minimum_each_day_relative_gain": 0.001,
+  "number_of_rounds": 4,
+  "difference_step_log": 0.006,
+  "initial_radius_log": 0.2,
+  "maximum_radius_log": 0.3,
+  "reserve_fraction": 0.1,
+  "line_search_fractions": [1.0, 0.5, 0.25, 0.125, 0.0625],
+  "continuation_start_fractions": [0.01, 0.025, 0.05],
+  "minimum_step_objective_gain": 0.000001,
+  "later_than_J15_used": false,
+  "production_promotion_allowed": false
+}

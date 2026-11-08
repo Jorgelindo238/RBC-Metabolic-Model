@@ -16,8 +16,10 @@ Focus areas:
 
 ## Immediate next action
 
-Start **Phase C - ML warm-start scaffolding** now that Phase B has a cautious
-tracked-flux gate for the first direct and wide reaction panels.
+Run a modest-budget **Phase C aggregate warm-start comparison** now that the
+all-held-out one-trial seed gate passed. Use the same aggregate rule
+(`win_rate=1.0`) before designing any worker/API integration, and keep that
+future integration behind an explicit feature flag.
 
 Phase B goal:
 - turn user uploaded `exp_data` into flux estimates and fixed-length features
@@ -71,12 +73,75 @@ Model-flux smoke landed:
     `VELAC`, `VLDH`, `VHK`
   - feature count: `244`
 
+Phase C scaffold landed:
+- `scripts/run_phase_c_warmstart_smoke.py`
+  - generates deterministic synthetic cases by perturbing `vmax_VEGLC`,
+    `vmax_VELAC`, `vmax_VLDH`, and `vmax_VHK`
+  - reuses Phase B `wide` feature extraction, preserving `feature_version:
+    phase_b_v1`
+  - trains a pure-NumPy standardized ridge model on log-parameter multipliers
+  - serializes the model coefficients plus validation metrics to
+    `Simulations/auto_param_scope/phase_c_warmstart_smoke/result.json`
+- `qa/test_phase_c_warmstart_smoke_script.py`
+  - locks the ridge helper math
+  - runs a short ODE-backed micro smoke and validates the JSON contract
+- local full smoke (`profile=smoke`, `t_max=2`, 8 points) passed:
+  - target params: `vmax_VEGLC`, `vmax_VELAC`, `vmax_VLDH`, `vmax_VHK`
+  - training cases: `11`
+  - validation cases: `3`
+  - validation mean log MAE: `0.01612`
+  - defaults baseline mean log MAE: `0.12595`
+  - improvement ratio: `0.12797`
+  - max abs log error: `0.10985`
+
+Phase C calibration-level comparison landed:
+- `scripts/run_phase_c_warmstart_compare.py`
+  - trains the same offline Phase C warm-start model
+  - supports one synthetic validation case or every held-out validation case
+  - runs two identical mini-calibrations with `MM_calibration.run_calibration`
+  - branch `default_no_ml` starts from default parameter values
+  - branch `warmstart` starts from the predicted warm-start seed
+  - both branches use the same target data, `stage_plan`, optimizer seed,
+    `n_trials`, target scope, and parameter set
+  - aggregate mode writes per-case branch artifacts under `cases/*/branches/*`
+    and requires warm-start superiority across all selected held-out cases
+- `qa/test_phase_c_warmstart_compare_script.py`
+  - locks the loss-comparison gate
+  - locks the aggregate win-rate gate
+  - runs an ODE-backed micro comparison and verifies branch artifacts
+  - runs an ODE-backed micro all-validation comparison and verifies branch
+    artifacts
+- local full comparison (`profile=smoke`, `t_max=2`, 8 points, `n_trials=1`)
+  passed:
+  - artifact: `Simulations/auto_param_scope/phase_c_warmstart_compare/result.json`
+  - default/no-ML final loss: `0.05018`
+  - warm-start final loss: `0.00667`
+  - relative improvement: `0.86711`
+  - warm-start seed log MAE vs true synthetic params: `0.04041`
+  - decision gate: `warmstart_beats_default`
+
+Phase C aggregate comparison landed:
+- command:
+  `python scripts/run_phase_c_warmstart_compare.py --all-validation-cases --out-dir Simulations/auto_param_scope/phase_c_warmstart_compare_all --profile smoke --t-max 2 --timepoints 8 --n-trials 1`
+- status: `passed`
+- artifact: `Simulations/auto_param_scope/phase_c_warmstart_compare_all/result.json`
+- held-out cases: `3`
+- passed cases: `3`
+- win rate: `1.0`
+- mean default/no-ML final loss: `0.05408`
+- mean warm-start final loss: `0.00293`
+- mean relative improvement: `0.94337`
+- observed relative improvement range: `0.86711` to `0.98588`
+- decision gate: `aggregate_warmstart_beats_default`
+
 Next Phase C step:
-- build a minimal deterministic trainer harness that consumes Phase B
-  `phase_b_v1` feature payloads and predicts a first safe subset of warm-start
-  parameters
-- keep it offline/experimental first; no worker/API contract change until it
-  beats the no-ML baseline on tracked artifacts
+- repeat the aggregate comparison with a modest optimization budget
+  (`n_trials > 1`) to ensure the warm-start advantage survives actual optimizer
+  movement, not only seed-quality evaluation
+- if that gate stays green, draft worker/API integration behind a disabled-by-
+  default feature flag; do not make warm-start production-active yet
+- keep optional flux-balance loss, identifiability regularisation, and hybrid
+  structure-learning deferred until the modest-budget aggregate gate is stable
 
 ### Phase 0 gate status
 
@@ -295,7 +360,8 @@ Next:
 ### Auto-calibrate-all + ML flux-learning rollout
 
 Status: Phase 0 + Phase A/A2 complete; Phase B direct/wide smoke gates
-complete; Phase C is next. Plan file:
+complete; Phase C single-case and aggregate warm-start comparisons passed.
+Plan file:
 `C:/Users/Jorgelindo/.windsurf/plans/auto-calibrate-all-and-ml-flux-learning-179f0d.md`.
 
 Goal:
@@ -368,10 +434,10 @@ Phase A/A2 closed (2026-05-05):
   curated
 
 Next when work resumes:
-- Phase C: build the first offline ML warm-start scaffold on top of the
-  `phase_b_v1` feature payload and the tracked-flux smoke artifacts
+- Phase C: repeat the aggregate warm-start-vs-default comparison with
+  `n_trials > 1`; require aggregate superiority before any worker/API wiring
 - keep optional flux-balance loss, identifiability regularisation, and hybrid
-  structure-learning deferred until the minimal warm-start baseline is measured
+  structure-learning deferred until the modest-budget aggregate gate is stable
 
 ### DeepAgents RoBoCop supervisor
 

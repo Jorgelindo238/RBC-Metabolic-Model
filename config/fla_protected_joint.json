@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "parent_config": "config/fla_joint_glucose_energy.json",
+  "parent_archive": "output/joint_glucose_energy_calibration_2026_10_27",
+  "purpose": "same_six_coordinates_with_nine_pool_training_nonregression",
+  "pools": ["EGLC", "GLC", "LAC", "ELAC", "ATP", "ADP", "AMP", "PEP", "G6P"],
+  "training_end_day": 10.0,
+  "training_times": [4.0, 8.0],
+  "audit_end_days": [4.0, 10.0, 46.0],
+  "guard_metric": "per_pool_training_RMSE_mM",
+  "reference_case": "glut_real_candidate_ultrastrict",
+  "guard_numerical_atol_mM": 0.00001,
+  "guard_numerical_rtol": 0.0001,
+  "fitting_allowance_fraction": 0.25,
+  "allowance_interpretation": "engineering_replay_allowance_not_assay_noise_or_biological_accuracy",
+  "optimizer": {
+    "method": "SLSQP",
+    "maxiter": 80,
+    "ftol": 1e-7,
+    "log_factor_difference_step": 0.002,
+    "primary_actual_integrations": 250,
+    "secondary_cumulative_actual_integrations": 600
+  },
+  "minimum_training_NLL_gain": 0.0001,
+  "start_policy": "feasible_control_rejected_joint_and_log_midpoint",
+  "guarded_scope": "nine_prespecified_pools_other46_source_channels_audited_not_hard_constrained",
+  "late_data_used_in_selection": false,
+  "new_kinetic_coordinates": false,
+  "latent_initial_states_fitted": false,
+  "production_promotion_allowed": false
+}

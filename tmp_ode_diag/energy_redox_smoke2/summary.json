@@ -1,0 +1,46 @@
+{
+  "contract_type": "fla_energy_redox_control_profile",
+  "contract_version": 1,
+  "generated_at": "2026-08-05T02:38:26.154218+00:00",
+  "diagnostic_only": true,
+  "optimization_performed": false,
+  "parameters_promoted": false,
+  "t_max": 2.0,
+  "timepoints": 12,
+  "reference_candidate": "mild_seed",
+  "candidate_params": {
+    "mild_seed": "C:\\Users\\Jorgelindo\\Desktop\\airbc\\Simulations\\brodbar\\hermes\\vpep_vpk_coupled_mild_feedback_46d_n20\\seed_fixed_params.json",
+    "coupled_rejected": "C:\\Users\\Jorgelindo\\Desktop\\airbc\\Simulations\\brodbar\\hermes\\vpep_vpk_coupled_mild_feedback_46d_n20\\candidate_params.json"
+  },
+  "top_reference_control": {
+    "candidate": "mild_seed",
+    "parameter": "km_ATP_HK",
+    "factor": "VHK_ATP_occupancy",
+    "late_factor": NaN,
+    "endpoint_factor": 0.3410095361568004,
+    "limitation_score": NaN,
+    "suggested_direction": "do not open km_ATP_HK"
+  },
+  "guardrails": [
+    "EGLC",
+    "GLC",
+    "LAC",
+    "ELAC",
+    "ATP",
+    "PEP",
+    "G6P",
+    "VEGLC",
+    "VELAC",
+    "VLDH",
+    "full_55_metabolite_panel"
+  ],
+  "artifact_paths": {
+    "timeseries_csv": "tmp_ode_diag\\energy_redox_smoke2\\energy_redox_timeseries.csv",
+    "summary_csv": "tmp_ode_diag\\energy_redox_smoke2\\energy_redox_summary.csv",
+    "ranking_csv": "tmp_ode_diag\\energy_redox_smoke2\\energy_redox_control_ranking.csv",
+    "profile_png": "tmp_ode_diag\\energy_redox_smoke2\\energy_redox_control_profile.png",
+    "late_controls_png": "tmp_ode_diag\\energy_redox_smoke2\\energy_redox_late_controls.png",
+    "report_md": "tmp_ode_diag\\energy_redox_smoke2\\energy_redox_control_report.md",
+    "summary_json": "tmp_ode_diag\\energy_redox_smoke2\\summary.json"
+  }
+}

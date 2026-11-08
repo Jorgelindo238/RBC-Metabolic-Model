@@ -9,6 +9,7 @@ outputs that Hermes Phase B and teacher-flux distillation understand.
 from __future__ import annotations
 
 import csv
+import math
 from pathlib import Path
 import sys
 from typing import Any, Dict, Iterable
@@ -83,7 +84,7 @@ def _write_all_metabolites_csv(result: dict[str, Any], csv_path: Path) -> None:
         writer = csv.writer(handle)
         writer.writerow(["Time", *metabolite_names])
         for index, timepoint in enumerate(timepoints):
-            row = trajectories[index] if index < len(trajectories) else []
+            row = trajectories[index]
             writer.writerow([timepoint, *[float(value) for value in row]])
 
 
@@ -108,17 +109,65 @@ def _write_reaction_fluxes_csv(result: dict[str, Any], csv_path: Path) -> None:
                     timepoint,
                     *[
                         float(flux_series[reaction_name][index])
-                        if index < len(flux_series[reaction_name])
-                        else 0.0
                         for reaction_name in reaction_names
                     ],
                 ]
             )
 
 
+def _validate_artifact_payload(result: dict[str, Any]) -> None:
+    """Reject malformed evidence before creating any output files.
+
+    Flux tracker times may include rejected solver steps, so their order is
+    preserved here. They are not an accepted-state quadrature grid.
+    """
+    names = _sequence_values(result.get("metabolite_names"))
+    times = _sequence_values(result.get("t"))
+    rows = _sequence_values(result.get("x"))
+    if (not names or any(not str(name).strip() for name in names)
+            or len(set(map(str, names))) != len(names)):
+        raise ValueError("metabolite_names must be nonempty and unique")
+    if not times or len(rows) != len(times):
+        raise ValueError("trajectory rows must align with nonempty timepoints")
+    if any(not math.isfinite(float(t)) for t in times):
+        raise ValueError("trajectory timepoints must be finite")
+    if any(float(b) <= float(a) for a, b in zip(times, times[1:])):
+        raise ValueError("trajectory timepoints must be strictly increasing")
+    for row in rows:
+        if not isinstance(row, (list, tuple)):
+            raise ValueError("trajectories must be a two-dimensional array")
+        values = _sequence_values(row)
+        if len(values) != len(names):
+            raise ValueError("trajectory columns must align with metabolite_names")
+        if any(not math.isfinite(float(value)) for value in values):
+            raise ValueError("trajectory values must be finite")
+    flux_data = result.get("flux_data")
+    if flux_data is None:
+        return
+    if not isinstance(flux_data, dict):
+        raise ValueError("flux_data must be a mapping or None")
+    if not flux_data:
+        return
+    flux_times = _sequence_values(flux_data.get("times"))
+    fluxes = flux_data.get("fluxes")
+    if not flux_times or not isinstance(fluxes, dict) or not fluxes:
+        raise ValueError("flux_data must contain nonempty times and fluxes")
+    if any(not math.isfinite(float(t)) for t in flux_times):
+        raise ValueError("flux timepoints must be finite")
+    for name, series in fluxes.items():
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("reaction names must be nonempty strings")
+        values = _sequence_values(series)
+        if len(values) != len(flux_times):
+            raise ValueError(f"flux series {name} must align with flux timepoints")
+        if any(not math.isfinite(float(value)) for value in values):
+            raise ValueError(f"flux series {name} must be finite")
+
+
 def write_simulation_artifacts(result: dict[str, Any], output_dir: Path) -> dict[str, str | None]:
     """Persist isolated CSV artifacts for pure-ODE and teacher-flux downstream steps."""
 
+    _validate_artifact_payload(result)
     output_dir = Path(output_dir)
     metabolites_csv = output_dir / "metabolites" / "all_metabolites.csv"
     reaction_fluxes_csv = output_dir / "fluxes" / "reaction_fluxes.csv"

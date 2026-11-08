@@ -12,10 +12,86 @@ _THIS_FILE = Path(__file__).resolve()
 _SRC_DIR = _THIS_FILE.parent  # This file is in src/
 _DATA_FILE = _SRC_DIR / "Data_Bordbar_et_al_exp.xlsx"
 
+INITIALIZATION_POLICIES = {
+    "legacy_experimental_alias",
+    "compartment_strict_generic",
+    "compartment_strict_historical",
+}
+
 from equadiff_brodbar import NUM_BASE_METABOLITES, H2O2_INDEX, PHI_INDEX
 
 
-def parse_initial_conditions(model, file_path):
+def _named_values_from_frame(frame, *, name_column=0, value_column=1):
+    values = {}
+    for name, value in zip(frame.iloc[:, name_column], frame.iloc[:, value_column]):
+        if pd.isna(name) or pd.isna(value):
+            continue
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            continue
+        values[str(name).strip().upper()] = numeric
+    return values
+
+
+def _resolve_historical_path(file_path):
+    path = Path(file_path)
+    if path.exists():
+        return path
+    candidate = _SRC_DIR / path.name
+    return candidate if candidate.exists() else path
+
+
+def build_initial_conditions(
+    model_metabolites,
+    file_path,
+    *,
+    initialization_policy="legacy_experimental_alias",
+):
+    """Build model-ordered initial values and record each value's provenance."""
+    if initialization_policy not in INITIALIZATION_POLICIES:
+        raise ValueError(
+            f"Unknown initialization policy {initialization_policy!r}; expected one of "
+            f"{sorted(INITIALIZATION_POLICIES)}"
+        )
+
+    experimental = pd.read_excel(_DATA_FILE, engine="openpyxl")
+    experimental_values = _named_values_from_frame(experimental)
+    historical_values = {}
+    if initialization_policy == "compartment_strict_historical":
+        historical_path = _resolve_historical_path(file_path)
+        historical = pd.read_excel(historical_path, sheet_name=0, header=None)
+        historical_values = _named_values_from_frame(historical)
+
+    x0 = np.ones(len(model_metabolites), dtype=float)
+    provenance = {}
+    for index, model_metabolite in enumerate(model_metabolites):
+        name = str(model_metabolite).strip().upper()
+        value = 1.0
+        source = "generic_1mM"
+        if name in historical_values:
+            value = historical_values[name]
+            source = "historical_exact"
+        if name in experimental_values:
+            value = experimental_values[name]
+            source = "brodbar_exact"
+        elif initialization_policy == "legacy_experimental_alias":
+            if name.startswith("E") and name[1:] in experimental_values:
+                value = experimental_values[name[1:]]
+                source = f"legacy_compartment_alias:{name[1:]}"
+            elif not name.startswith("E") and f"E{name}" in experimental_values:
+                value = experimental_values[f"E{name}"]
+                source = f"legacy_compartment_alias:E{name}"
+        x0[index] = max(float(value), 1e-6)
+        provenance[name] = source
+    return x0, provenance
+
+
+def parse_initial_conditions(
+    model,
+    file_path,
+    initialization_policy="legacy_experimental_alias",
+):
     """
     Python equivalent of parse_initcond_ja.m MATLAB function.
     Parses initial conditions from experimental data using correct model metabolite order.
@@ -40,13 +116,7 @@ def parse_initial_conditions(model, file_path):
     # Load experimental data - use first experimental time point as initial conditions
     try:
         df = pd.read_excel(_DATA_FILE, engine='openpyxl')
-        exp_metabolites = df.iloc[:, 0].tolist()  # First column (metabolite names)
-        exp_values = df.iloc[:, 1].tolist()      # Second column (first time point values)
-        
-        exp_data = {}
-        for name, value in zip(exp_metabolites, exp_values):
-            if pd.notna(name) and pd.notna(value):
-                exp_data[str(name).strip().upper()] = float(value)  # Store in uppercase for matching
+        exp_data = _named_values_from_frame(df)
         
         print(f"Loaded {len(exp_data)} experimental initial values from first time point")
         
@@ -68,39 +138,21 @@ def parse_initial_conditions(model, file_path):
         print("No model provided, using default metabolite order")
         model_metabolites = [f"x{i}" for i in range(NUM_BASE_METABOLITES)]
     
-    # Create initial conditions vector matching model order
-    x0 = np.ones(len(model_metabolites))  # Default to 1.0
+    # Create initial conditions vector matching model order.
+    x0, provenance = build_initial_conditions(
+        model_metabolites,
+        file_path,
+        initialization_policy=initialization_policy,
+    )
     x0_names = model_metabolites.copy()
-    
-    # Map experimental values to correct model positions
-    mapped_count = 0
-    for i, model_met in enumerate(model_metabolites):
-        model_met_upper = model_met.upper()
-        
-        # Try exact match first
-        if model_met_upper in exp_data:
-            x0[i] = max(exp_data[model_met_upper], 1e-6)
-            mapped_count += 1
-        else:
-            # Try with/without E prefix for extracellular metabolites
-            if model_met_upper.startswith('E'):
-                # Try without E prefix
-                base_name = model_met_upper[1:]
-                if base_name in exp_data:
-                    x0[i] = max(exp_data[base_name], 1e-6)
-                    mapped_count += 1
-            else:
-                # Try with E prefix
-                e_name = 'E' + model_met_upper
-                if e_name in exp_data:
-                    x0[i] = max(exp_data[e_name], 1e-6)
-                    mapped_count += 1
-                # Also try the base name directly
-                elif model_met_upper in exp_data:
-                    x0[i] = max(exp_data[model_met_upper], 1e-6)
-                    mapped_count += 1
-    
-    print(f"Successfully mapped {mapped_count} experimental values to model positions")
+    mapped_count = sum(source != "generic_1mM" for source in provenance.values())
+    alias_count = sum(
+        source.startswith("legacy_compartment_alias") for source in provenance.values()
+    )
+    print(
+        f"Initialized {mapped_count} model positions with policy "
+        f"{initialization_policy} ({alias_count} compartment aliases)"
+    )
     
     # Ensure we have enough metabolites for Brodbar model (base + pHi)
     expected_size = NUM_BASE_METABOLITES + 1

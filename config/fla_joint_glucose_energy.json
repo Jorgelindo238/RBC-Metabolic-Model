@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "purpose": "user_authorized_conditional_joint_glucose_energy_adenylate_calibration",
+  "initial_context": "output/exploratory_energy_sensitivity_J1_J4_2026_10_06",
+  "candidate": "config/fla_glucose_real_candidate.json",
+  "source_archive": "output/glut_only_free_network_2026_10_27",
+  "source_workbook": "src/Data_Bordbar_et_al_exp.xlsx",
+  "source_sheet": "Sheet1",
+  "fit_pools": ["EGLC", "GLC", "LAC", "ELAC", "ATP", "ADP", "AMP"],
+  "fit_end_days": [4.0, 10.0],
+  "prediction_end_day": 46.0,
+  "fit_initial_conditions": false,
+  "teacher_forcing": false,
+  "teacher_likelihood_terms": false,
+  "hematocrit": 0.58,
+  "pH_policy": "clamped_diagnostic_unchanged",
+  "reaction_availability_threshold_mM": 0.001,
+  "factor_bounds": {
+    "GLUT_conductance": [0.1, 4.0],
+    "investment": [0.02, 1.0],
+    "AK_capacity": [0.001, 2.0],
+    "GAPDH_PGK_capacity": [0.25, 16.0],
+    "PK_capacity": [0.25, 32.0],
+    "PEP_PASE_capacity": [0.001, 1.0]
+  },
+  "bounds_status": "exploratory_search_limits_not_physiological_priors_or_identifiability_claims",
+  "start_factors": {
+    "learned_GLUT": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+    "seed_GLUT": [3.2253350270993066, 1.0, 1.0, 1.0, 1.0, 1.0],
+    "coordinated_energy": [1.0, 0.5, 0.1, 4.0, 8.0, 0.1]
+  },
+  "likelihood": "mean_preserving_lognormal_profile_one_shared_total_log_variance_all7_pools",
+  "covariance": "conditional_independence_assumption_not_measured_assay_covariance",
+  "known_assay_uncertainty": false,
+  "optimizer": {
+    "method": "L-BFGS-B",
+    "maxfun": 250,
+    "maxiter": 80,
+    "ftol": 1e-8,
+    "gtol": 1e-4,
+    "finite_difference_relative_step": 0.002,
+    "secondary_maxfun": 600
+  },
+  "numerical_profiles": {
+    "strict": {"rtol": 1e-7, "atol": 1e-9},
+    "ultrastrict": {"rtol": 1e-8, "atol": 1e-10}
+  },
+  "accuracy_limits": "not_invented_no_automatic_biological_promotion",
+  "production_defaults_changed": false,
+  "new_MCT_or_pH_fitted": false,
+  "redox_initial_states_changed": false
+}

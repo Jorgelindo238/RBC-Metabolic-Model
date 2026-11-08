@@ -1,0 +1,748 @@
+{
+  "contract_type": "fixed_reversible_ppp_directionality_diagnostic",
+  "contract_version": 1,
+  "generated_at": "2026-08-10T15:03:18.354483+00:00",
+  "diagnostic_only": true,
+  "optimization_performed": false,
+  "kinetic_constants_changed": [],
+  "parameters_promoted": false,
+  "parameter_artifacts_generated": false,
+  "default_model_family_preserved": true,
+  "seed_params_path": "C:\\Users\\Jorgelindo\\Desktop\\airbc\\Simulations\\brodbar\\hermes\\vpep_vpk_coupled_mild_feedback_46d_n20\\seed_fixed_params.json",
+  "t_max": 5.0,
+  "timepoints": 81,
+  "teacher_dense_points": 32,
+  "solver": {
+    "method": "LSODA",
+    "rtol": 0.0003,
+    "atol": 1e-06
+  },
+  "closure_tolerance": 1e-12,
+  "reversible_family": "reversible_saturation_difference",
+  "case_toggles": {
+    "seed_irreversible": {},
+    "reversible_VTKL2": {
+      "kinetic_family_VTKL2": "reversible_saturation_difference",
+      "hybrid_blend_VTKL2": 1.0,
+      "hybrid_reverse_scale_VTKL2": 1.0
+    },
+    "reversible_VTAL": {
+      "kinetic_family_VTAL": "reversible_saturation_difference",
+      "hybrid_blend_VTAL": 1.0,
+      "hybrid_reverse_scale_VTAL": 1.0
+    },
+    "reversible_both": {
+      "kinetic_family_VTKL2": "reversible_saturation_difference",
+      "hybrid_blend_VTKL2": 1.0,
+      "hybrid_reverse_scale_VTKL2": 1.0,
+      "kinetic_family_VTAL": "reversible_saturation_difference",
+      "hybrid_blend_VTAL": 1.0,
+      "hybrid_reverse_scale_VTAL": 1.0
+    }
+  },
+  "cases": [
+    {
+      "label": "seed_irreversible",
+      "fixed_toggles": {},
+      "changed_configuration_keys": [],
+      "concentration_metrics": {
+        "EGLC": {
+          "rmse": 1.7295549166097215,
+          "nrmse": 0.06838888559152714,
+          "endpoint_error": 0.09690808319883264,
+          "final_value": 22.794039980061463,
+          "experimental_final": 25.24
+        },
+        "ELAC": {
+          "rmse": 1.413486719628896,
+          "nrmse": 0.26643870149994686,
+          "endpoint_error": 0.28573326864818926,
+          "final_value": 4.996965410866558,
+          "experimental_final": 6.995937499999999
+        },
+        "GLC": {
+          "rmse": 0.09246586953861127,
+          "nrmse": 0.07708354984770004,
+          "endpoint_error": 0.10249593421576364,
+          "final_value": 1.1450547227237013,
+          "experimental_final": 1.2758212094818266
+        },
+        "G6P": {
+          "rmse": 1.432338228001207,
+          "nrmse": 16.623633980266995,
+          "endpoint_error": 21.889105133107893,
+          "final_value": 2.118172803929859,
+          "experimental_final": 0.0925406559851059
+        },
+        "F6P": {
+          "rmse": 0.5180467693120538,
+          "nrmse": 6.585329272123314,
+          "endpoint_error": 8.30129622729796,
+          "final_value": 0.8208835103453124,
+          "experimental_final": 0.08825474324063971
+        },
+        "F16BP": {
+          "rmse": 0.02658341084976736,
+          "nrmse": 0.3792845893701577,
+          "endpoint_error": 0.679118132546825,
+          "final_value": 0.01776337774580125,
+          "experimental_final": 0.05535799790367833
+        },
+        "LAC": {
+          "rmse": 0.3802020786568949,
+          "nrmse": 0.290273074361751,
+          "endpoint_error": 0.3227643634871523,
+          "final_value": 1.1281938020230498,
+          "experimental_final": 1.6658807381020728
+        },
+        "PEP": {
+          "rmse": 0.022139460936153977,
+          "nrmse": 0.11715548749374412,
+          "endpoint_error": 0.19800757228156793,
+          "final_value": 0.1268149657639747,
+          "experimental_final": 0.15812489168351299
+        },
+        "ATP": {
+          "rmse": 0.7626027012968096,
+          "nrmse": 0.7577693076563886,
+          "endpoint_error": 0.9988131513816125,
+          "final_value": 0.0012815171236936944,
+          "experimental_final": 1.0797646
+        }
+      },
+      "teacher_flux_metrics": {
+        "VEGLC": {
+          "rmse": 0.49770625985471373,
+          "nrmse": 1.7579163137970584,
+          "target_mean_abs": 0.2831228403470924
+        },
+        "VELAC": {
+          "rmse": 0.3107144868560986,
+          "nrmse": 0.557481861242989,
+          "target_mean_abs": 0.5573535364241524
+        },
+        "VLDH": {
+          "rmse": 0.41369902716783347,
+          "nrmse": 0.5205495402297076,
+          "target_mean_abs": 0.7947351696541252
+        }
+      },
+      "pointwise_closure": {
+        "G6P": 8.881784197001252e-16,
+        "F6P": 3.552713678800501e-15
+      },
+      "max_pointwise_closure_error": 3.552713678800501e-15,
+      "directionality_summary": {
+        "VTKL2": {
+          "mean_flux": 0.2698275209292573,
+          "min_flux": 0.00900136751432136,
+          "max_flux": 11.095700416088764,
+          "fraction_time_negative": 0.0,
+          "integrated_forward_flux": 1.0793100837170293,
+          "integrated_reverse_flux": 0.0
+        },
+        "VTAL": {
+          "mean_flux": 0.4882803006830904,
+          "min_flux": 0.010744941126961501,
+          "max_flux": 13.123811653466799,
+          "fraction_time_negative": 0.0,
+          "integrated_forward_flux": 1.9531212027323617,
+          "integrated_reverse_flux": 0.0
+        }
+      },
+      "nonnegative_damping_summary": {
+        "G6P": {
+          "max_abs_adjustment": 0.0,
+          "fraction_time_active": 0.0
+        },
+        "F6P": {
+          "max_abs_adjustment": 0.0,
+          "fraction_time_active": 0.0
+        }
+      },
+      "window_diagnostics": [
+        {
+          "candidate": "seed_irreversible",
+          "window": "early_1_2d",
+          "start_day": 1.0,
+          "end_day": 2.0,
+          "n_timepoints": 43,
+          "G6P_mean_gross_inflow": 1.9550702401646576,
+          "G6P_mean_gross_outflow": 0.09139999953600783,
+          "G6P_gross_output_input_ratio": 0.04675023825656006,
+          "G6P_mean_net_flux": 1.8636702406286498,
+          "G6P_concentration_change": 1.9139432472725364,
+          "G6P_max_abs_closure_error": 8.881784197001252e-16,
+          "F6P_mean_gross_inflow": 2.914450214057494,
+          "F6P_mean_gross_outflow": 2.0640623532163875,
+          "F6P_gross_output_input_ratio": 0.7082167138284385,
+          "F6P_mean_net_flux": 0.8503878608411063,
+          "F6P_concentration_change": 0.9546974437449814,
+          "F6P_max_abs_closure_error": 3.552713678800501e-15,
+          "mean_VHK": 1.9550702401646576,
+          "mean_VPGI": 0.054140506902747534,
+          "mean_VG6PDH": 0.0372594926332603,
+          "mean_VPFK": 2.0640623532163875,
+          "mean_VTKL2": 0.9930970633409898,
+          "mean_VTAL": 1.8672126438137566,
+          "mean_PPP_positive_F6P_return": 2.8603097071547463,
+          "mean_PPP_reverse_F6P_drain": 0.0,
+          "mean_PPP_net_F6P_return": 2.8603097071547463,
+          "PPP_positive_share_of_F6P_inflow": 0.981423423655821
+        }
+      ],
+      "guard_reasons": []
+    },
+    {
+      "label": "reversible_VTKL2",
+      "fixed_toggles": {
+        "kinetic_family_VTKL2": "reversible_saturation_difference",
+        "hybrid_blend_VTKL2": 1.0,
+        "hybrid_reverse_scale_VTKL2": 1.0
+      },
+      "changed_configuration_keys": [
+        "hybrid_blend_VTKL2",
+        "hybrid_reverse_scale_VTKL2",
+        "kinetic_family_VTKL2"
+      ],
+      "concentration_metrics": {
+        "EGLC": {
+          "rmse": 1.732483672282726,
+          "nrmse": 0.06850469245878711,
+          "endpoint_error": 0.09707218327781995,
+          "final_value": 22.789898094067823,
+          "experimental_final": 25.24
+        },
+        "ELAC": {
+          "rmse": 1.415851863321164,
+          "nrmse": 0.26688452515394917,
+          "endpoint_error": 0.28621137730575896,
+          "final_value": 4.993620592579991,
+          "experimental_final": 6.995937499999999
+        },
+        "GLC": {
+          "rmse": 0.1770343696449596,
+          "nrmse": 0.1475835108173077,
+          "endpoint_error": 0.19623784641404332,
+          "final_value": 1.025456802923753,
+          "experimental_final": 1.2758212094818266
+        },
+        "G6P": {
+          "rmse": 1.5140054856887675,
+          "nrmse": 17.5714594124379,
+          "endpoint_error": 23.137150569938974,
+          "final_value": 2.2336677473534254,
+          "experimental_final": 0.0925406559851059
+        },
+        "F6P": {
+          "rmse": 0.2942813782846583,
+          "nrmse": 3.7408587205982653,
+          "endpoint_error": 4.715630016499431,
+          "final_value": 0.5044314595646506,
+          "experimental_final": 0.08825474324063971
+        },
+        "F16BP": {
+          "rmse": 0.022129892444473397,
+          "nrmse": 0.31574304802505443,
+          "endpoint_error": 0.5653454823869748,
+          "final_value": 0.024061603874846172,
+          "experimental_final": 0.05535799790367833
+        },
+        "LAC": {
+          "rmse": 0.38447483819476036,
+          "nrmse": 0.2935352002592371,
+          "endpoint_error": 0.32639163064319887,
+          "final_value": 1.1221512075358415,
+          "experimental_final": 1.6658807381020728
+        },
+        "PEP": {
+          "rmse": 0.029209759048755318,
+          "nrmse": 0.1545694166086688,
+          "endpoint_error": 0.2612418384012535,
+          "final_value": 0.11681605428311298,
+          "experimental_final": 0.15812489168351299
+        },
+        "ATP": {
+          "rmse": 0.7621521610451784,
+          "nrmse": 0.7573216229393408,
+          "endpoint_error": 0.9982230596762057,
+          "final_value": 0.0019186772579455982,
+          "experimental_final": 1.0797646
+        }
+      },
+      "teacher_flux_metrics": {
+        "VEGLC": {
+          "rmse": 0.5049622552689954,
+          "nrmse": 1.7835447491623797,
+          "target_mean_abs": 0.2831228403470924
+        },
+        "VELAC": {
+          "rmse": 0.31076502333124884,
+          "nrmse": 0.5575725334498517,
+          "target_mean_abs": 0.5573535364241524
+        },
+        "VLDH": {
+          "rmse": 0.41412931013077314,
+          "nrmse": 0.5210909570178018,
+          "target_mean_abs": 0.7947351696541252
+        }
+      },
+      "pointwise_closure": {
+        "G6P": 8.881784197001252e-16,
+        "F6P": 3.552713678800501e-15
+      },
+      "max_pointwise_closure_error": 3.552713678800501e-15,
+      "directionality_summary": {
+        "VTKL2": {
+          "mean_flux": -0.588925335163772,
+          "min_flux": -4.493169805804165,
+          "max_flux": 6.889711202858554,
+          "fraction_time_negative": 0.6790123456790124,
+          "integrated_forward_flux": 0.13385950552622122,
+          "integrated_reverse_flux": 2.489560846181309
+        },
+        "VTAL": {
+          "mean_flux": 1.3340592651939174,
+          "min_flux": 0.3548362545781631,
+          "max_flux": 13.099938430996552,
+          "fraction_time_negative": 0.0,
+          "integrated_forward_flux": 5.3362370607756695,
+          "integrated_reverse_flux": 0.0
+        }
+      },
+      "nonnegative_damping_summary": {
+        "G6P": {
+          "max_abs_adjustment": 0.0,
+          "fraction_time_active": 0.0
+        },
+        "F6P": {
+          "max_abs_adjustment": 0.0,
+          "fraction_time_active": 0.0
+        }
+      },
+      "window_diagnostics": [
+        {
+          "candidate": "reversible_VTKL2",
+          "window": "early_1_2d",
+          "start_day": 1.0,
+          "end_day": 2.0,
+          "n_timepoints": 43,
+          "G6P_mean_gross_inflow": 1.9585330564352978,
+          "G6P_mean_gross_outflow": 0.09141651983312961,
+          "G6P_gross_output_input_ratio": 0.046676015772496436,
+          "G6P_mean_net_flux": 1.8671165366021685,
+          "G6P_concentration_change": 1.9171771798603086,
+          "G6P_max_abs_closure_error": 8.881784197001252e-16,
+          "F6P_mean_gross_inflow": 4.410182252941187,
+          "F6P_mean_gross_outflow": 3.7047289940731702,
+          "F6P_gross_output_input_ratio": 0.8400398853363613,
+          "F6P_mean_net_flux": 0.7054532588680161,
+          "F6P_concentration_change": 0.6798299082785126,
+          "F6P_max_abs_closure_error": 3.552713678800501e-15,
+          "mean_VHK": 1.9585330564352978,
+          "mean_VPGI": 0.05414908233932299,
+          "mean_VG6PDH": 0.03726743749380662,
+          "mean_VPFK": 2.097853171895846,
+          "mean_VTKL2": -1.4730163166511023,
+          "mean_VTAL": 4.222173665075641,
+          "mean_PPP_positive_F6P_return": 4.356033170601863,
+          "mean_PPP_reverse_F6P_drain": 1.6068758221773236,
+          "mean_PPP_net_F6P_return": 2.7491573484245397,
+          "PPP_positive_share_of_F6P_inflow": 0.9877218039451292
+        }
+      ],
+      "guard_reasons": [
+        "G6P nRMSE guard",
+        "GLC endpoint guard",
+        "GLC nRMSE guard",
+        "PEP endpoint guard",
+        "PEP nRMSE guard"
+      ]
+    },
+    {
+      "label": "reversible_VTAL",
+      "fixed_toggles": {
+        "kinetic_family_VTAL": "reversible_saturation_difference",
+        "hybrid_blend_VTAL": 1.0,
+        "hybrid_reverse_scale_VTAL": 1.0
+      },
+      "changed_configuration_keys": [
+        "hybrid_blend_VTAL",
+        "hybrid_reverse_scale_VTAL",
+        "kinetic_family_VTAL"
+      ],
+      "concentration_metrics": {
+        "EGLC": {
+          "rmse": 1.7301015733697027,
+          "nrmse": 0.06841050112177552,
+          "endpoint_error": 0.09693871273147639,
+          "final_value": 22.793266890657534,
+          "experimental_final": 25.24
+        },
+        "ELAC": {
+          "rmse": 1.413278580106532,
+          "nrmse": 0.2663994677220136,
+          "endpoint_error": 0.28569119369606266,
+          "final_value": 4.997259764601951,
+          "experimental_final": 6.995937499999999
+        },
+        "GLC": {
+          "rmse": 0.10457684234821331,
+          "nrmse": 0.08717978082385788,
+          "endpoint_error": 0.11592062246642165,
+          "final_value": 1.1279272207228304,
+          "experimental_final": 1.2758212094818266
+        },
+        "G6P": {
+          "rmse": 1.4439185981699656,
+          "nrmse": 16.758035081402223,
+          "endpoint_error": 22.06607725823088,
+          "final_value": 2.1345499204798184,
+          "experimental_final": 0.0925406559851059
+        },
+        "F6P": {
+          "rmse": 0.41087195425549544,
+          "nrmse": 5.222939834266946,
+          "endpoint_error": 6.583903241580013,
+          "final_value": 0.6693154333474993,
+          "experimental_final": 0.08825474324063971
+        },
+        "F16BP": {
+          "rmse": 0.026899702349384123,
+          "nrmse": 0.38379734705318713,
+          "endpoint_error": 0.6871983331566746,
+          "final_value": 0.017316074017379897,
+          "experimental_final": 0.05535799790367833
+        },
+        "LAC": {
+          "rmse": 0.379877307963625,
+          "nrmse": 0.2900251215153829,
+          "endpoint_error": 0.32248865640405894,
+          "final_value": 1.1286530971421334,
+          "experimental_final": 1.6658807381020728
+        },
+        "PEP": {
+          "rmse": 0.022130152623718494,
+          "nrmse": 0.11710623065392005,
+          "endpoint_error": 0.19792432200042043,
+          "final_value": 0.12682812970566376,
+          "experimental_final": 0.15812489168351299
+        },
+        "ATP": {
+          "rmse": 0.7625903326914732,
+          "nrmse": 0.7577570174435603,
+          "endpoint_error": 0.9987969516938155,
+          "final_value": 0.001299008973107955,
+          "experimental_final": 1.0797646
+        }
+      },
+      "teacher_flux_metrics": {
+        "VEGLC": {
+          "rmse": 0.49850023627004886,
+          "nrmse": 1.7607206668982132,
+          "target_mean_abs": 0.2831228403470924
+        },
+        "VELAC": {
+          "rmse": 0.3107090921079689,
+          "nrmse": 0.5574721820218536,
+          "target_mean_abs": 0.5573535364241524
+        },
+        "VLDH": {
+          "rmse": 0.4136877310174857,
+          "nrmse": 0.5205353265006829,
+          "target_mean_abs": 0.7947351696541252
+        }
+      },
+      "pointwise_closure": {
+        "G6P": 8.881784197001252e-16,
+        "F6P": 3.552713678800501e-15
+      },
+      "max_pointwise_closure_error": 3.552713678800501e-15,
+      "directionality_summary": {
+        "VTKL2": {
+          "mean_flux": 0.2678871204015728,
+          "min_flux": 0.008974967663286728,
+          "max_flux": 11.095700416088766,
+          "fraction_time_negative": 0.0,
+          "integrated_forward_flux": 1.0715484816062912,
+          "integrated_reverse_flux": 0.0
+        },
+        "VTAL": {
+          "mean_flux": 0.45128642286537607,
+          "min_flux": 0.013004806123144697,
+          "max_flux": 8.212548663920147,
+          "fraction_time_negative": 0.0,
+          "integrated_forward_flux": 1.8051456914615043,
+          "integrated_reverse_flux": 0.0
+        }
+      },
+      "nonnegative_damping_summary": {
+        "G6P": {
+          "max_abs_adjustment": 0.0,
+          "fraction_time_active": 0.0
+        },
+        "F6P": {
+          "max_abs_adjustment": 0.0,
+          "fraction_time_active": 0.0
+        }
+      },
+      "window_diagnostics": [
+        {
+          "candidate": "reversible_VTAL",
+          "window": "early_1_2d",
+          "start_day": 1.0,
+          "end_day": 2.0,
+          "n_timepoints": 43,
+          "G6P_mean_gross_inflow": 1.9564803196827092,
+          "G6P_mean_gross_outflow": 0.09140755409161794,
+          "G6P_gross_output_input_ratio": 0.04672040560389684,
+          "G6P_mean_net_flux": 1.8650727655910915,
+          "G6P_concentration_change": 1.9152608930297415,
+          "G6P_max_abs_closure_error": 8.881784197001252e-16,
+          "F6P_mean_gross_inflow": 2.57164435551335,
+          "F6P_mean_gross_outflow": 1.9581976048132939,
+          "F6P_gross_output_input_ratio": 0.7614573922770903,
+          "F6P_mean_net_flux": 0.6134467507000559,
+          "F6P_concentration_change": 0.6073499393425689,
+          "F6P_max_abs_closure_error": 3.552713678800501e-15,
+          "mean_VHK": 1.9564803196827092,
+          "mean_VPGI": 0.05414472097982253,
+          "mean_VG6PDH": 0.0372628331117954,
+          "mean_VPFK": 1.9581976048132939,
+          "mean_VTKL2": 0.9850647672646531,
+          "mean_VTAL": 1.5324348672688741,
+          "mean_PPP_positive_F6P_return": 2.517499634533527,
+          "mean_PPP_reverse_F6P_drain": 0.0,
+          "mean_PPP_net_F6P_return": 2.517499634533527,
+          "PPP_positive_share_of_F6P_inflow": 0.9789454864302126
+        }
+      ],
+      "guard_reasons": []
+    },
+    {
+      "label": "reversible_both",
+      "fixed_toggles": {
+        "kinetic_family_VTKL2": "reversible_saturation_difference",
+        "hybrid_blend_VTKL2": 1.0,
+        "hybrid_reverse_scale_VTKL2": 1.0,
+        "kinetic_family_VTAL": "reversible_saturation_difference",
+        "hybrid_blend_VTAL": 1.0,
+        "hybrid_reverse_scale_VTAL": 1.0
+      },
+      "changed_configuration_keys": [
+        "hybrid_blend_VTAL",
+        "hybrid_blend_VTKL2",
+        "hybrid_reverse_scale_VTAL",
+        "hybrid_reverse_scale_VTKL2",
+        "kinetic_family_VTAL",
+        "kinetic_family_VTKL2"
+      ],
+      "concentration_metrics": {
+        "EGLC": {
+          "rmse": 1.7336951189631344,
+          "nrmse": 0.068552594660464,
+          "endpoint_error": 0.09714006142066962,
+          "final_value": 22.788184849742297,
+          "experimental_final": 25.24
+        },
+        "ELAC": {
+          "rmse": 1.4147741694599847,
+          "nrmse": 0.26668138256406865,
+          "endpoint_error": 0.2859935238337166,
+          "final_value": 4.9951446818545575,
+          "experimental_final": 6.995937499999999
+        },
+        "GLC": {
+          "rmse": 0.20434106434919194,
+          "nrmse": 0.1703475530840672,
+          "endpoint_error": 0.2265065844686422,
+          "final_value": 0.986839304929446,
+          "experimental_final": 1.2758212094818266
+        },
+        "G6P": {
+          "rmse": 1.5401045701533325,
+          "nrmse": 17.874363865364806,
+          "endpoint_error": 23.53599882557755,
+          "final_value": 2.2705774265687344,
+          "experimental_final": 0.0925406559851059
+        },
+        "F6P": {
+          "rmse": 0.32075464843119306,
+          "nrmse": 4.077382778177689,
+          "endpoint_error": 5.139843563634384,
+          "final_value": 0.5418703172462469,
+          "experimental_final": 0.08825474324063971
+        },
+        "F16BP": {
+          "rmse": 0.022302252048722108,
+          "nrmse": 0.31820222612266286,
+          "endpoint_error": 0.5697486996123865,
+          "final_value": 0.02381785058491238,
+          "experimental_final": 0.05535799790367833
+        },
+        "LAC": {
+          "rmse": 0.3830007639321223,
+          "nrmse": 0.2924097880322313,
+          "endpoint_error": 0.3251402470558342,
+          "final_value": 1.1242358633500094,
+          "experimental_final": 1.6658807381020728
+        },
+        "PEP": {
+          "rmse": 0.029276429473224223,
+          "nrmse": 0.15492221680116644,
+          "endpoint_error": 0.26183811529029516,
+          "final_value": 0.11672176806461988,
+          "experimental_final": 0.15812489168351299
+        },
+        "ATP": {
+          "rmse": 0.7621496911105436,
+          "nrmse": 0.7573191686592092,
+          "endpoint_error": 0.9982198246978979,
+          "final_value": 0.0019221702730041713,
+          "experimental_final": 1.0797646
+        }
+      },
+      "teacher_flux_metrics": {
+        "VEGLC": {
+          "rmse": 0.5065583147066934,
+          "nrmse": 1.7891820881907017,
+          "target_mean_abs": 0.2831228403470924
+        },
+        "VELAC": {
+          "rmse": 0.31072949182800136,
+          "nrmse": 0.557508783063561,
+          "target_mean_abs": 0.5573535364241524
+        },
+        "VLDH": {
+          "rmse": 0.41401332050152195,
+          "nrmse": 0.5209450094950545,
+          "target_mean_abs": 0.7947351696541252
+        }
+      },
+      "pointwise_closure": {
+        "G6P": 8.881784197001252e-16,
+        "F6P": 1.7763568394002505e-15
+      },
+      "max_pointwise_closure_error": 1.7763568394002505e-15,
+      "directionality_summary": {
+        "VTKL2": {
+          "mean_flux": -0.5968218667594247,
+          "min_flux": -3.6094685630445085,
+          "max_flux": 6.889711202858469,
+          "fraction_time_negative": 0.6666666666666666,
+          "integrated_forward_flux": 0.2517303586623189,
+          "integrated_reverse_flux": 2.6390178257000176
+        },
+        "VTAL": {
+          "mean_flux": 1.262640790602248,
+          "min_flux": 0.35919237785204117,
+          "max_flux": 8.21254866392004,
+          "fraction_time_negative": 0.0,
+          "integrated_forward_flux": 5.050563162408992,
+          "integrated_reverse_flux": 0.0
+        }
+      },
+      "nonnegative_damping_summary": {
+        "G6P": {
+          "max_abs_adjustment": 0.0,
+          "fraction_time_active": 0.0
+        },
+        "F6P": {
+          "max_abs_adjustment": 0.0,
+          "fraction_time_active": 0.0
+        }
+      },
+      "window_diagnostics": [
+        {
+          "candidate": "reversible_both",
+          "window": "early_1_2d",
+          "start_day": 1.0,
+          "end_day": 2.0,
+          "n_timepoints": 43,
+          "G6P_mean_gross_inflow": 1.9602503890496819,
+          "G6P_mean_gross_outflow": 0.09142579915064908,
+          "G6P_gross_output_input_ratio": 0.04663985767398408,
+          "G6P_mean_net_flux": 1.868824589899033,
+          "G6P_concentration_change": 1.9186653640239073,
+          "G6P_max_abs_closure_error": 8.881784197001252e-16,
+          "F6P_mean_gross_inflow": 3.725860390782924,
+          "F6P_mean_gross_outflow": 3.366465039884565,
+          "F6P_gross_output_input_ratio": 0.90354030661282,
+          "F6P_mean_net_flux": 0.35939535089836044,
+          "F6P_concentration_change": 0.37091485836930393,
+          "F6P_max_abs_closure_error": 1.7763568394002505e-15,
+          "mean_VHK": 1.9602503890496819,
+          "mean_VPGI": 0.05415469348894918,
+          "mean_VG6PDH": 0.037271105661699916,
+          "mean_VPFK": 1.7139695776980162,
+          "mean_VTKL2": -1.4007651035242288,
+          "mean_VTAL": 3.4199753386316565,
+          "mean_PPP_positive_F6P_return": 3.6717056972939752,
+          "mean_PPP_reverse_F6P_drain": 1.6524954621865477,
+          "mean_PPP_net_F6P_return": 2.019210235107427,
+          "PPP_positive_share_of_F6P_inflow": 0.9854651844650655
+        }
+      ],
+      "guard_reasons": [
+        "G6P nRMSE guard",
+        "GLC endpoint guard",
+        "GLC nRMSE guard",
+        "PEP endpoint guard",
+        "PEP nRMSE guard"
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "candidate": "reversible_VTKL2",
+      "f6p_relative_nrmse_improvement": 0.43194052020543894,
+      "guard_reasons": [
+        "G6P nRMSE guard",
+        "GLC endpoint guard",
+        "GLC nRMSE guard",
+        "PEP endpoint guard",
+        "PEP nRMSE guard"
+      ],
+      "passes_all_guards": false,
+      "fixed_hypothesis_feasible": false
+    },
+    {
+      "candidate": "reversible_VTAL",
+      "f6p_relative_nrmse_improvement": 0.20688250830882005,
+      "guard_reasons": [],
+      "passes_all_guards": true,
+      "fixed_hypothesis_feasible": true
+    },
+    {
+      "candidate": "reversible_both",
+      "f6p_relative_nrmse_improvement": 0.3808384349985564,
+      "guard_reasons": [
+        "G6P nRMSE guard",
+        "GLC endpoint guard",
+        "GLC nRMSE guard",
+        "PEP endpoint guard",
+        "PEP nRMSE guard"
+      ],
+      "passes_all_guards": false,
+      "fixed_hypothesis_feasible": false
+    }
+  ],
+  "decision": "advance reversible_VTAL to a bounded fixed-blend sensitivity screen before optimization",
+  "decision_rationale": "reversible_VTAL improves F6P by 20.7% while passing every transfer and closure guard. The formulation remains diagnostic and is not promoted.",
+  "selected_fixed_case": "reversible_VTAL",
+  "limitations": [
+    "The reversible saturation-difference law is not Haldane-consistent.",
+    "Reverse scales and blends are fixed diagnostic values, not calibrated constants.",
+    "Experimental concentrations constrain net balances but do not identify unique VTKL2/VTAL fluxes."
+  ],
+  "artifact_paths": {
+    "summary": "tmp_ode_diag\\reversible_ppp_smoke_final\\summary.json",
+    "decision_report": "tmp_ode_diag\\reversible_ppp_smoke_final\\decision_report.md",
+    "teacher_dataset": "tmp_ode_diag\\reversible_ppp_smoke_final\\teacher_flux_dataset.json",
+    "timeseries_csv": "tmp_ode_diag\\reversible_ppp_smoke_final\\reversible_ppp_timeseries.csv",
+    "window_summary_csv": "tmp_ode_diag\\reversible_ppp_smoke_final\\reversible_ppp_window_summary.csv",
+    "metrics_csv": "tmp_ode_diag\\reversible_ppp_smoke_final\\reversible_ppp_metrics.csv",
+    "case_decisions_csv": "tmp_ode_diag\\reversible_ppp_smoke_final\\reversible_ppp_case_decisions.csv",
+    "plot": "tmp_ode_diag\\reversible_ppp_smoke_final\\reversible_ppp_directionality.png"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "purpose": "synthetic_software_benchmark_not_biological_calibration",
+  "horizon_day": [1.0, 46.0],
+  "training_end_day": 22.0,
+  "parameters": ["vmax_VEGLC", "vmax_VELAC"],
+  "truth_multipliers": [0.85, 1.15],
+  "search_multiplier_bounds": [0.25, 2.0],
+  "start_multipliers": [[0.6, 1.4], [1.4, 0.6], [1.0, 1.0]],
+  "dense_observation_count": 601,
+  "dense_early_observation_count": 101,
+  "teacher_point_count": 401,
+  "noise_coefficient_of_variation": 0.005,
+  "noise_model": "independent_mean_preserving_lognormal_known_IC",
+  "noise_seeds": [2718, 31415, 1618],
+  "quadrature_orders": [8, 16],
+  "evaluation_point_count": 401,
+  "synthetic_recovery_checks": {
+    "oracle_max_relative_parameter_error": 0.00001,
+    "dense_clean_max_relative_parameter_error": 0.05,
+    "dense_clean_max_transport_holdout_excursion_nrmse": 0.05
+  },
+  "biological_calibration_allowed": false,
+  "global_model_promotion_allowed": false,
+  "change_scientific_readiness_contract": false,
+  "interpretation": "Known synthetic truth and numerical checks only. Noise and recovery limits are experimental-design choices, not measured uncertainty or biological accuracy limits. Full kinetic identifiability and ML warm-start are not tested."
+}

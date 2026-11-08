@@ -16,6 +16,11 @@ _SRC_DIR = _THIS_FILE.parent  # This file is in src/
 _DATA_FILE = _SRC_DIR / "Data_Bordbar_et_al_exp.xlsx"
 _IC_FILE = _SRC_DIR / "Initial_conditions_JA_Final.xls"
 
+# Increment when the executable reaction network or stoichiometric contract changes.
+MODEL_NETWORK_VERSION = "airbc-rbc-2026.09.04"
+MODEL_TIME_UNIT = "day"
+TRANSPORT_VOLUME_SCALING_MODE = "legacy_equal_concentration"
+
 # Global flux tracking
 _FLUX_TRACKER = None
 _TRACK_FLUXES = False
@@ -592,17 +597,24 @@ def _compute_veglc_flux(
         )
         return _blend_flux(base_flux, alt_flux, blend)
 
-    if family == "transport_depletion_gate":
+    if family in {"transport_depletion_gate", "transport_depletion_gate_import_feedback"}:
         import_hill = _get_param(custom_params, "hybrid_import_hill_VEGLC", 1.0)
         export_hill = _get_param(custom_params, "hybrid_export_hill_VEGLC", 1.0)
         reverse_scale = _get_param(custom_params, "hybrid_reverse_scale_VEGLC", 1.0)
         gate_km = _get_param(custom_params, "transport_gate_km_VEGLC", km_eglc)
         gate_hill = _get_param(custom_params, "transport_gate_hill_VEGLC", 1.0)
         depletion_gate = mm(x[85], gate_km, hill_coef=gate_hill)
-        alt_flux = vmax_veglc * (
-            depletion_gate * mm(x[85], km_eglc, hill_coef=import_hill)
-            - reverse_scale * mm(x[0], km_glc_transport, hill_coef=export_hill)
-        )
+        import_term = vmax_veglc * depletion_gate * mm(x[85], km_eglc, hill_coef=import_hill)
+        if family == "transport_depletion_gate_import_feedback":
+            feedback_strength = _get_param(custom_params, "transport_gate_feedback_strength_VEGLC", 0.0)
+            feedback_km = max(_get_param(custom_params, "transport_gate_feedback_km_GLC_VEGLC", 1.0), 1e-9)
+            feedback_hill = _get_param(custom_params, "transport_gate_feedback_hill_VEGLC", 1.0)
+            import_cap = _get_param(custom_params, "transport_gate_import_cap_VEGLC", 1e9)
+            feedback_load = max(float(x[0]), 0.0) / feedback_km
+            feedback_factor = 1.0 / (1.0 + feedback_strength * feedback_load**feedback_hill)
+            import_term = min(import_term * feedback_factor, max(import_cap, 0.0))
+        export_term = vmax_veglc * reverse_scale * mm(x[0], km_glc_transport, hill_coef=export_hill)
+        alt_flux = import_term - export_term
         return _blend_flux(base_flux, alt_flux, blend if blend > 0.0 else 1.0)
 
     return base_flux
@@ -789,6 +801,94 @@ def _compute_venopgm_flux(
     return base_flux
 
 
+def _compute_vtkl2_flux(
+    x: NDArray[np.float64],
+    custom_params: Optional[Dict[str, float]],
+    vmax_vtkl2: float,
+    km_e4p: float,
+    km_x5p: float,
+    km_f6p: float,
+    km_ga3p: float,
+) -> float:
+    """Hybrid-capable transketolase-2 flux.
+
+    The default remains the historical one-way MM term. The reversible
+    diagnostic subtracts a product-saturation term for
+    F6P + GA3P -> E4P + X5P while preserving the same signed stoichiometric
+    flux in the ODE balances.
+    """
+    forward = mm(x[8], km_e4p) * mm(x[7], km_x5p)
+    base_flux = vmax_vtkl2 * forward
+    blend = _get_param(custom_params, "hybrid_blend_VTKL2", 0.0)
+    family = _get_param_str(custom_params, "kinetic_family_VTKL2", "mm_forward")
+    if family == "mm_forward" and blend > 0.0:
+        family = "reversible_saturation_difference"
+    if family == "mm_forward":
+        return base_flux
+
+    if family == "reversible_saturation_difference":
+        reverse_scale = max(_get_param(custom_params, "hybrid_reverse_scale_VTKL2", 1.0), 0.0)
+        reverse = mm(x[2], km_f6p) * mm(x[10], km_ga3p)
+        alternative_flux = vmax_vtkl2 * (forward - reverse_scale * reverse)
+        return _blend_flux(base_flux, alternative_flux, blend)
+
+    return base_flux
+
+
+def _compute_vtal_flux(
+    x: NDArray[np.float64],
+    custom_params: Optional[Dict[str, float]],
+    vmax_vtal: float,
+    km_ga3p: float,
+    km_s7p: float,
+    km_f6p: float,
+    km_e4p: float,
+) -> float:
+    """Hybrid-capable transaldolase flux.
+
+    The optional reversible term represents
+    F6P + E4P -> GA3P + S7P. It is intentionally a fixed diagnostic family,
+    not a thermodynamically fitted reversible rate law.
+    """
+    forward = mm(x[10], km_ga3p) * mm(x[9], km_s7p)
+    base_flux = vmax_vtal * forward
+    blend = _get_param(custom_params, "hybrid_blend_VTAL", 0.0)
+    family = _get_param_str(custom_params, "kinetic_family_VTAL", "mm_forward")
+    if family == "mm_forward" and blend > 0.0:
+        family = "reversible_saturation_difference"
+    if family == "mm_forward":
+        return base_flux
+
+    if family == "reversible_saturation_difference":
+        reverse_scale = max(_get_param(custom_params, "hybrid_reverse_scale_VTAL", 1.0), 0.0)
+        reverse = mm(x[2], km_f6p) * mm(x[8], km_e4p)
+        alternative_flux = vmax_vtal * (forward - reverse_scale * reverse)
+        return _blend_flux(base_flux, alternative_flux, blend)
+
+    return base_flux
+
+
+def _compute_vampd1_flux(
+    t: float,
+    amp: float,
+    custom_params: Optional[Dict[str, float]],
+    vmax_vampd1: float,
+    km_amp: float,
+) -> float:
+    """AMP deaminase with an optional storage-activity decay law."""
+    base_flux = vmax_vampd1 * mm(max(amp, 1e-6), km_amp)
+    family = _get_param_str(custom_params, 'kinetic_family_VAMPD1', 'mm')
+    if family == 'mm':
+        return base_flux
+    if family == 'storage_activity_decay':
+        decay = max(_get_param(custom_params, 'storage_decay_VAMPD1', 0.0), 0.0)
+        elapsed = max(float(t) - 1.0, 0.0)
+        return base_flux * math.exp(-decay * elapsed)
+    raise ValueError(
+        'kinetic_family_VAMPD1 must be mm or storage_activity_decay'
+    )
+
+
 def equadiff_brodbar(t: float, 
                      x: NDArray[np.float64], 
                      thermo_constraints: Optional[object] = None,
@@ -797,13 +897,16 @@ def equadiff_brodbar(t: float,
                      flux_tracker: Optional[object] = None,
                      ph_perturbation: Optional[object] = None,
                      bohr_effect: Optional[object] = None,
-                     bohr_tracker: Optional[dict] = None) -> NDArray[np.float64]:
+                     bohr_tracker: Optional[dict] = None,
+                     positivity_policy: str = "legacy",
+                     numerical_audit: Optional[dict] = None,
+                     reaction_availability_threshold: Optional[float] = None) -> NDArray[np.float64]:
     """Brodbar RBC metabolic model with 108 ODEs (106 base metabolites + pHi + pHe) and adjustable curve fitting.
     
     Parameters:
     -----------
     t : float
-        Current time point (hours)
+        Current time point (model days in the current Brodbar/FLA contract)
     x : NDArray[np.float64]
         State vector of metabolite concentrations (mM) - length 108 (106 base + pHi + pHe)
     thermo_constraints : Optional[object]
@@ -830,6 +933,17 @@ def equadiff_brodbar(t: float,
     bohr_tracker : dict, optional
         Dict for storing Bohr effect metrics (thread-safe).
         If None, falls back to global _BOHR_TRACKER for CLI compatibility.
+    positivity_policy : str, optional
+        "legacy" preserves pool-wise damping. "reaction_consistent" limits
+        complete signed reactions from unfloored substrate availability.
+        The diagnostic policy requires an unforced ODE and is not calibrated.
+    numerical_audit : dict, optional
+        Receives native/limited rates for this call in reaction-consistent mode.
+        This is not an accepted-step history; replay accepted states separately.
+    reaction_availability_threshold : float, optional
+        Numerical availability threshold in mM, separate from kinetic constants.
+        Defaults to NONEG_THRESHOLD for reaction_consistent. Legacy forbids an
+        explicit threshold, so a historical replay cannot silently ignore it.
         
     Returns:
     --------
@@ -865,6 +979,24 @@ def equadiff_brodbar(t: float,
         raise ValueError(f"State vector x must be 1-dimensional, got shape {x.shape}")
     if len(x) < NUM_BASE_METABOLITES:
         raise ValueError(f"State vector x must have at least {NUM_BASE_METABOLITES} metabolites, got {len(x)}")
+    if positivity_policy not in {"legacy", "reaction_consistent"}:
+        raise ValueError("positivity_policy must be legacy or reaction_consistent")
+    availability_threshold = NONEG_THRESHOLD
+    if reaction_availability_threshold is not None:
+        if positivity_policy != "reaction_consistent":
+            raise ValueError("reaction_availability_threshold requires reaction_consistent")
+        if (isinstance(reaction_availability_threshold, (bool, np.bool_))
+                or not isinstance(reaction_availability_threshold, (int, float, np.integer, np.floating))
+                or not np.isfinite(reaction_availability_threshold) or reaction_availability_threshold <= 0.0):
+            raise ValueError("reaction_availability_threshold must be finite and positive")
+        availability_threshold = float(reaction_availability_threshold)
+    if positivity_policy == "reaction_consistent":
+        if not np.all(np.isfinite(x)) or not np.isfinite(t):
+            raise ValueError("reaction-consistent replay requires finite states and time")
+        if not np.isfinite(curve_fit_strength) or curve_fit_strength != 0.0:
+            raise ValueError("reaction_consistent requires curve_fit_strength=0")
+    if numerical_audit is not None:
+        numerical_audit.clear()
     
     # Initialize thermodynamic constraints if not provided (disabled - missing module)
     # if thermo_constraints is None:
@@ -907,6 +1039,7 @@ def equadiff_brodbar(t: float,
             x = x_extended
     
     # Apply concentration bounds to prevent negative values
+    raw_concentrations = x[:NUM_BASE_METABOLITES].copy() if positivity_policy == "reaction_consistent" else None
     x = np.maximum(x, MIN_CONCENTRATION)  # Ensure all concentrations are positive
     
     # Initialize derivatives array AFTER extending x to correct size
@@ -983,6 +1116,7 @@ def equadiff_brodbar(t: float,
     vmax_VAPRT = _get_param(custom_params, 'vmax_VAPRT', 1.087935)     # Adenine phosphoribosyltransferase
     vmax_VADA = _get_param(custom_params, 'vmax_VADA', 0.3)            # Adenosine deaminase
     vmax_VAMPD1 = _get_param(custom_params, 'vmax_VAMPD1', 0.538065)   # AMP deaminase
+    vmax_VAMP_NT = _get_param(custom_params, 'vmax_VAMP_NT', 0.0)      # AMP 5'-nucleotidase (optional AMP => ADO branch)
     vmax_VHGPRT1 = _get_param(custom_params, 'vmax_VHGPRT1', 0.645581) # Hypoxanthine-guanine phosphoribosyltransferase 1
     vmax_VHGPRT2 = _get_param(custom_params, 'vmax_VHGPRT2', 0.25)     # Hypoxanthine-guanine phosphoribosyltransferase 2
     vmax_VGMPS = _get_param(custom_params, 'vmax_VGMPS', 0.379205)     # GMP synthase
@@ -1112,6 +1246,7 @@ def equadiff_brodbar(t: float,
     km_HYPX = _get_param(custom_params, 'km_HYPX', 0.355000)    # Hypoxanthine
     km_ADO = _get_param(custom_params, 'km_ADO', 0.1)           # Adenosine
     km_AMP = _get_param(custom_params, 'km_AMP', 0.282865)      # AMP
+    km_AMP_NT = _get_param(custom_params, 'km_AMP_NT', km_AMP)  # AMP 5'-nucleotidase
     km_IMP = _get_param(custom_params, 'km_IMP', 0.231000)      # Inosine monophosphate
     km_XMP = _get_param(custom_params, 'km_XMP', 0.05)          # Xanthosine monophosphate
     km_GMP = _get_param(custom_params, 'km_GMP', 0.085000)      # Guanosine monophosphate
@@ -1152,6 +1287,7 @@ def equadiff_brodbar(t: float,
     km_NADP = _get_param(custom_params, 'km_NADP', 0.05)        # NADP
     km_NADPH = _get_param(custom_params, 'km_NADPH', 0.02)      # NADPH
     km_GTP = _get_param(custom_params, 'km_GTP', 0.5)           # Guanosine triphosphate
+    km_GTP_VADSS = _get_param(custom_params, 'km_GTP_VADSS', km_GTP)  # VADSS-specific GTP affinity; legacy fallback
     km_GDP = _get_param(custom_params, 'km_GDP', 0.3)           # Guanosine diphosphate
     
     # EXTRACELLULAR TRANSPORT Km VALUES
@@ -1225,6 +1361,30 @@ def equadiff_brodbar(t: float,
     km_NADP_NADPH = _get_param(custom_params, 'km_NADP_NADPH', 1.0)  # NADP/NADPH ratio effect (G6PDH, 6PGD)
     km_ADP_ATP = _get_param(custom_params, 'km_ADP_ATP', 1.0)        # ADP/ATP ratio effect (PGK, PK — ATP producers)
     
+    sam_adenylate_stoichiometry = _get_param_str(
+        custom_params,
+        'sam_adenylate_stoichiometry',
+        'biochemical_transfer',
+    )
+    if sam_adenylate_stoichiometry not in {
+        'biochemical_transfer',
+        'legacy_amp_coproduct',
+    }:
+        raise ValueError(
+            'sam_adenylate_stoichiometry must be biochemical_transfer or '
+            'legacy_amp_coproduct'
+        )
+
+    purine_structure_mode = _get_param_str(
+        custom_params,
+        'purine_structure_mode',
+        'legacy',
+    )
+    if purine_structure_mode not in {'legacy', 'amp_nucleotidase'}:
+        raise ValueError(
+            'purine_structure_mode must be legacy or amp_nucleotidase'
+        )
+
     # ===== pH-DEPENDENT ENZYME MODULATION =====
     # Extract pH values
     pHi = x[PHI_INDEX]  # Intracellular pH
@@ -1296,8 +1456,24 @@ def equadiff_brodbar(t: float,
     VPGLS = vmax_VPGLS * mm(x[3], km_GL6P)  # PGLS: GL6P -> GO6P
     V6PGD = vmax_V6PGD * mm(x[4], km_GO6P) * mm(NADP/(NADPH+1e-6), km_NADP_NADPH)  # 6PGD: GO6P + NADP -> RU5P + NADPH
     VTKL1 = vmax_VTKL1 * mm(x[6], km_R5P) * mm(x[7], km_X5P)  # TKL1
-    VTKL2 = vmax_VTKL2 * mm(x[8], km_E4P) * mm(x[7], km_X5P)  # TKL2
-    VTAL = vmax_VTAL * mm(x[10], km_GA3P) * mm(x[9], km_S7P)  # TAL
+    VTKL2 = _compute_vtkl2_flux(
+        x,
+        custom_params,
+        vmax_VTKL2,
+        km_E4P,
+        km_X5P,
+        km_F6P,
+        km_GA3P,
+    )  # TKL2: E4P + X5P <-> F6P + GA3P [hybrid-ready]
+    VTAL = _compute_vtal_flux(
+        x,
+        custom_params,
+        vmax_VTAL,
+        km_GA3P,
+        km_S7P,
+        km_F6P,
+        km_E4P,
+    )  # TAL: GA3P + S7P <-> F6P + E4P [hybrid-ready]
     
     # Transport reactions (removed - defined later in complete section)
     
@@ -1326,8 +1502,19 @@ def equadiff_brodbar(t: float,
     VHGPRT1 = vmax_VHGPRT1 * mm(x[41], km_PRPP) * mm(x[28], km_HYPX)  # PRPP + HYPX => IMP
     VADA = vmax_VADA * mm(x[26], km_ADO)  # ADO => INO + NH4
     VAPRT = vmax_VAPRT * mm(x[25], km_ADE) * mm(x[41], km_PRPP)  # ADE + PRPP => AMP
-    VAMPD1 = vmax_VAMPD1 * mm(max(AMP,1e-6), km_AMP)  # AMP => IMP + NH4
-    VADSS = vmax_VADSS * mm(x[42], km_IMP) * mm(x[56], km_ASP) * mm(x[38], km_GTP)  # IMP + ASP + GTP => ADESUC + GDP
+    VAMPD1 = _compute_vampd1_flux(
+        t,
+        AMP,
+        custom_params,
+        vmax_VAMPD1,
+        km_AMP,
+    )  # AMP => IMP + NH4; optional storage-activity decay
+    VAMP_NT = (
+        vmax_VAMP_NT * mm(max(AMP, 1e-6), km_AMP_NT)
+        if purine_structure_mode == 'amp_nucleotidase'
+        else 0.0
+    )  # AMP => ADO; reversible structural diagnostic, default off
+    VADSS = vmax_VADSS * mm(x[42], km_IMP) * mm(x[56], km_ASP) * mm(x[38], km_GTP_VADSS)  # IMP + ASP + GTP => ADESUC + GDP
     VIMPH = vmax_VIMPH * mm(x[42], km_IMP) * mm(max(NAD,1e-6), km_NAD)  # IMP + NAD => XMP + NADH
     Vnucleo2 = vmax_Vnucleo2 * mm(x[42], km_IMP)  # IMP => INO
     VADSL = vmax_VADSL * mm(x[44], km_ADESUC)  # ADESUC = FUM + AMP
@@ -1427,6 +1614,8 @@ def equadiff_brodbar(t: float,
     VEARG = vmax_VEARG * mm(x[53], 0.1)  # ARG transport: ARG → EARG
     VEGSSG = vmax_VEGSSG * mm(max(GSSG,1e-6), 1.0)  # GSSG transport: GSSG → EGSSG
     VEGSH_rate = vmax_VEGSH * mm(max(GSH,1e-6), 1.0)  # GSH transport: GSH → EGSH
+    VEGSSG_deg = k_EGSSG_deg * max(x[EGSSG_INDEX], 0.0)  # Extracellular GSSG degradation
+    VEGSH_deg = k_EGSH_deg * max(x[EGSH_INDEX], 0.0)  # Extracellular GSH degradation
     
     # Redox and detoxification
     VH2O2 = vmax_VH2O2 * mm(x[79], km_H2O2)  # H2O2 => O2
@@ -1464,7 +1653,7 @@ def equadiff_brodbar(t: float,
     
     # Nucleotide metabolites
     dxdt[25] = -VEADE - VAPRT  # ADE (removed VADA: adenosine deaminase involves ADO not ADE)
-    dxdt[26] = -VEADO - VAK2 - VADA + VAHCY  # ADO (VADA consumes ADO; VEADO efflux decreases ADO)
+    dxdt[26] = VAMP_NT - VEADO - VAK2 - VADA + VAHCY  # ADO (optional AMP 5'-nucleotidase source)
     dxdt[27] = VADA + Vnucleo2 - VEINO - VPNPase1  # INO
     dxdt[28] = -VXAO + VPNPase1 + VOPRIBT - VHGPRT1 - VEHYPX  # HYPX (XAO consumes HYPX)
     dxdt[29] = VXAO + VGDA - VXAO2 - VEXAN  # XAN (VGDA: guanine deaminase adds XAN)
@@ -1475,7 +1664,9 @@ def equadiff_brodbar(t: float,
     dxdt[34] = -VOPRIBT  # DEOXYINO
     dxdt[35] = VPGK + VPK + VAK - VHK - VPFK - VAK2 - VGLNS - VGLUCYS - VGSS - VSAM - VRKa - VPRPPASe - VGMPS - VGMPK - VNDPK - VOPLAH  # ATP (RBC-strict: removed VPC, VACLY, VASS; OPLAH consumes ATP)
     dxdt[36] = VHK + VPFK + VAK2 + VGLNS + VGLUCYS + VGSS + VRKa + VGMPK + VNDPK + VOPLAH - VPGK - VPK - 2*VAK  # ADP (RBC-strict: VPC removed; OPLAH produces ADP)
-    dxdt[37] = VAK + VAK2 + VADSL + VPRPPASe + VGMPS + VAPRT + VSAM - VAMPD1  # AMP (VSAM: ATP→AMP+PPi conserves adenylates; VHGPRT2 no longer consumes AMP)
+    dxdt[37] = VAK + VAK2 + VADSL + VPRPPASe + VGMPS + VAPRT - VAMPD1 - VAMP_NT  # AMP; optional 5'-nucleotidase transfers AMP to ADO
+    if sam_adenylate_stoichiometry == 'legacy_amp_coproduct':
+        dxdt[37] += VSAM  # Explicit revert path for pre-correction parameter replays.
     dxdt[38] = VNDPK - VADSS  # GTP (RBC-strict: VGENASP removed)
     dxdt[39] = VADSS + VGMPK - VNDPK  # GDP (RBC-strict: VGENASP removed)
     dxdt[40] = VGMPS + VHGPRT2 - VGMPK - Vnucleo_GMP  # GMP (VGMPK + Vnucleo_GMP consume GMP — guanylate pool exit)
@@ -1556,9 +1747,26 @@ def equadiff_brodbar(t: float,
     dxdt[EOXOP_INDEX] = VEOXOP   # EOXOP (extracellular oxoproline: accumulates from OXOP export)
     dxdt[ESER_INDEX] = VESER     # ESER (extracellular serine)
     dxdt[EARG_INDEX] = VEARG     # EARG (extracellular arginine)
-    dxdt[EGSSG_INDEX] = VEGSSG - k_EGSSG_deg * max(x[EGSSG_INDEX], 0.0)  # EGSSG (extracellular GSSG — degrades in storage)
-    dxdt[EGSH_INDEX] = VEGSH_rate - k_EGSH_deg * max(x[EGSH_INDEX], 0.0)  # EGSH (extracellular GSH — degrades in storage)
+    dxdt[EGSSG_INDEX] = VEGSSG - VEGSSG_deg  # EGSSG (extracellular GSSG — degrades in storage)
+    dxdt[EGSH_INDEX] = VEGSH_rate - VEGSH_deg  # EGSH (extracellular GSH — degrades in storage)
     dxdt[EASN_INDEX] = VEASN_rate # EASN (extracellular asparagine)
+
+    reaction_audit = None
+    if positivity_policy == "reaction_consistent":
+        from reaction_positivity import limit_rbc_reactions
+
+        reaction_audit = limit_rbc_reactions(
+            raw_concentrations, locals(), dxdt[:NUM_BASE_METABOLITES],
+            threshold=availability_threshold, sam_mode=sam_adenylate_stoichiometry,
+        )
+        dxdt[:NUM_BASE_METABOLITES] = reaction_audit["effective_derivative"]
+        # pH production terms must use the same rates as the metabolic balances.
+        effective_rates = reaction_audit["effective_fluxes"]
+        VPK, VLDH = effective_rates["VPK"], effective_rates["VLDH"]
+        VG6PDH, V6PGD = effective_rates["VG6PDH"], effective_rates["V6PGD"]
+        VHK, VPFK = effective_rates["VHK"], effective_rates["VPFK"]
+        if numerical_audit is not None:
+            numerical_audit.update(reaction_audit)
     
     # ===== DYNAMIC pH REGULATION =====
     # pHi (intracellular pH) - index 106
@@ -1751,7 +1959,7 @@ def equadiff_brodbar(t: float,
     # Only applies to base metabolite concentrations (0–105), not pH indices.
     n_conc = min(NUM_BASE_METABOLITES, len(dxdt))
     conc = x[:n_conc]
-    mask = (conc < NONEG_THRESHOLD) & (dxdt[:n_conc] < 0)
+    mask = (conc < NONEG_THRESHOLD) & (dxdt[:n_conc] < 0) if positivity_policy == "legacy" else np.zeros(n_conc, dtype=bool)
     if np.any(mask):
         damping = np.ones(n_conc)
         damping[mask] = conc[mask] / NONEG_THRESHOLD
@@ -1759,10 +1967,17 @@ def equadiff_brodbar(t: float,
     
     # Step 6: Final numerical stability check (essential for integration)
     # Ensure all derivatives are finite and reasonable
-    dxdt = np.nan_to_num(dxdt, nan=0.0, posinf=1e6, neginf=-1e6)
+    if positivity_policy == "reaction_consistent":
+        if not np.all(np.isfinite(dxdt)) or np.any(np.abs(dxdt[:n_conc]) > MAX_DERIVATIVE):
+            raise ValueError("reaction-consistent RHS cannot sanitize or independently clip reaction balances")
+    else:
+        dxdt = np.nan_to_num(dxdt, nan=0.0, posinf=1e6, neginf=-1e6)
     
     # Clip extreme derivatives to prevent numerical instability
-    dxdt = np.clip(dxdt, -MAX_DERIVATIVE, MAX_DERIVATIVE)
+    if positivity_policy == "legacy":
+        dxdt = np.clip(dxdt, -MAX_DERIVATIVE, MAX_DERIVATIVE)
+    else:
+        dxdt[n_conc:] = np.clip(dxdt[n_conc:], -MAX_DERIVATIVE, MAX_DERIVATIVE)
     
     # Step 7: Track fluxes if enabled
     if _flux is not None:
@@ -1780,7 +1995,7 @@ def equadiff_brodbar(t: float,
             # Purine metabolism
             'VAPRT': VAPRT, 'VHGPRT1': VHGPRT1, 'VHGPRT2': VHGPRT2,
             'VADA': VADA, 'VAK': VAK, 'VAK2': VAK2,
-            'VAMPD1': VAMPD1, 'VIMPH': VIMPH, 'VXAO': VXAO,
+            'VAMPD1': VAMPD1, 'VAMP_NT': VAMP_NT, 'VIMPH': VIMPH, 'VXAO': VXAO,
             'VGMPS': VGMPS, 'VADSS': VADSS, 'VADSL': VADSL,
             'VPNPase1': VPNPase1, 'VXAO2': VXAO2, 'Vnucleo2': Vnucleo2,
             'VRKa': VRKa, 'VRKb': VRKb, 'VPRPPASe': VPRPPASe,
@@ -1790,6 +2005,7 @@ def equadiff_brodbar(t: float,
             'VGSS': VGSS, 'VGSR': VGSR, 'VGGT': VGGT, 'VGGCT': VGGCT,
             'VMESE': VMESE, 'VSAM': VSAM, 'VSAH': VSAH, 'VAHCY': VAHCY, 'VSHMT': VSHMT,
             'VCBS': VCBS, 'VCSE': VCSE, 'VASPTA': VASPTA, 'VALATA': VALATA, 'VPHGDH': VPHGDH, 'VOPLAH': VOPLAH,
+            'VASNG': VASNG,
             'VGENASP': VGENASP, 'VPEP_PASE': VPEP_PASE, 'VGMPK': VGMPK, 'VFUM': VFUM, 'VMLD': VMLD,
             'VASL': VASL, 'VASS': VASS, 'Vpolyam': Vpolyam,
             'VASTA': VASTA, 'VCYSGLY': VCYSGLY,
@@ -1803,8 +2019,14 @@ def equadiff_brodbar(t: float,
             'VEHYPX': VEHYPX, 'VEXAN': VEXAN, 'VEURT': VEURT,
             'VECIT': VECIT, 'VEMAL': VEMAL, 'VEFUM': VEFUM,
             'VEUREA': VEUREA, 'VENH4': VENH4, 'VEASP': VEASP,
-            'VEMET': VEMET, 'VECYT': VECYT, 'VEALA': VEALA
+            'VEMET': VEMET, 'VECYT': VECYT, 'VEALA': VEALA,
+            'VEASN_rate': VEASN_rate, 'VEOXOP': VEOXOP,
+            'VESER': VESER, 'VEARG': VEARG, 'VEGSSG': VEGSSG,
+            'VEGSH_rate': VEGSH_rate, 'VEGSSG_deg': VEGSSG_deg,
+            'VEGSH_deg': VEGSH_deg,
         }
+        if reaction_audit is not None:
+            flux_dict.update(reaction_audit["effective_fluxes"])
         _flux.add_timepoint(t, flux_dict)
     
     # Step 8: Track Bohr effect if enabled

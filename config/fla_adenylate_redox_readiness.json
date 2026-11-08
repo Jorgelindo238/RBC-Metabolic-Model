@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "contract_type": "fla_scientific_precalibration_readiness",
+  "dataset_id": "Bordbar_curated_workbook",
+  "horizon_day": [1.0, 4.0],
+  "lineage": {
+    "verified": false,
+    "source_table_id": null,
+    "row_mapping": {"ATP": null, "ADP": null, "AMP": null},
+    "evidence_files": []
+  },
+  "normalization": {
+    "verified": false,
+    "source_quantity_basis": null,
+    "model_unit": "mM",
+    "compartment": "intracellular",
+    "model_volume_basis": null,
+    "transformation": null,
+    "scale_to_model_mM_by_pool": {"ATP": null, "ADP": null, "AMP": null},
+    "evidence_files": []
+  },
+  "time_origin": {
+    "verified": false,
+    "biological_origin": null,
+    "source_days": null,
+    "source_to_model_offset_day": null,
+    "evidence_files": []
+  },
+  "uncertainty": {
+    "verified": false,
+    "estimand": null,
+    "estimator": null,
+    "estimator_type": null,
+    "biological_unit_count": null,
+    "technical_replicate_count": null,
+    "observation_order": ["ATP_J1", "ADP_J1", "AMP_J1", "ATP_J4", "ADP_J4", "AMP_J4"],
+    "covariance_mM2": null,
+    "cross_pool_and_cross_day_independence_assumed": false,
+    "evidence_files": []
+  },
+  "accuracy": {
+    "verified": false,
+    "metric": "absolute_endpoint_error_mM",
+    "absolute_endpoint_error_mM": {"ATP": null, "ADP": null, "AMP": null},
+    "basis": null,
+    "justification": null,
+    "independent_of_model_fit": false,
+    "frozen_at": null,
+    "evidence_files": []
+  },
+  "redox_prior": {
+    "verified": false,
+    "quantity_unit": "mM",
+    "sample_context": null,
+    "volume_basis": null,
+    "source_pool_definition": null,
+    "model_pool_definition": null,
+    "NAD_total_bounds_mM": null,
+    "NADH_fraction_bounds": null,
+    "evidence_files": []
+  },
+  "rules": [
+    "Unknown does not mean zero or verified.",
+    "Historical model inputs are diagnostic anchors, not biological prior bounds.",
+    "A different cohort's process variability is not this workbook's uncertainty.",
+    "Endpoint limits in mM are distinct from full-panel nRMSE limits and numerical tolerances.",
+    "Passing this local contract does not authorize optimization or global model promotion."
+  ]
+}

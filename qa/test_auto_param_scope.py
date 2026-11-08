@@ -110,6 +110,13 @@ class TestStoichiometryParser:
         assert rs.STOICHIOMETRY["VAK"] == {"ATP": 1.0, "ADP": -2.0, "AMP": 1.0}
         # GSSG + NADPH -> 2 GSH + NADP
         assert rs.STOICHIOMETRY["VGSR"] == {"GSH": 2.0, "GSSG": -1.0, "NADP": 1.0, "NADPH": -1.0}
+        # Methionine adenosyltransferase transfers ATP's adenosyl group to MET;
+        # AMP is not a coproduct.
+        assert rs.STOICHIOMETRY["VSAM"] == {
+            "ATP": -1.0,
+            "MET": -1.0,
+            "ADOMET": 1.0,
+        }
 
     def test_aliased_reaction_resolves_to_canonical_params(self):
         # VEASN_rate is the dxdt-side variable; vmax_VEASN is the parameter.
@@ -139,6 +146,13 @@ class TestStoichiometryParser:
 
         assert "vmax_VELAC" in rs.REACTION_PARAMS["VELAC"]
         assert "km_LAC" in rs.REACTION_PARAMS["VELAC"]
+
+        assert "vmax_V23DPGP" in rs.REACTION_PARAMS["V23DPGP"]
+        assert "km_B23PG" in rs.REACTION_PARAMS["V23DPGP"]
+
+        assert "vmax_V6PGD" in rs.REACTION_PARAMS["V6PGD"]
+        assert "km_GO6P" in rs.REACTION_PARAMS["V6PGD"]
+        assert "km_NADP_NADPH" in rs.REACTION_PARAMS["V6PGD"]
 
     def test_zero_flux_reactions_have_no_stoichiometry(self):
         # RBC-strict deletions must not appear in the stoichiometry table —

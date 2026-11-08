@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "purpose": "conditional_exploratory_energy_sensitivity_not_biological_calibration",
+  "horizon_day": [1.0, 4.0],
+  "initialization": "exact_Sheet1_J1_for_all_55_measured_pools_unchanged_frozen_unmeasured_pools",
+  "fixed_context": "output/ppp_numerical_audit_2026_10_05",
+  "working_reference": "config/fla_working_reference.json",
+  "historical_prepared_protocol": "output/adenylate_redox_readiness_2026_10_05_v2/coupled_sensitivity_protocol.json",
+  "user_authorized_exploratory_execution": true,
+  "biological_optimization_allowed": false,
+  "global_model_promotion_allowed": false,
+  "historical_contract_changed": false,
+  "initial_conditions_fitted": false,
+  "teacher_forcing": false,
+  "observation_reset": false,
+  "output_clipping": false,
+  "historical_initialization_enabled": false,
+  "single_group_log_steps": [0.05, 0.10],
+  "paired_group_log_step": 0.05,
+  "planned_case_count": 19,
+  "planned_ODE_integration_count": 38,
+  "interpretation": "Deterministic responses conditional on nominal workbook units and unchanged unmeasured pools; no statistical compatibility, physiological prior or best-case promotion. B13PG and P2G duplicate rows remain non-independent."
+}

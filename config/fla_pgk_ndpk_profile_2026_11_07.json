@@ -1,0 +1,14 @@
+{
+  "parent_archive": "output/absolute_vmax_2026_11_07",
+  "PGK_factors": [0.25, 0.5, 0.75, 1.0, 1.5],
+  "NDPK_factors": [0.1, 0.5, 1.0, 2.0, 4.0],
+  "PGK_lower_probe": 0.25,
+  "NDPK_upper_probe": 4.0,
+  "maximum_screen_attempts": 26,
+  "maximum_new_audit_profiles": 4,
+  "diagnostic_pools": ["ATP", "ADP", "AMP", "GDP", "GTP", "GMP"],
+  "sampled_reactions": ["VPGK", "VNDPK", "VPK", "VAK", "VHK", "VPFK", "VADSS", "VGMPK", "VEGSSG"],
+  "production_promotion_allowed": false,
+  "optimization_executed": false,
+  "J46_replayed": false
+}

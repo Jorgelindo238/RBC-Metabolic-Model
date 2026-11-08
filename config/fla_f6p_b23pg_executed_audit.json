@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "purpose": "fixed_parameter_saved_executed_flux_attribution_before_optimization",
+  "parent_archive": "output/protected_joint_calibration_2026_11_02",
+  "end_day": 10.0,
+  "observation_days": [1.0, 4.0, 8.0],
+  "profiles": ["strict", "ultrastrict"],
+  "windows": [["J1_J2", 1.0, 2.0], ["J2_J4", 2.0, 4.0], ["J1_J4", 1.0, 4.0], ["J4_J8", 4.0, 8.0], ["J1_J8", 1.0, 8.0], ["J8_J10", 8.0, 10.0]],
+  "pools": ["F6P", "B23PG", "PEP", "G6P", "B13PG", "P3G", "F16BP", "ATP"],
+  "limiter_reactions": ["VPGI", "VTKL2", "VTAL", "VPFK", "VDPGM", "V23DPGP", "VGAPDH", "VPGK", "VENOPGM", "VPK", "VPEP_PASE", "VHK"],
+  "source_aliases": {"B13PG": "B23PG", "P2G": "P3G"},
+  "proposed_added_RMSE_guards": ["F6P", "B23PG"],
+  "proposed_pointwise_guards": ["PEP"],
+  "guard_activation": "proposal_only_no_calibration_or_retrospective_selection",
+  "attribution_interpretation": "trajectory_accounting_and_fixed_state_rate_decomposition_not_causal_recovery",
+  "new_ODE_integrations_allowed": false,
+  "optimization_allowed": false,
+  "parameter_or_initial_state_changes_allowed": false,
+  "source_rescaling_allowed": false,
+  "production_promotion_allowed": false
+}

@@ -1,0 +1,15 @@
+{
+  "parent_archive": "output/pgk_ndpk_profile_2026_11_07",
+  "thresholds_mM": [0.001, 0.0001, 0.00001, 0.000001],
+  "profiles": ["strict", "ultrastrict"],
+  "focus_pools": ["ATP", "ADP", "AMP", "GDP", "GTP", "GMP"],
+  "focus_atol_mM": 0.0000000001,
+  "focus_rtol": 0.01,
+  "executed_integral_atol_mM": 0.00000001,
+  "executed_integral_rtol": 0.01,
+  "required_final_adjacent_pairs": 2,
+  "maximum_new_original_replays": 6,
+  "production_promotion_allowed": false,
+  "optimization_executed": false,
+  "J46_replayed": false
+}

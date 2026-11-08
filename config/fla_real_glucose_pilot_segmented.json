@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "purpose": "experimental_conditional_GLUT_pilot_segmented_numerical_successor",
+  "workbook": "src/Data_Bordbar_et_al_exp.xlsx",
+  "sheet": "Sheet1",
+  "source_sha256": "7a7393972628646f7cf44fcc7d227381fd4921873eeb88296bfba0d37de92ad4",
+  "seed_context": "output/distinct_phase_transport_2026_10_06/fixed_context_v2/preregistered_contract.json",
+  "horizon_day": [
+    1,
+    46
+  ],
+  "training_end_day": 25,
+  "initial_EGLC": "exact_source_J1_not_estimated",
+  "intracellular_GLC": "PCHIP_training_samples_only_then_hold_last_training_value",
+  "initial_and_future_GLC_uncertainty": "not_propagated_conditional_input_assumption",
+  "normalization": "user_selected_distinct_packed_cell_and_supernatant_litres_no_rescaling_no_uFBA",
+  "free_cases": [
+    "effective_clearance_only",
+    "effective_clearance_and_km_e"
+  ],
+  "clearance_definition": "hematocrit_over_1_minus_hematocrit_times_cell_basis_GLUT_conductance",
+  "bounds": {
+    "effective_clearance": [
+      0.0001,
+      2
+    ],
+    "km_e": [
+      0.1,
+      500
+    ]
+  },
+  "starts": [
+    [
+      0.03,
+      12
+    ],
+    [
+      0.12,
+      24
+    ],
+    [
+      0.4,
+      48
+    ]
+  ],
+  "hematocrit_conversion_scenarios": [
+    0.574,
+    0.58,
+    0.632
+  ],
+  "noise": "profile_mean_preserving_lognormal_total_training_residual_dispersion_no_synthetic_CV",
+  "optimizer": {
+    "maxfun": 4000,
+    "maxiter": 2000,
+    "ftol": 1e-10,
+    "gtol": 0.000001,
+    "finite_diff_rel_step": 0.0001
+  },
+  "solver_profiles": {
+    "strict": {
+      "rtol": 1e-9,
+      "atol": 1e-11
+    },
+    "ultrastrict": {
+      "rtol": 1e-10,
+      "atol": 1e-12
+    }
+  },
+  "select_per_case": "lowest_training_NLL_only_all_starts_retained_no_holdout_selection",
+  "temporal_comparison": "historically_exposed_internal_holdout_not_external_validation",
+  "editable_kinetic_candidates": true,
+  "biological_constant_identification": false,
+  "full_RBC_ODE_execution": false,
+  "MCT_or_pH_calibration": false,
+  "ATP_inference": false,
+  "production_defaults_changed": false,
+  "supersedes": "output/real_glucose_likelihood_pilot_2026_10_23",
+  "numerical_repair": "integrate_separately_between_all_training_knots_and_training_cutoff"
+}

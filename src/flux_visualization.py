@@ -34,7 +34,7 @@ class FluxTracker:
         Parameters:
         -----------
         t : float
-            Time point (hours)
+            Time point (model days for the current Brodbar/FLA contract)
         flux_dict : dict
             Dictionary of {reaction_name: flux_value}
         """
@@ -70,7 +70,7 @@ class FluxTracker:
             DataFrame with time as index and reactions as columns
         """
         df = pd.DataFrame(self.fluxes, index=self.times)
-        df.index.name = 'Time (hours)'
+        df.index.name = 'Time (model day)'
         return df
     
     def save_to_csv(self, filepath: str):

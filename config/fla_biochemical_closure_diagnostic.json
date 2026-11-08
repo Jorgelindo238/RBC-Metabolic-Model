@@ -1,0 +1,24 @@
+{
+  "purpose": "reversible_C4_folate_redox_closure_not_biological_calibration",
+  "horizon_day": [1.0, 4.0],
+  "audit_boundaries_day": [1.0, 2.0, 3.0, 4.0],
+  "tolerances": ["strict", "ultrastrict"],
+  "initial_state_archive": "output/exploratory_energy_sensitivity_J1_J4_2026_10_06",
+  "historical_replay_archive": "output/rbc_gem_network_audit_2026_10_06/fixed_parameter_diagnostic",
+  "working_reference": "config/fla_working_reference.json",
+  "biological_calibration_allowed": false,
+  "global_promotion_allowed": false,
+  "forcing_allowed": false,
+  "redox_kinetics_enabled_in_Bordbar_replays": false,
+  "MTHFR_enabled_in_Bordbar_replays": false,
+  "added_pool_initialization": "declared_zero_structural_null_probe_not_physiological_estimate",
+  "folate_partition": "preserve_unsupported_historical_latent_total_conditional_not_a_prior",
+  "abc_exports": false,
+  "cases": [
+    {"name": "vcse_c4", "mode": "vcse_c4", "methyl_fraction": null, "oplah_policy": "retained"},
+    {"name": "folate_methyl_only", "mode": "folate_split", "methyl_fraction": 1.0, "oplah_policy": "retained"},
+    {"name": "combined_methyl_only", "mode": "vcse_folate", "methyl_fraction": 1.0, "oplah_policy": "retained"},
+    {"name": "combined_methylene_only", "mode": "vcse_folate", "methyl_fraction": 0.0, "oplah_policy": "retained"},
+    {"name": "combined_oplah_countertest", "mode": "vcse_folate", "methyl_fraction": 1.0, "oplah_policy": "diagnostic_off"}
+  ]
+}
