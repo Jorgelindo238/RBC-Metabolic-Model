@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "purpose": "synthetic_fixed_capacity_smoothed_interval_free_ODE_validation",
+  "parent_archive": "output/fla_sparse_teacher_resolution_2026_10_05",
+  "methods": ["raw_integrated", "smoothed_inputs_integrated"],
+  "noise_seeds": [2718, 31415, 1618, 57721, 104729],
+  "reused_raw_cases": ["clean", "noise_2718", "noise_31415", "noise_1618"],
+  "horizon_day": [1.0, 46.0],
+  "training_end_day": 22.0,
+  "new_fit_count": 0,
+  "new_ODE_integration_count": 16,
+  "reused_ODE_integration_count": 8,
+  "biological_calibration_allowed": false,
+  "global_model_promotion_allowed": false,
+  "teacher_forcing": false,
+  "observation_reset": false,
+  "raw_state_output_clipping": false
+}

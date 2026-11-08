@@ -1,0 +1,440 @@
+{
+  "contract_type": "fixed_kinetic_b13pg_only_initialization_screen",
+  "contract_version": 1,
+  "generated_at": "2026-08-11T21:12:41.382166+00:00",
+  "diagnostic_only": true,
+  "kinetic_optimization_performed": false,
+  "parameters_promoted": false,
+  "initial_conditions_promoted": false,
+  "source_refinement_dir": "C:\\Users\\Jorgelindo\\Desktop\\airbc\\Simulations\\brodbar\\hermes\\v6pgd_constrained_transition_refinement_46d",
+  "seed_params_path": "C:\\Users\\Jorgelindo\\Desktop\\airbc\\Simulations\\brodbar\\hermes\\vpep_vpk_coupled_mild_feedback_46d_n20\\seed_fixed_params.json",
+  "fixed_kinetic_context": {
+    "vmax_V6PGD": 9.0
+  },
+  "changed_kinetic_constants": [],
+  "changed_initial_states": [
+    "B13PG"
+  ],
+  "locked_initial_states": {
+    "B23PG": 3.5840452108483682
+  },
+  "duplicated_B13PG_initial_mM": 3.5840452108483682,
+  "qss_B13PG_initial_mM": 0.00017667766898477443,
+  "qss_to_duplicated_ratio": 4.929560275913863e-05,
+  "qss_initial_balance": {
+    "VGAPDH": 2.021820136988234,
+    "VPGK": 1.9341118586113588,
+    "VDPGM": 0.08770827837691114,
+    "raw_B13PG_balance": -3.5915714846623814e-14,
+    "effective_B13PG_derivative": -6.34550477902335e-15
+  },
+  "initial_balance_by_candidate": {
+    "duplicated_data_revert": {
+      "VGAPDH": 2.021820136988234,
+      "VPGK": 32.98943064618599,
+      "VDPGM": 1.4960076656005319,
+      "raw_B13PG_balance": -32.463618174798285,
+      "effective_B13PG_derivative": -32.463618174798285
+    },
+    "qss_0.250x": {
+      "VGAPDH": 2.021820136988234,
+      "VPGK": 0.5057487252971243,
+      "VDPGM": 0.02293473864483529,
+      "raw_B13PG_balance": 1.4931366730462745,
+      "effective_B13PG_derivative": 1.4931366730462745
+    },
+    "qss_0.500x": {
+      "VGAPDH": 2.021820136988234,
+      "VPGK": 0.9962366061423273,
+      "VDPGM": 0.045177427144020336,
+      "raw_B13PG_balance": 0.9804061037018864,
+      "effective_B13PG_derivative": 0.9804061037018864
+    },
+    "qss_1.000x": {
+      "VGAPDH": 2.021820136988234,
+      "VPGK": 1.9341118586113588,
+      "VDPGM": 0.08770827837691114,
+      "raw_B13PG_balance": -3.5915714846623814e-14,
+      "effective_B13PG_derivative": -6.34550477902335e-15
+    },
+    "qss_2.000x": {
+      "VGAPDH": 2.021820136988234,
+      "VPGK": 3.6541565740549697,
+      "VDPGM": 0.16570902070790444,
+      "raw_B13PG_balance": -1.79804545777464,
+      "effective_B13PG_derivative": -0.6353489604165701
+    },
+    "qss_4.000x": {
+      "VGAPDH": 2.021820136988234,
+      "VPGK": 6.580035981404789,
+      "VDPGM": 0.2983920630120651,
+      "raw_B13PG_balance": -4.85660790742862,
+      "effective_B13PG_derivative": -3.4322166570300463
+    },
+    "qss_8.000x": {
+      "VGAPDH": 2.021820136988234,
+      "VPGK": 10.97311820842184,
+      "VDPGM": 0.4976099506354389,
+      "raw_B13PG_balance": -9.448908022069045,
+      "effective_B13PG_derivative": -9.448908022069045
+    }
+  },
+  "short_horizon_days": [
+    1.0,
+    3.0
+  ],
+  "long_horizon_days": null,
+  "short_metrics": [
+    {
+      "candidate": "duplicated_data_revert",
+      "horizon_days": [
+        1.0,
+        3.0
+      ],
+      "B13PG_initial_mM": 3.5840452108483682,
+      "B23PG_initial_mM": 3.5840452108483682,
+      "ATP_initial_mM": 0.9329923000000002,
+      "B13PG_final_mM": 1.3719415565303696e-05,
+      "B23PG_final_mM": 2.869372901183201,
+      "ATP_final_mM": 0.0049324842407041086,
+      "ATP_minimum_mM": 0.0049324842407041086,
+      "all_state_minimum_mM": 9.999999999999997e-07,
+      "NAD_minimum_mM": 0.0800428699780698,
+      "NADH_minimum_mM": 0.9999999999999999,
+      "NAD_NADH_max_drift_mM": 8.43769498715119e-15,
+      "B13PG_maximum_mM": 3.5840452108483682,
+      "VPGK_peak_mM_per_day": 32.98943064618599,
+      "VPGK_integral_ATP_yield_mM": 3.7950176343085387,
+      "VDPGM_integral_shunt_mM": 0.424265058683053,
+      "VGAPDH_integral_input_mM": 0.6216518468358745,
+      "total_B13PG_drainage_integral_mM": 4.219282692991592,
+      "stock_supported_drainage_mM": 3.5976308461557176,
+      "ATP_production_integral_mM": 6.060854611134362,
+      "ATP_consumption_integral_mM": 6.99537528394769,
+      "ATP_nrmse": 0.7568828994048141,
+      "B23PG_nrmse": 0.056260044836965985,
+      "ATP_below_0.01_mM_day": 2.725,
+      "max_B13PG_closure_error": 0.0,
+      "max_ATP_closure_error": 3.552713678800501e-15
+    },
+    {
+      "candidate": "qss_0.250x",
+      "horizon_days": [
+        1.0,
+        3.0
+      ],
+      "B13PG_initial_mM": 4.4169417246193607e-05,
+      "B23PG_initial_mM": 3.5840452108483682,
+      "ATP_initial_mM": 0.9329923000000002,
+      "B13PG_final_mM": 3.171255976227224e-05,
+      "B23PG_final_mM": 2.503148505646507,
+      "ATP_final_mM": 0.002055305583718314,
+      "ATP_minimum_mM": 0.002055305583718314,
+      "all_state_minimum_mM": 1e-06,
+      "NAD_minimum_mM": 0.08076174600848426,
+      "NADH_minimum_mM": 0.9999999999999999,
+      "NAD_NADH_max_drift_mM": 1.865174681370263e-14,
+      "B13PG_maximum_mM": 0.00017120303213666015,
+      "VPGK_peak_mM_per_day": 1.891176312114219,
+      "VPGK_integral_ATP_yield_mM": 0.6052933843622612,
+      "VDPGM_integral_shunt_mM": 0.028021045957345038,
+      "VGAPDH_integral_input_mM": 0.6295870315878442,
+      "total_B13PG_drainage_integral_mM": 0.6333144303196063,
+      "stock_supported_drainage_mM": 0.0037273987317620882,
+      "ATP_production_integral_mM": 3.3818018147849687,
+      "ATP_consumption_integral_mM": 4.316827122420049,
+      "ATP_nrmse": 0.9167398114101984,
+      "B23PG_nrmse": 0.12663138111561809,
+      "ATP_below_0.01_mM_day": 2.075,
+      "max_B13PG_closure_error": 0.0,
+      "max_ATP_closure_error": 2.220446049250313e-15
+    },
+    {
+      "candidate": "qss_0.500x",
+      "horizon_days": [
+        1.0,
+        3.0
+      ],
+      "B13PG_initial_mM": 8.833883449238721e-05,
+      "B23PG_initial_mM": 3.5840452108483682,
+      "ATP_initial_mM": 0.9329923000000002,
+      "B13PG_final_mM": 3.187130599325507e-05,
+      "B23PG_final_mM": 2.5030806295564068,
+      "ATP_final_mM": 0.002048010783832736,
+      "ATP_minimum_mM": 0.002048010783832736,
+      "all_state_minimum_mM": 1e-06,
+      "NAD_minimum_mM": 0.0807606976680044,
+      "NADH_minimum_mM": 0.9999999999999999,
+      "NAD_NADH_max_drift_mM": 2.220446049250313e-15,
+      "B13PG_maximum_mM": 0.00017182824358736359,
+      "VPGK_peak_mM_per_day": 1.8976585904808059,
+      "VPGK_integral_ATP_yield_mM": 0.6042528122796804,
+      "VDPGM_integral_shunt_mM": 0.028013153994556693,
+      "VGAPDH_integral_input_mM": 0.6296348542740122,
+      "total_B13PG_drainage_integral_mM": 0.6322659662742371,
+      "stock_supported_drainage_mM": 0.002631112000224922,
+      "ATP_production_integral_mM": 3.3806947894599175,
+      "ATP_consumption_integral_mM": 4.314246775185724,
+      "ATP_nrmse": 0.9168181791947294,
+      "B23PG_nrmse": 0.12665397957639787,
+      "ATP_below_0.01_mM_day": 2.075,
+      "max_B13PG_closure_error": 0.0,
+      "max_ATP_closure_error": 2.6645352591003757e-15
+    },
+    {
+      "candidate": "qss_1.000x",
+      "horizon_days": [
+        1.0,
+        3.0
+      ],
+      "B13PG_initial_mM": 0.00017667766898477443,
+      "B23PG_initial_mM": 3.5840452108483682,
+      "ATP_initial_mM": 0.9329923000000002,
+      "B13PG_final_mM": 3.258315029853457e-05,
+      "B23PG_final_mM": 2.5031782666786824,
+      "ATP_final_mM": 0.002044301388710753,
+      "ATP_minimum_mM": 0.002044301388710753,
+      "all_state_minimum_mM": 9.999999999999997e-07,
+      "NAD_minimum_mM": 0.08076229181800147,
+      "NADH_minimum_mM": 0.9999999999999999,
+      "NAD_NADH_max_drift_mM": 4.440892098500626e-15,
+      "B13PG_maximum_mM": 0.00017667766898477443,
+      "VPGK_peak_mM_per_day": 1.9341118586113588,
+      "VPGK_integral_ATP_yield_mM": 0.608031440831006,
+      "VDPGM_integral_shunt_mM": 0.02824996950836753,
+      "VGAPDH_integral_input_mM": 0.6296342463108752,
+      "total_B13PG_drainage_integral_mM": 0.6362814103393735,
+      "stock_supported_drainage_mM": 0.006647164028498298,
+      "ATP_production_integral_mM": 3.383781383426615,
+      "ATP_consumption_integral_mM": 4.3145505435118725,
+      "ATP_nrmse": 0.9167303572512558,
+      "B23PG_nrmse": 0.12663431952550575,
+      "ATP_below_0.01_mM_day": 2.075,
+      "max_B13PG_closure_error": 0.0,
+      "max_ATP_closure_error": 2.220446049250313e-15
+    },
+    {
+      "candidate": "qss_2.000x",
+      "horizon_days": [
+        1.0,
+        3.0
+      ],
+      "B13PG_initial_mM": 0.00035335533796954885,
+      "B23PG_initial_mM": 3.5840452108483682,
+      "ATP_initial_mM": 0.9329923000000002,
+      "B13PG_final_mM": 3.1770428426166474e-05,
+      "B23PG_final_mM": 2.5031026535217094,
+      "ATP_final_mM": 0.002052133486181313,
+      "ATP_minimum_mM": 0.002052133486181313,
+      "all_state_minimum_mM": 1e-06,
+      "NAD_minimum_mM": 0.08076126625472274,
+      "NADH_minimum_mM": 0.9999999999999999,
+      "NAD_NADH_max_drift_mM": 2.220446049250313e-14,
+      "B13PG_maximum_mM": 0.00035335533796954885,
+      "VPGK_peak_mM_per_day": 3.6541565740549697,
+      "VPGK_integral_ATP_yield_mM": 0.6106115472511388,
+      "VDPGM_integral_shunt_mM": 0.02832100533937924,
+      "VGAPDH_integral_input_mM": 0.6296125878985217,
+      "total_B13PG_drainage_integral_mM": 0.6389325525905181,
+      "stock_supported_drainage_mM": 0.009319964691996363,
+      "ATP_production_integral_mM": 3.3866577180474944,
+      "ATP_consumption_integral_mM": 4.31363815440938,
+      "ATP_nrmse": 0.9167942796349096,
+      "B23PG_nrmse": 0.12664651970740254,
+      "ATP_below_0.01_mM_day": 2.075,
+      "max_B13PG_closure_error": 0.0,
+      "max_ATP_closure_error": 2.6645352591003757e-15
+    },
+    {
+      "candidate": "qss_4.000x",
+      "horizon_days": [
+        1.0,
+        3.0
+      ],
+      "B13PG_initial_mM": 0.0007067106759390978,
+      "B23PG_initial_mM": 3.5840452108483682,
+      "ATP_initial_mM": 0.9329923000000002,
+      "B13PG_final_mM": 3.1777895192427074e-05,
+      "B23PG_final_mM": 2.5034551102105023,
+      "ATP_final_mM": 0.002056498130977731,
+      "ATP_minimum_mM": 0.002056498130977731,
+      "all_state_minimum_mM": 1e-06,
+      "NAD_minimum_mM": 0.08076835512567702,
+      "NADH_minimum_mM": 0.9999999999999999,
+      "NAD_NADH_max_drift_mM": 1.021405182655144e-14,
+      "B13PG_maximum_mM": 0.0007067106759390978,
+      "VPGK_peak_mM_per_day": 6.58003598140479,
+      "VPGK_integral_ATP_yield_mM": 0.6266014188451334,
+      "VDPGM_integral_shunt_mM": 0.029008103471012285,
+      "VGAPDH_integral_input_mM": 0.6297840128703771,
+      "total_B13PG_drainage_integral_mM": 0.6556095223161458,
+      "stock_supported_drainage_mM": 0.02582550944576867,
+      "ATP_production_integral_mM": 3.4036712055429383,
+      "ATP_consumption_integral_mM": 4.325052318718275,
+      "ATP_nrmse": 0.9164309150989206,
+      "B23PG_nrmse": 0.12655972182247394,
+      "ATP_below_0.01_mM_day": 2.075,
+      "max_B13PG_closure_error": 0.0,
+      "max_ATP_closure_error": 3.552713678800501e-15
+    },
+    {
+      "candidate": "qss_8.000x",
+      "horizon_days": [
+        1.0,
+        3.0
+      ],
+      "B13PG_initial_mM": 0.0014134213518781954,
+      "B23PG_initial_mM": 3.5840452108483682,
+      "ATP_initial_mM": 0.9329923000000002,
+      "B13PG_final_mM": 3.268313768414308e-05,
+      "B23PG_final_mM": 2.5032086402994116,
+      "ATP_final_mM": 0.0020624533483050403,
+      "ATP_minimum_mM": 0.0020624533483050403,
+      "all_state_minimum_mM": 1e-06,
+      "NAD_minimum_mM": 0.08075794170451704,
+      "NADH_minimum_mM": 1.0,
+      "NAD_NADH_max_drift_mM": 2.1760371282653068e-14,
+      "B13PG_maximum_mM": 0.0014134213518781954,
+      "VPGK_peak_mM_per_day": 10.97311820842184,
+      "VPGK_integral_ATP_yield_mM": 0.6297823420666628,
+      "VDPGM_integral_shunt_mM": 0.02920647733632385,
+      "VGAPDH_integral_input_mM": 0.6295966132897084,
+      "total_B13PG_drainage_integral_mM": 0.6589888194029866,
+      "stock_supported_drainage_mM": 0.029392206113278196,
+      "ATP_production_integral_mM": 3.4059370986434074,
+      "ATP_consumption_integral_mM": 4.316089963711232,
+      "ATP_nrmse": 0.916734309980179,
+      "B23PG_nrmse": 0.12662525184634743,
+      "ATP_below_0.01_mM_day": 2.075,
+      "max_B13PG_closure_error": 0.0,
+      "max_ATP_closure_error": 3.1086244689504383e-15
+    }
+  ],
+  "short_assessments": [
+    {
+      "candidate": "qss_0.250x",
+      "scale": 0.25,
+      "ATP_nrmse": 0.9167398114101984,
+      "B23PG_nrmse": 0.12663138111561809,
+      "short_guards": {
+        "exact_J1_quasi_steady_balance": false,
+        "B13PG_closure_exact": true,
+        "ATP_closure_exact": true,
+        "all_states_nonnegative": true,
+        "NAD_NADH_positive": true,
+        "NAD_NADH_conserved": true,
+        "B23PG_initial_locked": true,
+        "B23PG_trajectory_noninferior_10pct": false,
+        "duplicated_stock_pulse_removed_95pct": true
+      },
+      "short_guard_pass": false
+    },
+    {
+      "candidate": "qss_0.500x",
+      "scale": 0.5,
+      "ATP_nrmse": 0.9168181791947294,
+      "B23PG_nrmse": 0.12665397957639787,
+      "short_guards": {
+        "exact_J1_quasi_steady_balance": false,
+        "B13PG_closure_exact": true,
+        "ATP_closure_exact": true,
+        "all_states_nonnegative": true,
+        "NAD_NADH_positive": true,
+        "NAD_NADH_conserved": true,
+        "B23PG_initial_locked": true,
+        "B23PG_trajectory_noninferior_10pct": false,
+        "duplicated_stock_pulse_removed_95pct": true
+      },
+      "short_guard_pass": false
+    },
+    {
+      "candidate": "qss_1.000x",
+      "scale": 1.0,
+      "ATP_nrmse": 0.9167303572512558,
+      "B23PG_nrmse": 0.12663431952550575,
+      "short_guards": {
+        "exact_J1_quasi_steady_balance": true,
+        "B13PG_closure_exact": true,
+        "ATP_closure_exact": true,
+        "all_states_nonnegative": true,
+        "NAD_NADH_positive": true,
+        "NAD_NADH_conserved": true,
+        "B23PG_initial_locked": true,
+        "B23PG_trajectory_noninferior_10pct": false,
+        "duplicated_stock_pulse_removed_95pct": true
+      },
+      "short_guard_pass": false
+    },
+    {
+      "candidate": "qss_2.000x",
+      "scale": 2.0,
+      "ATP_nrmse": 0.9167942796349096,
+      "B23PG_nrmse": 0.12664651970740254,
+      "short_guards": {
+        "exact_J1_quasi_steady_balance": false,
+        "B13PG_closure_exact": true,
+        "ATP_closure_exact": true,
+        "all_states_nonnegative": true,
+        "NAD_NADH_positive": true,
+        "NAD_NADH_conserved": true,
+        "B23PG_initial_locked": true,
+        "B23PG_trajectory_noninferior_10pct": false,
+        "duplicated_stock_pulse_removed_95pct": true
+      },
+      "short_guard_pass": false
+    },
+    {
+      "candidate": "qss_4.000x",
+      "scale": 4.0,
+      "ATP_nrmse": 0.9164309150989206,
+      "B23PG_nrmse": 0.12655972182247394,
+      "short_guards": {
+        "exact_J1_quasi_steady_balance": false,
+        "B13PG_closure_exact": true,
+        "ATP_closure_exact": true,
+        "all_states_nonnegative": true,
+        "NAD_NADH_positive": true,
+        "NAD_NADH_conserved": true,
+        "B23PG_initial_locked": true,
+        "B23PG_trajectory_noninferior_10pct": false,
+        "duplicated_stock_pulse_removed_95pct": true
+      },
+      "short_guard_pass": false
+    },
+    {
+      "candidate": "qss_8.000x",
+      "scale": 8.0,
+      "ATP_nrmse": 0.916734309980179,
+      "B23PG_nrmse": 0.12662525184634743,
+      "short_guards": {
+        "exact_J1_quasi_steady_balance": false,
+        "B13PG_closure_exact": true,
+        "ATP_closure_exact": true,
+        "all_states_nonnegative": true,
+        "NAD_NADH_positive": true,
+        "NAD_NADH_conserved": true,
+        "B23PG_initial_locked": true,
+        "B23PG_trajectory_noninferior_10pct": false,
+        "duplicated_stock_pulse_removed_95pct": true
+      },
+      "short_guard_pass": false
+    }
+  ],
+  "selected_short_candidate": null,
+  "long_metrics": {},
+  "long_assessment": null,
+  "long_horizon_statement": "No candidate qualified for J1-J10 transfer.",
+  "decision": "no guarded B13PG-only initialization found",
+  "decision_rationale": "No root-derived state simultaneously closed the balances, preserved B23PG, and removed the duplicated-stock pulse. B13PG initialization cannot yet be separated safely.",
+  "next_step": "expand the fixed-state B13PG feasibility bounds without changing kinetics",
+  "artifact_paths": {
+    "summary": "tmp_ode_diag\\b13pg_init_bdf_smoke\\summary.json",
+    "report": "tmp_ode_diag\\b13pg_init_bdf_smoke\\decision_report.md",
+    "diagnostic_initializations": "tmp_ode_diag\\b13pg_init_bdf_smoke\\diagnostic_initializations.json",
+    "short_metrics": "tmp_ode_diag\\b13pg_init_bdf_smoke\\short_screen_metrics.csv",
+    "short_assessments": "tmp_ode_diag\\b13pg_init_bdf_smoke\\short_screen_assessments.csv",
+    "short_timeseries": "tmp_ode_diag\\b13pg_init_bdf_smoke\\short_screen_timeseries.csv",
+    "long_timeseries": null,
+    "plot": "tmp_ode_diag\\b13pg_init_bdf_smoke\\b13pg_initialization_screen.png"
+  }
+}

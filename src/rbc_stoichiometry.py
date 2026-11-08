@@ -76,6 +76,8 @@ ZERO_FLUX_REACTIONS: FrozenSet[str] = frozenset({
     "Vpolyam", "VGENASP",
 })
 
+STOICHIOMETRY_SCHEMA_VERSION = 2  # Includes digit-prefixed V6PGD/V23DPGP terms.
+
 
 # ---------------------------------------------------------------------------
 # Reaction-name aliases. The ODE's dxdt RHS may use a variable name that
@@ -105,7 +107,7 @@ _DXDT_RE = re.compile(
 # lines (`vmax_VHK = _get_param(...)`) by requiring the LHS to begin with
 # uppercase `V` and not contain an underscore until at least one alpha char.
 _FLUX_ASSIGN_RE = re.compile(
-    r"^\s{4}(?P<name>V[A-Za-z][A-Za-z0-9_]*)\s*=\s*(?P<rhs>[^\n]+)$",
+    r"^\s{4}(?P<name>V[A-Za-z0-9][A-Za-z0-9_]*)\s*=\s*(?P<rhs>[^\n]+)$",
     re.MULTILINE,
 )
 
@@ -129,10 +131,11 @@ _GET_PARAM_DECL_RE = re.compile(
 )
 
 # Reaction-name token used inside a dxdt RHS. We require an uppercase V
-# followed by at least one more alpha char to disambiguate from generic Python
+# followed by at least one alphanumeric char, including V6PGD and V23DPGP.
+# This distinguishes reaction terms from generic Python
 # identifiers. We also support the `_rate` suffix for the two known aliased
 # reactions.
-_DXDT_REACTION_TOKEN_RE = re.compile(r"\bV[A-Za-z][A-Za-z0-9_]*\b")
+_DXDT_REACTION_TOKEN_RE = re.compile(r"\bV[A-Za-z0-9][A-Za-z0-9_]*\b")
 
 
 # ---------------------------------------------------------------------------
@@ -201,7 +204,7 @@ def _parse_dxdt_rhs(rhs: str) -> Dict[str, float]:
             token = token[1:].strip()
 
         m = re.fullmatch(
-            r"\s*(?:(?P<coef>\d+(?:\.\d+)?)\s*\*\s*)?(?P<reaction>V[A-Za-z][A-Za-z0-9_]*)\s*",
+            r"\s*(?:(?P<coef>\d+(?:\.\d+)?)\s*\*\s*)?(?P<reaction>V[A-Za-z0-9][A-Za-z0-9_]*)\s*",
             token,
         )
         if m is None:
@@ -304,7 +307,7 @@ def _iter_flux_blocks(source: str):
     else:
         block = source[start:end]
 
-    flux_head_re = re.compile(r"^\s{4}(?P<name>V[A-Za-z][A-Za-z0-9_]*)\s*=\s*(?P<rhs>.*)$")
+    flux_head_re = re.compile(r"^\s{4}(?P<name>V[A-Za-z0-9][A-Za-z0-9_]*)\s*=\s*(?P<rhs>.*)$")
 
     lines = block.splitlines()
     i = 0

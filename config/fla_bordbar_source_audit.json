@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "purpose": "read_only_Bordbar_lineage_units_time_audit",
+  "scope": "workspace_and_all_local_git_refs_only_not_user_computer_or_private_cloud",
+  "workbook": "src/Data_Bordbar_et_al_exp.xlsx",
+  "sources_reviewed_on": "2026-10-06",
+  "public_sources": [
+    {
+      "id": "Bordbar_2016",
+      "doi": "10.1111/trf.13460",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/26749434/",
+      "access": "indexed_primary_abstract_read; direct_open_rate_limited; publisher_full_text_unavailable",
+      "finding": "Historical 42-day description is a publication-level statement, not proof that local J43/J46 values are extrapolated.",
+      "local_row_mapping_verified": false
+    },
+    {
+      "id": "Yurkovich_2017",
+      "doi": "10.1371/journal.pcbi.1005424",
+      "url": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1005424",
+      "access": "full_primary_article_read",
+      "finding": "Results describe reuse of Bordbar data: 96 metabolites, 20 biological replicates and 14 observations over 45 days. Day 31 was removed in this study after an extracellular measurement anomaly. This does not authorize local exclusion or identify the workbook's aggregation.",
+      "local_row_mapping_verified": false
+    },
+    {
+      "id": "Bordbar_uFBA_2017",
+      "doi": "10.1038/srep46249",
+      "url": "https://www.nature.com/articles/srep46249",
+      "accessible_article_url": "https://www.nature.com/articles/srep46249?error=cookies_not_supported&code=none",
+      "access": "full_primary_article_read; supplementary_spreadsheet_download_returned_HTML_not_Excel",
+      "finding": "Methods use mmol per liter of total bag volume for RBC intracellular and extracellular pools, prioritize blood-gas glucose/lactate and enzymatic ATP/2,3-DPG, and report unresolved-pool splitting. The local workbook has no verified mapping to this preparation.",
+      "local_row_mapping_verified": false
+    },
+    {
+      "id": "Qi_2017",
+      "doi": "10.3390/metabo7020012",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5487983/",
+      "access": "indexed_primary_section_4_4_read; direct_HTML_open_unavailable",
+      "finding": "ADSOL data are a separate cohort. Relative-to-absolute and carbon-normalization procedures and reported variability cannot be assigned to the local Bordbar workbook.",
+      "local_row_mapping_verified": false
+    }
+  ],
+  "supplementary_candidates": [
+    {
+      "source_id": "Bordbar_uFBA_2017",
+      "url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fsrep46249/MediaObjects/41598_2017_BFsrep46249_MOESM34_ESM.xlsx",
+      "expected_format": "xlsx",
+      "role": "Supplementary Dataset S1; article describes isotope validation, not established local concentration source"
+    },
+    {
+      "source_id": "Bordbar_uFBA_2017",
+      "url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fsrep46249/MediaObjects/41598_2017_BFsrep46249_MOESM35_ESM.xls",
+      "expected_format": "xls",
+      "role": "Supplementary Dataset S2; listed model output, not established local concentration source"
+    }
+  ],
+  "time_offset_hypothesis_day": 1.0,
+  "apply_time_offset": false,
+  "apply_normalization": false,
+  "modify_readiness": false,
+  "simulations_authorized": false,
+  "optimization_authorized": false
+}

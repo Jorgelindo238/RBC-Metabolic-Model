@@ -1,0 +1,4 @@
+candidate,f6p_relative_nrmse_improvement,guard_reasons,passes_all_guards,fixed_hypothesis_feasible
+reversible_VTKL2,0.4319411640484586,"['G6P nRMSE guard', 'GLC endpoint guard', 'GLC nRMSE guard', 'PEP endpoint guard', 'PEP nRMSE guard']",False,False
+reversible_VTAL,0.2068762899704344,[],True,True
+reversible_both,0.3808308924820949,"['G6P nRMSE guard', 'GLC endpoint guard', 'GLC nRMSE guard', 'PEP endpoint guard', 'PEP nRMSE guard']",False,False

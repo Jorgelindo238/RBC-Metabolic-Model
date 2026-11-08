@@ -599,6 +599,10 @@ PHASE1_HYBRID_TRANSPORT_PARAMS = {
     "hybrid_reverse_scale_VEGLC": (1.0, 0.1, 3.0),
     "transport_gate_km_VEGLC": (10.0, 0.5, 80.0),
     "transport_gate_hill_VEGLC": (1.0, 0.5, 5.0),
+    "transport_gate_feedback_strength_VEGLC": (0.0, 0.0, 8.0),
+    "transport_gate_feedback_km_GLC_VEGLC": (1.0, 0.05, 20.0),
+    "transport_gate_feedback_hill_VEGLC": (1.0, 0.5, 6.0),
+    "transport_gate_import_cap_VEGLC": (5.0, 0.05, 5.0),
     "hybrid_blend_VELAC": (0.0, 0.0, 1.0),
     "hybrid_efflux_hill_VELAC": (1.0, 0.5, 4.0),
     "hybrid_backpressure_hill_VELAC": (1.0, 0.5, 6.0),
@@ -658,6 +662,7 @@ PHASE2_PARAMS = {
     "vmax_VGDA": (0.15, 0.01, 0.5),
     "km_ATP": (0.569, 0.05, 5.0),
     "km_AMP": (0.283, 0.05, 3.0),
+    "km_GTP_VADSS": (0.5, 0.001, 2.0),
 }
 
 PHASE3_PARAMS = {
@@ -945,6 +950,10 @@ HYBRID_TRANSPORT_PARAM_NAMES = {
     "hybrid_reverse_scale_VEGLC",
     "transport_gate_km_VEGLC",
     "transport_gate_hill_VEGLC",
+    "transport_gate_feedback_strength_VEGLC",
+    "transport_gate_feedback_km_GLC_VEGLC",
+    "transport_gate_feedback_hill_VEGLC",
+    "transport_gate_import_cap_VEGLC",
     "hybrid_blend_VELAC",
     "hybrid_efflux_hill_VELAC",
     "hybrid_backpressure_hill_VELAC",
@@ -1512,14 +1521,18 @@ def load_teacher_curve_dataset(teacher_dataset_path):
     return payload
 
 
-def load_initial_conditions():
+def load_initial_conditions(initialization_policy="legacy_experimental_alias"):
     n_with_phi = NUM_BASE_METABOLITES + 1
     metabolite_list = [""] * n_with_phi
     for name, idx in BRODBAR_METABOLITE_MAP.items():
         if idx < n_with_phi:
             metabolite_list[idx] = name
     model = {"metab": metabolite_list}
-    x0, _ = parse_initial_conditions(model, str(DATA_DIR / "Initial_conditions_JA_Final.xls"))
+    x0, _ = parse_initial_conditions(
+        model,
+        str(DATA_DIR / "Initial_conditions_JA_Final.xls"),
+        initialization_policy=initialization_policy,
+    )
     return x0
 
 
@@ -2035,6 +2048,7 @@ class ObjectiveFunction:
         self.report_final_index = int(np.searchsorted(self.t_eval_report, self.t_max))
 
         self._solve_cache = {}
+        self._teacher_flux_cache = {}
         self.n_calls = 0
         self.best_loss = float("inf")
         self.best_params = None
@@ -2208,56 +2222,48 @@ class ObjectiveFunction:
         if self.teacher_flux_values is None or not self.teacher_flux_names:
             return None
 
-        params = self.default_param_values.copy()
-        if custom_params:
-            params.update(custom_params)
+        cache_key = self._params_cache_key(custom_params)
+        cached = self._teacher_flux_cache.get(cache_key)
+        if cached is not None:
+            return cached
 
-        sim_flux_values = []
-        for reaction_name in self.teacher_flux_names:
-            reaction_series = []
-            for idx, t in enumerate(self.teacher_timepoints):
-                x = y_dense[:, idx]
-                if reaction_name == "VEGLC":
-                    reaction_series.append(
-                        _compute_veglc_flux(
-                            float(t),
-                            x,
-                            custom_params,
-                            float(params["vmax_VEGLC"]),
-                            float(params["km_EGLC"]),
-                            float(params["km_GLC_transport"]),
-                        )
-                    )
-                elif reaction_name == "VELAC":
-                    reaction_series.append(
-                        _compute_velac_flux(
-                            float(t),
-                            x,
-                            custom_params,
-                            float(params["vmax_VELAC"]),
-                            float(params["km_LAC"]),
-                        )
-                    )
-                elif reaction_name == "VLDH":
-                    reaction_series.append(
-                        _compute_vldh_flux(
-                            x,
-                            custom_params,
-                            float(t),
-                            1.0,
-                            float(params["vmax_VLDH"]),
-                            float(params["km_PYR"]),
-                            float(params["km_LAC"]),
-                            float(params["km_NADH_NAD"]),
-                            float(params["km_NAD_NADH"]),
-                            float(x[self.nad_idx]),
-                            float(x[self.nadh_idx]),
-                        )
-                    )
-                else:
-                    raise ValueError(f"Unsupported teacher flux reaction target: {reaction_name}")
-            sim_flux_values.append(reaction_series)
-        return np.asarray(sim_flux_values, dtype=float)
+        class FluxSnapshot:
+            def __init__(self):
+                self.latest = {}
+
+            def add_timepoint(self, _t, flux_dict):
+                self.latest = {str(name): float(value) for name, value in flux_dict.items()}
+
+        sim_flux_values_by_reaction = {reaction_name: [] for reaction_name in self.teacher_flux_names}
+        for idx, t in enumerate(self.teacher_timepoints):
+            tracker = FluxSnapshot()
+            equadiff_brodbar(
+                float(t),
+                np.asarray(y_dense[:, idx], dtype=float),
+                custom_params=custom_params,
+                curve_fit_strength=self.curve_fit_strength,
+                flux_tracker=tracker,
+            )
+            snapshot = tracker.latest
+            missing = [reaction_name for reaction_name in self.teacher_flux_names if reaction_name not in snapshot]
+            if missing:
+                raise ValueError(
+                    "Unsupported teacher flux reaction target(s): "
+                    + ", ".join(sorted(missing))
+                )
+            for reaction_name in self.teacher_flux_names:
+                sim_flux_values_by_reaction[reaction_name].append(snapshot[reaction_name])
+
+        sim_flux_values = [
+            sim_flux_values_by_reaction[reaction_name]
+            for reaction_name in self.teacher_flux_names
+        ]
+        out = np.asarray(sim_flux_values, dtype=float)
+        self._teacher_flux_cache[cache_key] = out
+        if len(self._teacher_flux_cache) > SOLVE_CACHE_SIZE:
+            oldest_key = next(iter(self._teacher_flux_cache))
+            self._teacher_flux_cache.pop(oldest_key, None)
+        return out
 
     def _teacher_student_loss(self, custom_params):
         teacher_supervision_active = (

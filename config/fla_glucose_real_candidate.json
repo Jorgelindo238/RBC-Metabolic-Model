@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "status": "experimental_conditional_candidate_pending_GLUT_only_full_network_replay",
+  "source_archive": "output/real_glucose_likelihood_pilot_segmented_2026_10_23",
+  "source_case": "effective_clearance_only",
+  "source_start": 0,
+  "selection": "simpler_verified_case_no_affinity_bound_hit_not_selected_by_holdout",
+  "working_hematocrit": 0.58,
+  "hematocrit_status": "borrowed_Yurkovich_geometry_not_matched_Bordbar_metadata",
+  "effective_clearance_per_day": 0.0376631537888491,
+  "glucose_kinetics": {
+    "conductance": 0.027273318260890734,
+    "km_i": 3.4913742400037897,
+    "km_e": 23.50088375077599
+  },
+  "seed_conductance": 0.08796558869207803,
+  "constructor_vmax_equivalent": 0.6409470819471091,
+  "native_MM_Vmax_interchangeable": false,
+  "planned_override_reactions": ["VEGLC"],
+  "VELAC_and_pH_mechanisms": "retain_reference_do_not_enable_MCT_candidate",
+  "initial_states": "preserve_exact55_J1_and_current_latent_context",
+  "kinetic_constants_editable": true,
+  "activation": "explicit_successor_GLUT_only_adapter_required_not_loaded_by_production",
+  "next_execution": "baseline_and_candidate_fixed_context_J1_J4_then_longer_replay_if_numerically_valid",
+  "guardrails": ["EGLC", "GLC", "LAC", "ELAC", "ATP", "ADP", "AMP", "raw_and_executed_flux_closure", "positivity", "strict_ultrastrict_convergence"],
+  "full_RBC_validation_passed": false,
+  "production_promoted": false
+}

@@ -1,0 +1,10 @@
+{
+  "parent_archive": "output/temporal_vmax_2026_11_04_v2",
+  "target_day": 15,
+  "target_pools": ["ATP", "ADP"],
+  "target_band": "inherited_working_scale",
+  "number_of_rounds": 4,
+  "exploratory_fractions": [0.25, 0.5],
+  "maximum_attempts": 80,
+  "production_promotion_allowed": false
+}

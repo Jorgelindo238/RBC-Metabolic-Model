@@ -1,0 +1,52 @@
+{
+  "purpose": "published_source_review_not_kinetic_calibration",
+  "review_date": "2026-10-06",
+  "local_source_directory": "C:/Users/Jorgelindo/Downloads/Issaian2026",
+  "sources": [
+    {
+      "id": "Issaian_2026_Deep_Red",
+      "doi": "10.1182/blood.2025032915",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13283417/",
+      "palsson_coauthor": true,
+      "role": "human_enzyme_abundance_and_oxygen_redox_mechanistic_evidence",
+      "data": "supplied workbook and four HTML data views; MassIVE MSV000100191; PRIDE PXD072059",
+      "limitations": "two copy-number calibrations; PTM signal is not occupancy; mouse interventions are not human storage trajectories",
+      "priority": 1
+    },
+    {
+      "id": "Haiman_2025_RBC_GEM",
+      "doi": "10.1371/journal.pcbi.1012109",
+      "url": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012109",
+      "palsson_coauthor": true,
+      "role": "longitudinal_human_storage_proteomics_and_GPR_audit",
+      "data": "S6 pcbi.1012109.s008.xlsx; Figshare 28583740; GitHub z-haiman/RBC-GEM; Zenodo 10836860",
+      "limitations": "616 complete donors at days10/23/42; estimated absolute abundances; 95-percent hemoglobin assumption and imputation; FVA rates are simulated, not measured teachers",
+      "priority": 1
+    },
+    {
+      "id": "Nemkov_2024_PFK",
+      "doi": "10.1016/j.cmet.2024.06.007",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11374506/",
+      "palsson_coauthor": true,
+      "role": "PFK_isoforms_HK1_adenylates_and_matched_multiomics",
+      "data": "Supplemental data and REDS RBC Omics recall metadata; data accession/quantification audit still needed",
+      "limitations": "same REDS recall cohort overlaps RBC-GEM; not independent external validation",
+      "priority": 2
+    },
+    {
+      "id": "Bevers_2026_PIMT",
+      "doi": "10.1002/hem3.70361",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13084699/",
+      "palsson_coauthor": true,
+      "role": "PCMT1_protein_repair_one_carbon_and_active_enzyme_integrity",
+      "data": "Supporting Information; human donor genetics and mouse interventions; acquisition not performed",
+      "limitations": "recombinant peptide assay is not a human cold-storage Km; genotype and species must remain distinct; do not add an ATP sink without reaction/amount evidence",
+      "priority": 3
+    }
+  ],
+  "initial_conditions_changed": false,
+  "kinetics_changed": false,
+  "network_changed": false,
+  "optimization_allowed": false,
+  "proteomic_priors_activated": false
+}

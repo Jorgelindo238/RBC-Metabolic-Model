@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "purpose": "reversible_HK_PFK_dissociation_with_other_kinetics_fixed",
+  "parent_archive": "output/broad_protected_joint_restoration_2026_11_03",
+  "training_end_day": 10.0,
+  "training_times": [4.0, 8.0],
+  "audit_end_days": [4.0, 10.0, 46.0],
+  "screen_log_step": 0.04879016416943205,
+  "screen_offsets": {"baseline": [0, 0], "HK_down": [-1, 0], "HK_up": [1, 0], "PFK_down": [0, -1], "PFK_up": [0, 1], "paired_down": [-1, -1], "paired_up": [1, 1], "HK_down_PFK_up": [-1, 1], "HK_up_PFK_down": [1, -1]},
+  "directed_start_multiplier": 0.8,
+  "minimum_NLL_gain": 0.0001,
+  "optimizer": {
+    "method": "SLSQP_with_unchanged_outer_caps_and_inner_target",
+    "maxiter": 80,
+    "ftol": 1e-7,
+    "difference_step": 0.0001,
+    "inner_reserve_fraction": 0.01,
+    "primary_actual_integrations": 200,
+    "secondary_cumulative_actual_integrations": 500,
+    "stagnation_minimum_calls": 120,
+    "stagnation_patience_calls": 90,
+    "admissible_progress_NLL": 0.0001,
+    "one_optional_within_budget_interior_repair": true,
+    "repair_trust_radius": 0.005
+  },
+  "free_parameters": ["vmax_VHK", "vmax_VPFK"],
+  "global_primitive_bounds_expanded": false,
+  "all_other_parameters_fixed_to_parent": true,
+  "all13_guard_limits_identical_to_parent": true,
+  "late_data_used_in_selection": false,
+  "initial_states_or_source_values_changed": false,
+  "production_promotion_allowed": false
+}

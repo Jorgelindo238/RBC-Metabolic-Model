@@ -221,7 +221,7 @@ def parse(file_path, strict=False):
     sys['ext'] = ext
     
     # Ensure all reactions have been defined
-    defined = np.any(abs(st) > 0, axis=0)
+    defined = np.any(abs(st) > 0, axis=0) | np.any(abs(ext) > 0, axis=0)
     undefined = np.where(~defined)[0].tolist()
     if undefined:
         print("Warning: the following reactions are undefined:")
@@ -274,28 +274,19 @@ def parse_equation_side(equation_side):
         List of dictionaries with metabolite names and coefficients
     """
     result = []
-    
-    # Add a space at the end to simplify parsing
-    equation_side += ' '
-    
-    # Regular expression to match coefficient and metabolite
-    pattern = r'(?:(\d+(?:\.\d*)?|\d*\.\d+)?\s*)?(\S+)\s*(\+)?'
-    
-    matches = re.finditer(pattern, equation_side)
-    for match in matches:
-        coeff_str, met, plus = match.groups()
-        
-        if not met or met == '+':
-            continue
-        
-        # Convert coefficient to float
-        coeff = 1.0 if not coeff_str else float(coeff_str)
-        
-        result.append({
-            'met': met,
-            'coeff': coeff,
-            'plus': bool(plus)
-        })
+    terms = equation_side.strip().split('+')
+    for index, raw in enumerate(terms):
+        term = raw.strip()
+        if not term:
+            if len(terms) == 1:
+                continue  # A source/sink has an intentionally empty side.
+            raise ValueError("empty metabolite term between '+' separators")
+        match = re.fullmatch(r'(?:(\d+(?:\.\d*)?|\.\d+)\s*)?([A-Za-z_][A-Za-z0-9_]*)', term)
+        if match is None:
+            raise ValueError(f"invalid metabolite term: {term!r}")
+        coeff_str, met = match.groups()
+        result.append({'met': met, 'coeff': float(coeff_str) if coeff_str else 1.0,
+                       'plus': index < len(terms) - 1})
     
     return result
 
@@ -332,11 +323,11 @@ def process_equation_side(items, sys, st, ext, reac_idx, sign):
         if met_name in sys['int_met']:
             # Internal metabolite
             met_idx = sys['int_met'].index(met_name)
-            st[met_idx, reac_idx] = coeff
+            st[met_idx, reac_idx] += coeff
         elif met_name in sys['ext_met']:
             # External metabolite
             met_idx = sys['ext_met'].index(met_name)
-            ext[met_idx, reac_idx] = coeff
+            ext[met_idx, reac_idx] += coeff
         else:
             # Undeclared metabolite, add as internal by default
             print(f"Warning: undeclared metabolite '{met_name}' is added as internal")

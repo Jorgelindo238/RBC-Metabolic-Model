@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "purpose": "user_authorized_eleven_pool_calibration_with_pointwise_PEP_guards",
+  "parent_archive": "output/protected_joint_calibration_2026_11_02",
+  "guard_audit_archive": "output/protected_f6p_b23pg_executed_audit_2026_11_03_v3",
+  "pools": ["EGLC", "GLC", "LAC", "ELAC", "ATP", "ADP", "AMP", "PEP", "G6P", "F6P", "B23PG"],
+  "pointwise_pools": ["PEP"],
+  "training_end_day": 10.0,
+  "training_times": [4.0, 8.0],
+  "audit_end_days": [4.0, 10.0, 46.0],
+  "guard_numerical_atol_mM": 0.00001,
+  "guard_numerical_rtol": 0.0001,
+  "fitting_allowance_fraction": 0.25,
+  "allowance_interpretation": "engineering_replay_allowance_not_assay_noise_or_biological_accuracy",
+  "optimizer": {
+    "method": "SLSQP",
+    "maxiter": 120,
+    "ftol": 1e-7,
+    "log_factor_difference_step": 0.002,
+    "primary_actual_integrations": 400,
+    "secondary_cumulative_actual_integrations": 1000
+  },
+  "minimum_training_NLL_gain": 0.0001,
+  "start_policy": "control_previous_nine_pool_fit_and_log_midpoint",
+  "late_data_used_in_selection": false,
+  "new_kinetic_coordinates": false,
+  "latent_initial_states_fitted": false,
+  "source_aliases_excluded": {"B13PG": "B23PG", "P2G": "P3G"},
+  "other_source_representations_not_hard_guarded": 44,
+  "production_promotion_allowed": false
+}

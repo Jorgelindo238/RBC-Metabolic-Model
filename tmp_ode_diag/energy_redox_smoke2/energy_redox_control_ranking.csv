@@ -1,0 +1,9 @@
+candidate,parameter,factor,late_factor,endpoint_factor,limitation_score,suggested_direction
+mild_seed,km_ATP_HK,VHK_ATP_occupancy,,0.3410095361568004,,do not open km_ATP_HK
+mild_seed,km_ATP_PFK,VPFK_ATP_occupancy,,0.4851692320834893,,do not open km_ATP_PFK
+mild_seed,ki_ATP_PK,VPK_ATP_inhibition,,0.9823394011474204,,do not open
+mild_seed,km_NADH_NAD,VLDH_NADH_NAD_drive,,0.7166116973926241,,do not open km_NADH_NAD
+coupled_rejected,km_ATP_HK,VHK_ATP_occupancy,,0.4520557140027277,,do not open km_ATP_HK
+coupled_rejected,km_ATP_PFK,VPFK_ATP_occupancy,,0.6003899016229542,,do not open km_ATP_PFK
+coupled_rejected,ki_ATP_PK,VPK_ATP_inhibition,,0.9721362748286775,,do not open
+coupled_rejected,km_NADH_NAD,VLDH_NADH_NAD_drive,,0.7169857990792892,,do not open km_NADH_NAD

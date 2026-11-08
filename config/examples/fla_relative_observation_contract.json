@@ -1,0 +1,55 @@
+{
+  "purpose": "synthetic_software_example_not_biological_observations",
+  "series": [
+    {
+      "channel_id": "glucose_supernatant",
+      "metabolite": "EGLC",
+      "trajectory_id": "synthetic_bag_1",
+      "cohort_id": "synthetic_cohort",
+      "source_id": "synthetic_example_only",
+      "donor_id": "synthetic_D1",
+      "compartment": "extracellular",
+      "volume_basis": "supernatant_phase",
+      "measurement_type": "absolute_concentration",
+      "unit": "mM",
+      "normalization_status": "resolved",
+      "time": [0, 1, 2],
+      "values": [10, 9, 8]
+    },
+    {
+      "channel_id": "lactate_cell_relative_intensity",
+      "metabolite": "LAC",
+      "trajectory_id": "synthetic_bag_1",
+      "cohort_id": "synthetic_cohort",
+      "source_id": "synthetic_example_only",
+      "donor_id": "synthetic_D1",
+      "compartment": "intracellular",
+      "volume_basis": "cell_phase",
+      "measurement_type": "relative_signal",
+      "unit": "relative_signal",
+      "normalization_status": "resolved",
+      "linear_response_verified": true,
+      "ratio_kind": "within_metabolite_time_course",
+      "time": [0, 1, 2],
+      "values": [100, 200, 300]
+    },
+    {
+      "channel_id": "lactate_supernatant_temporal_ratio",
+      "metabolite": "ELAC",
+      "trajectory_id": "synthetic_bag_1",
+      "cohort_id": "synthetic_cohort",
+      "source_id": "synthetic_example_only",
+      "donor_id": "synthetic_D1",
+      "compartment": "extracellular",
+      "volume_basis": "supernatant_phase",
+      "measurement_type": "temporal_ratio",
+      "unit": "fold_change",
+      "normalization_status": "resolved",
+      "linear_response_verified": true,
+      "ratio_kind": "within_metabolite_time_course",
+      "reference_index": 0,
+      "time": [0, 1, 2],
+      "values": [1, 2, 3]
+    }
+  ]
+}

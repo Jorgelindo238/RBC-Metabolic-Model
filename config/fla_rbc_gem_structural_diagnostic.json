@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "purpose": "fixed_parameter_structural_diagnostic_not_calibration",
+  "horizon_day": [1.0, 4.0],
+  "audit_boundaries_day": [1.0, 2.0, 3.0, 4.0],
+  "initial_state_archive": "output/exploratory_energy_sensitivity_J1_J4_2026_10_06",
+  "working_reference": "config/fla_working_reference.json",
+  "cases": [
+    {"name": "historical", "network_mode": "historical", "disable_oplah": false},
+    {"name": "oplah_off_only", "network_mode": "historical", "disable_oplah": true},
+    {"name": "redox_only", "network_mode": "redox_stoichiometry", "disable_oplah": false},
+    {"name": "rbc_gem_core", "network_mode": "rbc_gem_core", "disable_oplah": false}
+  ],
+  "tolerances": ["strict", "ultrastrict"],
+  "new_branches_enabled": [],
+  "initial_conditions_changed": false,
+  "biological_optimization_allowed": false,
+  "global_promotion_allowed": false,
+  "forcing_allowed": false,
+  "interpretation": "Reversible tests of stoichiometry, ATP coupling and exclusion of OPLAH. ATP availability limiting remains numerical, not a physiological rate law; no O2 binding or supply model is introduced."
+}

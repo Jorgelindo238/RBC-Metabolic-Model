@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "purpose": "source_audit_and_prospective_transport_design_only",
+  "production_enabled": false,
+  "normalization_enabled": false,
+  "optimization_enabled": false,
+  "gem_versions": {
+    "1.2.0": "5347d80275be01e410aa9787b0aac99497a8ed57",
+    "1.3.0": "43fd381d9eb8a8a4079629012362312960e1c009"
+  },
+  "jbc_workbook": "output/jbc_supplements_ingestion_2026_10_06/source_files/jbc.M117.804914-1.xlsx",
+  "jbc_workbook_sha256": "58105120d68fba11ffa4829955fa1228aabe409b94edace0c39240eb7b03a2d0",
+  "jbc_channels": {
+    "endo!L": "GLC",
+    "endo!AE": "LAC",
+    "assay!D": "hematocrit",
+    "assay!Q": "EGLC",
+    "assay!T": "ELAC",
+    "assay!Y": "pH_measured_at_37C",
+    "assay!Z": "pH_reported_at_22C"
+  },
+  "observation_decisions": {
+    "user_target_convention": "Distinct intracellular and extracellular reference litres; a bag contains both phases. Keep cellular, supernatant and total-bag denominators explicit, not inferred from mM.",
+    "local_sheet1": "mM label verified; denominator and donor-level source lineage unverified. Preserve every value including exact J1.",
+    "jbc2017": "Separate pellet/supernatant assays, mM labels and measured hematocrit verified. Complete concentration normalization equations and cross-sheet donor linkage unverified.",
+    "ufba2017": "Methods explicitly normalize both intracellular and extracellular amounts by total bag volume. This is a published observation convention, not proof of local Sheet1 or JBC workbook processing.",
+    "cell_water": "A litre of packed cells and a litre of intracellular water are not interchangeable. A water-fraction correction is required only if that is the stated assay basis. No assumed water fraction."
+  },
+  "validation_policy": {
+    "unit": "identified_donor_or_predeclared_matched_group",
+    "donor_ids_from_positional_blocks": false,
+    "keep_repeated_days_and_paired_conditions_together": true,
+    "group_matching": ["storage_solution", "temperature", "collection_processing", "sampling_origin", "assay_pool_and_denominator", "supported_donor_covariates"],
+    "outcome_selected_groups_allowed": false,
+    "cohort_independence_assumed": false,
+    "validation_split_created": false
+  },
+  "prospective_kinetics": {
+    "glucose": "Reversible facilitated transport, with equal-activity equilibrium and Haldane-constrained directional capacities. First test a reduced law; later allostery requires independently supported kinetics.",
+    "lactate": "Reversible proton-lactate cotransport; explicit pHi and pHe at the simulation temperature. Net extracellular lactate constrains the sum of lactate transport routes, not MCT1 alone.",
+    "gem_bounds_are_vmax": false,
+    "automatic_proteomic_vmax_conversion": false,
+    "automatic_ph_input": false,
+    "automatic_gem_boundary_reservoir": false
+  },
+  "primary_sources": [
+    {
+      "id": "ufba2017",
+      "url": "https://www.nature.com/articles/srep46249",
+      "accessible_pdf": "https://backend.orbit.dtu.dk/ws/portalfiles/portal/132148106/srep46249.pdf",
+      "locator": "Article p7, Data Preparation; PDF page8 when institutional cover is included",
+      "access": "full primary PDF read",
+      "finding": "Both pools normalized per total bag litre; physiological splitting of unresolved pools; rates per hour; closed-system treatment. Local preprocessing equivalence remains unverified."
+    },
+    {
+      "id": "rbc_gem2025",
+      "url": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012109",
+      "locator": "Primary article and pinned model JSON/GPR/curation files",
+      "access": "full primary article and pinned model files read",
+      "finding": "Compartment-preserving stoichiometry and gene rules, not kinetic Km or dynamic Vmax."
+    },
+    {
+      "id": "yurkovich_jbc2017",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/29030425/",
+      "locator": "Supplied supplement PDF p2; workbook endo/assay headers and exact cells",
+      "access": "supplied numerical workbook and PDF read; fresh primary full-text web access unsuccessful",
+      "finding": "Three donors with units split among four temperatures; hematocrit measured; first sample one day after storage began; blood-gas pH measured at37C. No verified sheet-to-donor key."
+    },
+    {
+      "id": "glut1_kinetics2018",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/29209831/",
+      "full_text": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5834401/",
+      "access": "primary indexed abstract/sections read; direct PMC open challenged",
+      "finding": "GLUT1 facilitated diffusion has cis/trans allostery; ATP can modulate transport. A minimal reversible saturation law is a proposed reduction, not the complete experimentally established mechanism."
+    },
+    {
+      "id": "human_rbc_lactate1983",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/6871216/",
+      "doi": "10.1016/0005-2736(83)90232-8",
+      "access": "primary abstract read",
+      "finding": "Human RBC lactate has parallel routes; specific carrier experiments support proton-first ordered binding and proton-lactate symport. No storage-temperature Km or fixed fractional route contribution is imported."
+    },
+    {
+      "id": "human_rbc_lactate1976",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/942406/",
+      "access": "primary abstract read",
+      "finding": "Evidence for chloride-carrier and chloride-independent routes and competition with pyruvate. Historical route interpretation is not used as a universal modern mechanism."
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "purpose": "accessible_pool_and_acid_base_contract_before_calibration",
+  "previous_archive": "output/distinct_phase_transport_2026_10_06",
+  "simulation_temperature_C": 4,
+  "concentration_basis": {
+    "intracellular": "mmol_per_L_packed_cells",
+    "extracellular": "mmol_per_L_supernatant",
+    "source_processing_verified": false,
+    "ufba_applied": false,
+    "original_values_changed": false
+  },
+  "accessible_pools": {
+    "GLC": {"free_fraction": null, "aqueous_fraction": null, "recovery_fraction": null, "activity_coefficient": null, "evidence": null},
+    "EGLC": {"free_fraction": null, "aqueous_fraction": null, "recovery_fraction": null, "activity_coefficient": null, "evidence": null},
+    "LAC": {"free_fraction": null, "aqueous_fraction": null, "recovery_fraction": null, "activity_coefficient": null, "evidence": null},
+    "ELAC": {"free_fraction": null, "aqueous_fraction": null, "recovery_fraction": null, "activity_coefficient": null, "evidence": null}
+  },
+  "pH_inputs": {
+    "pHi": {"value": null, "temperature_C": null, "compartment": "intracellular", "evidence": null},
+    "pHe": {"value": null, "temperature_C": null, "compartment": "extracellular", "evidence": null},
+    "source_assay_Y": {"measurement_temperature_C": 37, "assign_to_simulation": false},
+    "source_assay_Z": {"reported_temperature_C": 22, "assign_to_simulation": false},
+    "universal_temperature_correction_allowed": false
+  },
+  "buffering": {
+    "beta_i_mM_per_L_cells_per_pH": null,
+    "beta_e_mM_per_L_supernatant_per_pH": null,
+    "temperature_C": null,
+    "evidence": null,
+    "representation": null,
+    "allowed_representations": ["effective_total_capacity", "explicit_CO2_plus_intrinsic_capacity"],
+    "Hb_oxygenation_and_CO2_boundary_contract": null,
+    "metabolic_proton_stoichiometry_contract": null,
+    "AE1_Cl_HCO3_contract": null,
+    "gas_exchange_sampling_hemolysis_contract": null
+  },
+  "kinetics": {
+    "affinity_and_capacity_coordinate_contract": null,
+    "alternative_lactate_routes_and_shared_capacity_contract": null,
+    "proton_ledger_uses_executed_flux": true,
+    "legacy_pH_terms_reused": false
+  },
+  "diagnostic_design": {
+    "lactate_accessibility_ratio_i_over_e": [0.5, 1.0, 2.0, 4.0],
+    "pHi_minus_pHe": [-1.0, -0.5, -0.2, 0.0, 0.2],
+    "beta_i_mM_per_L_cells_per_pH": [30.0, 65.0, 85.0],
+    "beta_e_mM_per_L_supernatant_per_pH": [1.0, 10.0, 30.0],
+    "status": "algebraic_counterfactuals_not_measured_4C_priors_not_new_ODE_replays",
+    "beta_i_labels": ["historical_code_anchor_not_validated", "37C_literature_context_not_4C_prior", "37C_literature_context_not_4C_prior"],
+    "beta_e_status": "synthetic_sensitivity_grid_not_SAGM_measurements"
+  },
+  "optimization_allowed": false,
+  "free_pH_prediction_allowed": false,
+  "production_default_changed": false,
+  "measured_initial_state_changed": false
+}

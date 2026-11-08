@@ -33,19 +33,29 @@ for _path in (_APP_API, _SRC):
         sys.path.insert(0, _path_str)
 
 from services.pure_ode_runtime import run_pure_ode_rerun
+from extracellular_teacher_flux import (
+    EXTRACELLULAR_TEACHER_FLUX_RULES,
+    build_extracellular_teacher_flux_dataset,
+    infer_extracellular_teacher_flux_targets,
+)
 from teacher_flux_bridge import distill_teacher_flux_kinetics, write_teacher_override_params
 
 
 _SUPPORTED_TARGETS = {
-    "EGLC": {"reaction": "VEGLC", "sign": -1.0},
-    "ELAC": {"reaction": "VELAC", "sign": 1.0},
+    **{
+        name: {"reaction": rule["reaction"], "source": "extracellular_balance"}
+        for name, rule in EXTRACELLULAR_TEACHER_FLUX_RULES.items()
+    },
     "LAC": {
         "reaction": "VLDH",
         "auxiliary_reaction": "VELAC",
         "derivative_scale": 1.0,
         "auxiliary_scale": 1.0,
+        "source": "intracellular_balance",
     },
 }
+
+_TEACHER_OVERRIDE_REACTIONS = {"VEGLC", "VELAC", "VLDH"}
 
 
 def _normalize(name: Any) -> str:
@@ -81,13 +91,33 @@ def build_teacher_flux_dataset_from_request(
         raise ValueError("Teacher-flux dataset requires at least two experimental time points.")
 
     dense_timepoints = np.linspace(float(exp_time[0]), float(exp_time[-1]), int(dense_points))
-    teacher_curves: Dict[str, Dict[str, Any]] = {}
-    reaction_flux_curves: Dict[str, Dict[str, Any]] = {}
     normalized_targets = infer_teacher_flux_targets(metabolite_names)
     if not normalized_targets:
         raise ValueError("No supported teacher-flux targets were present in the request.")
 
-    for metabolite_name in normalized_targets:
+    extracellular_targets = infer_extracellular_teacher_flux_targets(normalized_targets)
+    intracellular_balance_targets = [name for name in normalized_targets if name not in extracellular_targets]
+
+    if extracellular_targets:
+        payload = build_extracellular_teacher_flux_dataset(
+            exp_data,
+            exp_time,
+            metabolite_names=extracellular_targets,
+            dense_points=dense_points,
+            dataset_label="teacher_flux_" + "_".join(name.lower() for name in normalized_targets),
+            data_path="request_payload",
+            strict=True,
+        )
+        teacher_curves: Dict[str, Dict[str, Any]] = dict(payload.get("teacher_curves", {}))
+        reaction_flux_curves: Dict[str, Dict[str, Any]] = dict(payload.get("reaction_flux_curves", {}))
+        teacher_target_weights: Dict[str, float] = dict(payload.get("teacher_target_weights", {}))
+        dense_timepoints = np.asarray(payload.get("dense_timepoints", dense_timepoints.tolist()), dtype=float)
+    else:
+        teacher_curves = {}
+        reaction_flux_curves = {}
+        teacher_target_weights = {}
+
+    for metabolite_name in intracellular_balance_targets:
         values = exp_data.get(metabolite_name) or exp_data.get(metabolite_name.lower()) or exp_data.get(metabolite_name.upper())
         if not values:
             raise KeyError(f"Experimental series for {metabolite_name} was not present in the request.")
@@ -104,17 +134,10 @@ def build_teacher_flux_dataset_from_request(
             "dense_values": dense_values.tolist(),
             "dense_derivative": dense_derivative.tolist(),
         }
+        teacher_target_weights.setdefault(metabolite_name, 1.0)
 
         rule = _SUPPORTED_TARGETS[metabolite_name]
         reaction_name = str(rule["reaction"])
-        if metabolite_name != "LAC":
-            reaction_flux_curves[reaction_name] = {
-                "source_metabolite": metabolite_name,
-                "source": "request_experimental_pchip_derivative",
-                "dense_values": (float(rule["sign"]) * dense_derivative).tolist(),
-            }
-            continue
-
         if auxiliary_flux_csv_path is None:
             raise ValueError("LAC teacher-flux reconstruction requires auxiliary_flux_csv_path with VELAC.")
         aux_time, aux_values = _load_auxiliary_flux_series(Path(auxiliary_flux_csv_path), str(rule["auxiliary_reaction"]))
@@ -138,6 +161,7 @@ def build_teacher_flux_dataset_from_request(
         "auxiliary_flux_csv_path": str(auxiliary_flux_csv_path) if auxiliary_flux_csv_path is not None else None,
         "target_metabolites": normalized_targets,
         "dense_timepoints": dense_timepoints.tolist(),
+        "teacher_target_weights": teacher_target_weights,
         "teacher_curves": teacher_curves,
         "reaction_flux_curves": reaction_flux_curves,
     }
@@ -205,12 +229,21 @@ def run_teacher_flux_rescue(
         seed_params_path=seed_params_path,
         dataset_path=dataset_path,
         out_path=teacher_override_params_path,
-        reactions=[_SUPPORTED_TARGETS[target]["reaction"] for target in targets],
+        reactions=[
+            str(_SUPPORTED_TARGETS[target]["reaction"])
+            for target in targets
+            if str(_SUPPORTED_TARGETS[target]["reaction"]) in _TEACHER_OVERRIDE_REACTIONS
+        ],
     )
 
     distillation_payload: dict[str, Any] | None = None
     state_csv_path = artifacts.get("all_metabolites_csv")
-    if state_csv_path and reaction_flux_csv_path:
+    distillable_targets = [
+        target
+        for target in targets
+        if str(_SUPPORTED_TARGETS[target]["reaction"]) in _TEACHER_OVERRIDE_REACTIONS
+    ]
+    if state_csv_path and reaction_flux_csv_path and distillable_targets:
         distillation_dir = output_dir / "distillation"
         distillation_report = distill_teacher_flux_kinetics(
             state_csv_path=Path(state_csv_path),

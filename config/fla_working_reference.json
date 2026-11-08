@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "status": "provisional_numerical_working_reference",
+  "profile": {
+    "positivity_policy": "reaction_consistent",
+    "reaction_availability_threshold_mM": 0.001,
+    "solver_method": "BDF",
+    "solver_rtol": 1e-7,
+    "solver_atol": 1e-9
+  },
+  "historical_profile": {
+    "positivity_policy": "legacy",
+    "reaction_availability_threshold_mM": null,
+    "solver_method": "BDF",
+    "solver_rtol": 1e-7,
+    "solver_atol": 1e-9
+  },
+  "fixed_context": "output/ppp_numerical_audit_2026_10_05",
+  "baseline_audit": "output/reaction_positivity_fixed_2026_10_05_roundtrip",
+  "context_status": "unpromoted_VAMPD1_storage_decay_diagnostic",
+  "model_network_version": "airbc-rbc-2026.09.04",
+  "validation_before_calibration": {
+    "horizon_day": [1.0, 46.0],
+    "ultrastrict_rtol": 1e-8,
+    "ultrastrict_atol": 1e-10,
+    "availability_thresholds_mM": [0.0001, 0.001, 0.01],
+    "comparison_atol_mM": 1e-5,
+    "comparison_rtol": 0.01,
+    "negative_state_tolerance_mM": -1e-10,
+    "closure_tolerance_mM_per_day": 1e-7,
+    "quadrature_atol_mM": 1e-6,
+    "quadrature_rtol": 0.001,
+    "quadrature_orders": [4, 8]
+  },
+  "kinetic_parameters_changed": false,
+  "kinetic_parameters_promoted": false,
+  "calibration_allowed": false,
+  "threshold_selection_by_prediction_error": false,
+  "historical_kernel_default": "legacy"
+}

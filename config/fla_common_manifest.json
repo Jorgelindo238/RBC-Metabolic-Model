@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "purpose": "source_observation_cohort_inventory_only",
+  "policy": {
+    "data_fusion_allowed": false,
+    "normalization_allowed": false,
+    "teacher_generation_allowed": false,
+    "ode_execution_allowed": false,
+    "optimization_allowed": false,
+    "initial_state_changes_allowed": false,
+    "production_training_enabled": false,
+    "readiness_override_allowed": false
+  },
+  "public_metadata_checked_on": "2026-10-06",
+  "sources": [
+    {"source_id": "local_bordbar_unresolved", "title": "Local AIRBC Sheet1 reference; experimental lineage unresolved", "identifiers": [], "role": "historical_development", "metadata_evidence": "output/bordbar_source_units_time_audit_2026_10_06/workbook_receipt.json"},
+    {"source_id": "bordbar2015", "title": "Personalized Whole-Cell Kinetic Models of Metabolism for Discovery in Genomics and Pharmacodynamics", "identifiers": ["doi:10.1016/j.cels.2015.10.003", "pmid:27136057"], "url": "https://pubmed.ncbi.nlm.nih.gov/27136057/", "role": "kinetic_lineage_reference", "metadata_evidence": "tasks/fla_project_objectives_2026_10_06.md"},
+    {"source_id": "bordbar2016_storage", "title": "Bordbar storage publication; candidate lineage only", "identifiers": ["doi:10.1111/trf.13460", "pmid:26749434"], "url": "https://pubmed.ncbi.nlm.nih.gov/26749434/", "role": "candidate_storage_lineage", "metadata_evidence": "config/fla_bordbar_source_audit.json"},
+    {"source_id": "bordbar2017_ufba", "title": "Elucidating dynamic metabolic physiology through network integration of quantitative time-course metabolomics", "identifiers": ["doi:10.1038/srep46249", "pmid:28387366"], "url": "https://pubmed.ncbi.nlm.nih.gov/28387366/", "role": "candidate_storage_lineage", "metadata_evidence": "config/fla_bordbar_source_audit.json"},
+    {"source_id": "yurkovich2017_jbc", "title": "Quantitative time-course metabolomics in human red blood cells reveal the temperature dependence of human metabolic networks", "identifiers": ["doi:10.1074/jbc.M117.804914", "pmid:29030425"], "url": "https://pubmed.ncbi.nlm.nih.gov/29030425/", "role": "prospective_metabolomic_constraints", "metadata_evidence": "output/jbc_supplements_ingestion_2026_10_06/decision_report.md"},
+    {"source_id": "rbc_gem2025", "title": "RBC-GEM: A genome-scale metabolic model for systems biology of the human red blood cell", "identifiers": ["doi:10.1371/journal.pcbi.1012109"], "url": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012109", "role": "structural_reference_and_prospective_capacity_priors", "metadata_evidence": "output/rbc_gem_network_audit_2026_10_06/summary.json"},
+    {"source_id": "issaian_deep_red", "title": "The red blood cell proteome and interactome identify a Band 3-BLVRB axis regulating hypoxic metabolic adaptation", "identifiers": ["doi:10.1101/2025.11.29.691178", "pmid:41394639", "doi:10.1182/blood.2025032915", "pmid:42224377"], "url": "https://pubmed.ncbi.nlm.nih.gov/42224377/", "role": "prospective_capacity_and_regulatory_evidence", "versions": ["2025 preprint v1", "Blood 2026 published article"], "supplied_file_version_equivalence_verified": false, "metadata_evidence": "tasks/fla_proteomics_source_review_2026_10_06.md"},
+    {"source_id": "population_atlas2026", "title": "A population-scale Red Blood Cell proteome atlas of 13,000 donors uncovers genetically encoded aging clocks predicting hemolysis, transfusion efficacy, and donor activity a decade later", "identifiers": ["doi:10.64898/2026.03.07.710284", "pmid:41846981", "pmcid:PMC12991079"], "url": "https://pubmed.ncbi.nlm.nih.gov/41846981/", "role": "candidate_biological_benchmark", "publication_status": "preprint_v1_indexed", "full_methods_and_supplements_reviewed": false, "metadata_evidence": "tasks/fla_project_objectives_2026_10_06.md"},
+    {"source_id": "bardyn_unresolved", "title": "Local standardized Bardyn panels; original lineage/pairing unresolved", "identifiers": [], "role": "external_exploratory_transfer", "metadata_evidence": "output/external_validation_manifest/summary.json"},
+    {"source_id": "michel_unresolved", "title": "Local standardized Michel panel; original lineage/pairing unresolved", "identifiers": [], "role": "external_exploratory_transfer", "metadata_evidence": "output/external_validation_manifest/summary.json"}
+  ],
+  "datasets": [
+    {"dataset_id": "local_bordbar_sheet1", "source_id": "local_bordbar_unresolved", "cohort_id": "local_bordbar_unknown", "reader": "bordbar", "path": "src/Data_Bordbar_et_al_exp.xlsx", "role": "historical_development", "exposure": "used_for_parameter_selection", "blockers": ["original_cell_lineage", "volume_normalization", "donor_aggregation", "duplicate_pool_identity"]},
+    {"dataset_id": "jbc_temperature", "source_id": "yurkovich2017_jbc", "cohort_id": "jbc_three_donors_positional", "reader": "jbc", "path": "output/jbc_supplements_ingestion_2026_10_06", "role": "candidate_metabolomic_constraints", "exposure": "source_and_mapping_reviewed_no_joint_fit", "blockers": ["compartment_volume_normalization", "donor_pairing", "ATP_pool_definition", "hexose_phosphate_identity", "zeros_censoring"]},
+    {"dataset_id": "gem_s6_priority", "source_id": "rbc_gem2025", "cohort_id": "reds_recall_s6_616", "reader": "s6", "path": "output/rbc_gem_network_audit_2026_10_06/priority_proteomics_v2", "role": "candidate_capacity_priors", "exposure": "curation_and_priority_selection_reviewed", "blockers": ["active_fraction_kcat_volume", "complex_shared_capacity", "atlas_donor_linkage"]},
+    {"dataset_id": "deep_red_human", "source_id": "issaian_deep_red", "cohort_id": "deep_red_human_unknown", "reader": "deep_red", "path": "output/palsson_proteomics_review_2026_10_06/human_protein_copy_numbers.csv", "role": "candidate_capacity_priors", "exposure": "used_for_reaction_evidence_and_prior_design", "blockers": ["F_G_calibration", "active_fraction_kcat_volume", "donor_metadata", "supplied_published_version_equivalence", "3799_vs_3775_scope"]},
+    {"dataset_id": "bardyn_control", "source_id": "bardyn_unresolved", "cohort_id": "bardyn_unknown_pairing", "reader": "standardized", "path": "tests/bardyn_control_standardized.csv", "role": "external_exploratory_transfer", "exposure": "previous_transfer_diagnostics_not_pristine_holdout", "blockers": ["original_source_normalization", "donor_pairing", "constant_one_placeholders", "prior_exposure"]},
+    {"dataset_id": "bardyn_supplemented", "source_id": "bardyn_unresolved", "cohort_id": "bardyn_unknown_pairing", "reader": "standardized", "path": "tests/bardyn_supplemented_standardized.csv", "role": "external_exploratory_intervention", "exposure": "previous_transfer_diagnostics_not_pristine_holdout", "blockers": ["original_source_normalization", "donor_pairing", "supplement_composition", "constant_one_placeholders", "prior_exposure"]},
+    {"dataset_id": "michel", "source_id": "michel_unresolved", "cohort_id": "michel_unknown", "reader": "standardized", "path": "tests/donnees_michel_standardized.csv", "role": "external_exploratory_transfer", "exposure": "previous_free_ODE_replay_not_pristine_holdout", "blockers": ["original_source_normalization", "donor_pairing", "prior_exposure"]},
+    {"dataset_id": "population_atlas_metadata", "source_id": "population_atlas2026", "cohort_id": "atlas_population_linkage_pending", "reader": "metadata_only", "role": "candidate_biological_benchmark", "exposure": "abstract_reviewed_no_sample_data_available", "blockers": ["full_methods_and_supplements", "compatible_ODE_observables", "donor_overlap", "untouched_validation_partition", "clinical_endpoint_observation_model"]}
+  ],
+  "cohorts": [
+    {"cohort_id": "local_bordbar_unknown", "reported_donors": null, "donor_identity_status": "unresolved", "time_basis": "model J1-J46; elapsed 45 days; sampling origin unresolved"},
+    {"cohort_id": "jbc_three_donors_positional", "reported_donors": 3, "donor_identity_status": "positional_blocks_only_not_donor_IDs", "time_basis": "source_day and separate source_day+1 documented storage coordinate"},
+    {"cohort_id": "reds_recall_s6_616", "reported_donors": 616, "donor_identity_status": "source Sample Index available; cross_study_linkage_unverified", "time_basis": "storage D10/D23/D42"},
+    {"cohort_id": "deep_red_human_unknown", "reported_donors": null, "donor_identity_status": "not_available_in_copy_number_rows", "time_basis": "copy_number_estimates_not_storage_time_series"},
+    {"cohort_id": "bardyn_unknown_pairing", "reported_donors": null, "donor_identity_status": "unresolved; shared risk group does not prove paired donors", "time_basis": "local storage labels 2/8/15/29/43"},
+    {"cohort_id": "michel_unknown", "reported_donors": null, "donor_identity_status": "unresolved", "time_basis": "local storage labels 2/15/22/36/43"},
+    {"cohort_id": "atlas_population_linkage_pending", "reported_donors": 13091, "donor_identity_status": "abstract_total_not_imported_subjects", "time_basis": "donor biological age and donation followup are not storage time"}
+  ],
+  "relationships": [
+    {"left": "local_bordbar_unresolved", "right": "bordbar2015", "status": "lineage_not_established", "evidence": "filename is not row-level experimental provenance"},
+    {"left": "local_bordbar_unresolved", "right": "bordbar2016_storage", "status": "candidate_lineage_only", "evidence": "storage publication; no source-cell mapping"},
+    {"left": "local_bordbar_unresolved", "right": "bordbar2017_ufba", "status": "candidate_lineage_only", "evidence": "normalization and pool splitting cannot be assigned to local Sheet1 without mapping"},
+    {"left": "rbc_gem2025", "right": "population_atlas2026", "status": "overlap_risk_linkage_required", "evidence": "RBC-GEM S6 uses REDS RBC-Omics recall; atlas participant-level linkage not inspected"},
+    {"left": "issaian_deep_red", "right": "population_atlas2026", "status": "independence_not_established", "evidence": "distinct study identities do not prove disjoint cohort or derived-prior independence"}
+  ],
+  "seals": [
+    {"root": "output/jbc_supplements_ingestion_2026_10_06", "receipt": "final_verification.json", "key": "output_sha256"},
+    {"root": "output/palsson_proteomics_review_2026_10_06", "receipt": "manifest.json", "key": "output_sha256"},
+    {"root": "output/rbc_gem_network_audit_2026_10_06", "receipt": "final_manifest.json", "key": "archive_sha256"},
+    {"root": "output/rbc_gem_network_audit_2026_10_06/priority_proteomics_v2", "receipt": "manifest.json", "key": "output_sha256"}
+  ],
+  "protected_paths": ["src/Data_Bordbar_et_al_exp.xlsx", "src/equadiff_brodbar.py", "src/MM_calibration.py", "src/rbc_stoichiometry.py", "src/rbc_biochemical_extensions.py", "src/reaction_positivity.py", "config/fla_working_reference.json", "config/fla_adenylate_redox_readiness.json", "RBC/Rxn_RBC.txt"]
+}

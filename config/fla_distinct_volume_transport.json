@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "purpose": "user_selected_distinct_phase_volumes_fixed_parameter_diagnostic",
+  "ufba_normalization_applied": false,
+  "normalization": {
+    "intracellular": "mmol_per_litre_packed_cells",
+    "extracellular": "mmol_per_litre_supernatant",
+    "source_status": "user_selected_working_assumption_not_verified_source_processing",
+    "cell_water_fraction": null,
+    "rescale_source_concentrations": false,
+    "amounts_per_bag_litre": "derived_conservation_ledger_only_not_training_observations"
+  },
+  "keys": {
+    "trajectory": "JBC2017::{sheet}::T{temperature_C}::B{replicate_block_index}",
+    "sample": "trajectory_key::t{source_day}",
+    "candidate_unit": "JBC2017::P{replicate_block_index}; ordinal hypothesis only",
+    "primary_pairing": [1, 2, 3],
+    "pairing_status": "explicit_positional_hypothesis_not_verified_donor_identity",
+    "pairing_sensitivity": "all_six_endo_to_assay_permutations_at4C",
+    "validation_split_key": "JBC2017_unknown_linkage_all_units",
+    "validation_split_created": false
+  },
+  "jbc_workbook": "output/jbc_supplements_ingestion_2026_10_06/source_files/jbc.M117.804914-1.xlsx",
+  "jbc_sha256": "58105120d68fba11ffa4829955fa1228aabe409b94edace0c39240eb7b03a2d0",
+  "initial_state_archive": "output/exploratory_energy_sensitivity_J1_J4_2026_10_06",
+  "hct_source": "assay!D at4C source_day0; three separate constant geometry scenarios, not matched Bordbar donor metadata",
+  "horizon_day": [1.0, 4.0],
+  "working_reference": "config/fla_working_reference.json",
+  "kinetic_coordinate_assumption": "existing effective native rates per litre cells/day except explicitly external-only rates per litre supernatant/day",
+  "external_only_rate_basis": {"VECYT": "cellular_membrane_transport_from_explicit_CYT_chemostat", "VEGSH_deg": "supernatant", "VEGSSG_deg": "supernatant"},
+  "reversible_kinetics": {
+    "glucose": "conductance=seed_vmax_VEGLC/seed_km_EGLC; seed Km kept; reverse capacity tied by Haldane, not fitted",
+    "lactate": "conductance=seed_vmax_VELAC/seed_km_LAC; symmetric lactate Km and proton-relative activity drive; reduced diagnostic law, not complete ordered carrier",
+    "pH_reference": 7.2,
+    "pHe_diagnostic": 7.2,
+    "pH_policy": "clamped_diagnostic",
+    "proton_policy": "executed_MCT_proton_ledger_with_external_buffer_reservoir_not_free_pH_prediction",
+    "alternative_lactate_routes": "not_activated_in_reduced_hypothesis; VELAC interpreted_as_effective_net_MCT_diagnostic"
+  },
+  "tolerances": ["strict", "ultrastrict"],
+  "optimization_allowed": false,
+  "biological_promotion_allowed": false,
+  "production_default_changed": false,
+  "measured_initial_state_changed": false
+}
