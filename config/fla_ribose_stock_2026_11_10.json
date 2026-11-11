@@ -1,0 +1,29 @@
+{
+  "protocol": "tasks/fla_ribose_stock_protocol_2026_11_10.md",
+  "numerical_parent": "output/vmax_requalification_2026_11_09",
+  "control_case": "working_center",
+  "backend": "joint",
+  "profiles": ["strict", "ultrastrict"],
+  "changed_pool": "RIB",
+  "control_value_mM": 1.0,
+  "arms": {
+    "JA_historical": {"RIB_mM": 0.0023, "provenance": "Initial_conditions_JA_Final.xls first sheet, unproven as a measurement"},
+    "intermediate_diagnostic": {"RIB_mM": 0.1, "provenance": "numerical probe equal to coded km_RIB default, no physiological meaning"}
+  },
+  "hypothesis_arm": "JA_historical",
+  "monotonicity_arm": "intermediate_diagnostic",
+  "historical_workbook": "src/Initial_conditions_JA_Final.xls",
+  "report_pools": ["ATP", "ADP", "AMP", "RIB", "R5P", "PRPP", "IMP", "GMP", "GTP", "ADESUC", "PEP", "G6P", "F6P"],
+  "report_days": [1, 4, 8, 11, 15],
+  "windows": {"J1_J4": [1, 4], "J4_J8": [4, 8], "J8_J15": [8, 15]},
+  "ledger_reactions": ["VRKa", "VPRPPASe", "VNDPK", "VADSS", "VADSL", "VAMPD1", "VAK", "VAK2", "VHK", "VPFK", "VPGK", "VPK", "VHGPRT1"],
+  "phosphoryl_stocks": {"E_A": {"ATP": 2, "ADP": 1}, "E_G": {"GTP": 2, "GDP": 1}},
+  "compensation_fraction": 0.5,
+  "maximum_new_integrations": 4,
+  "measured_J1_changed": false,
+  "parameters_changed": false,
+  "optimization_executed": false,
+  "followup_calibration_allowed": false,
+  "production_promotion_allowed": false,
+  "J46_replayed": false
+}

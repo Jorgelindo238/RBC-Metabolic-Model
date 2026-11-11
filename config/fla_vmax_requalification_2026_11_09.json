@@ -1,0 +1,25 @@
+{
+  "numerical_parent": "output/integration_fine_jacobian_2026_11_08",
+  "historical_controls": "output/absolute_vmax_2026_11_07",
+  "sources": [
+    {"id": "temporal", "archive": "output/temporal_vmax_2026_11_04_v2", "trace": "fit/trace.jsonl"},
+    {"id": "absolute", "archive": "output/absolute_vmax_2026_11_07", "trace": "fit/trace.jsonl"},
+    {"id": "profile", "archive": "output/pgk_ndpk_profile_2026_11_07", "trace": "screen/trace.jsonl"}
+  ],
+  "threshold_mM": 0.001,
+  "scipy_version": "1.17.1",
+  "method": "Radau",
+  "profiles": {
+    "strict": {"rtol": 0.00000001, "atol": 0.000000000001, "max_step": 0.05},
+    "ultrastrict": {"rtol": 0.000000001, "atol": 0.0000000000001, "max_step": 0.05}
+  },
+  "jacobian_minimum_step_mM": {"strict": 0.000000000000001, "ultrastrict": 0.0000000000000001},
+  "control_backends": ["full", "joint"],
+  "candidate_backend": "joint",
+  "maximum_candidates": 16,
+  "maximum_control_integrations": 8,
+  "maximum_new_integrations": 40,
+  "optimization_executed": false,
+  "production_promotion_allowed": false,
+  "J46_replayed": false
+}

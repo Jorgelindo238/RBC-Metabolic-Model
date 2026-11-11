@@ -1,0 +1,40 @@
+{
+  "status": "protocol_only_not_executed",
+  "protocol": "tasks/fla_atp_attribution_protocol_2026_11_10.md",
+  "cases": {
+    "fixed_reference": {"folder": "output/vmax_requalification_2026_11_09/controls/fixed_reference", "backend": "full"},
+    "working_center": {"folder": "output/vmax_requalification_2026_11_09/controls/working_center", "backend": "full"},
+    "search_selected": {"folder": "output/vmax_corrected_search_2026_11_10/candidates/selected", "backend": "joint"}
+  },
+  "primary_case": "working_center",
+  "profiles": ["strict", "ultrastrict"],
+  "primary_profile": "ultrastrict",
+  "published_budgets": "output/vmax_requalification_decision_2026_11_09/ATP_budgets.csv",
+  "windows": {"J1_J4": [1, 4], "J4_J8": [4, 8], "J8_J15": [8, 15]},
+  "primary_window": "J1_J4",
+  "daily_resolution": true,
+  "ledger_pools": ["ATP", "ADP", "AMP", "GTP", "GDP", "GMP", "IMP", "PRPP", "ADESUC", "B13PG", "B23PG"],
+  "lumped_pools": {"adenylate_total": {"ATP": 1, "ADP": 1, "AMP": 1}, "phosphate_bond_equivalents": {"ATP": 2, "ADP": 1}},
+  "gate_threshold_mM": 0.001,
+  "gate_tabulated_reactions": ["VPGK", "VPK", "VHK", "VPFK", "VNDPK", "VAK", "VPRPPASe"],
+  "cycles": {
+    "purine_nucleotide_cycle": ["VAMPD1", "VADSS", "VADSL"],
+    "NDPK_coupling": {"transfer": "VNDPK", "GTP_sinks": ["VADSS"], "GDP_sources": ["VADSS", "VGMPK"]},
+    "adenylate_kinase": ["VAK", "VAK2"],
+    "PRPP": {"source": "VPRPPASe", "sinks": ["VHGPRT1", "VHGPRT2", "VAPRT"]},
+    "glycolytic_yield": {"return": ["VPGK", "VPK"], "investment": ["VHK", "VPFK"]},
+    "rapoport_luebering": {"bypass": "VDPGM", "direct": "VPGK", "return": "V23DPGP"}
+  },
+  "reading_thresholds": {
+    "dominant_consumer_share": 0.25,
+    "glycolytic_yield_below": 1.0,
+    "bypass_share_above": 0.5
+  },
+  "closure_atol_mM": 0.000001,
+  "closure_rtol": 0.001,
+  "new_integrations": 0,
+  "parameters_changed": false,
+  "optimization_executed": false,
+  "production_promotion_allowed": false,
+  "J46_replayed": false
+}
