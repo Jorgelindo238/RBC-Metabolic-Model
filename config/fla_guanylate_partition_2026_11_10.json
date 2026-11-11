@@ -1,0 +1,32 @@
+{
+  "protocol": "tasks/fla_guanylate_partition_protocol_2026_11_10.md",
+  "numerical_parent": "output/vmax_requalification_2026_11_09",
+  "control_case": "working_center",
+  "backend": "joint",
+  "profiles": ["strict", "ultrastrict"],
+  "arms": {
+    "A_fixed_total": {"convention": "GDP_plus_GTP", "value_mM": 2.0,
+                      "expected_GDP_mM": 0.06747626934568701, "expected_GTP_mM": 1.932523730654313},
+    "B_fixed_phosphoryl": {"convention": "GDP_plus_2GTP", "value_mM": 3.0,
+                           "expected_GDP_mM": 0.06250679296885149, "expected_GTP_mM": 1.4687466035155743}
+  },
+  "hypothesis_arm": "B_fixed_phosphoryl",
+  "inventory_arm": "A_fixed_total",
+  "expected_tolerance_mM": 0.000000001,
+  "zero_flux_reaction": "VNDPK",
+  "zero_flux_abs_tolerance": 0.000000000001,
+  "changed_pools": ["GDP", "GTP"],
+  "report_pools": ["ATP", "ADP", "AMP", "GMP", "GDP", "GTP", "ADESUC"],
+  "report_days": [1, 4, 8, 11, 15],
+  "windows": {"J1_J4": [1, 4], "J4_J8": [4, 8], "J8_J15": [8, 15]},
+  "ledger_reactions": ["VNDPK", "VADSS", "VADSL", "VAMPD1", "VAK", "VAK2", "VPRPPASe", "VRKa", "VHK", "VPFK", "VPGK", "VPK"],
+  "phosphoryl_stocks": {"E_A": {"ATP": 2, "ADP": 1}, "E_G": {"GTP": 2, "GDP": 1}},
+  "compensation_fraction": 0.5,
+  "maximum_new_integrations": 4,
+  "measured_J1_changed": false,
+  "parameters_changed": false,
+  "optimization_executed": false,
+  "followup_calibration_allowed": false,
+  "production_promotion_allowed": false,
+  "J46_replayed": false
+}

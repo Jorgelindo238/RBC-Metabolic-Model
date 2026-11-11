@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-10",
+  "scope": "Pinned live sources and prepared-file integrity; full output manifest only for attribution archive; no scientific recomputation",
+  "new_simulations": 0,
+  "campaigns": [
+    {
+      "archive": "output/integration_fine_jacobian_2026_11_08",
+      "pinned_live_inputs": 207,
+      "mismatched_inputs": [],
+      "prepared_check": "source_seal",
+      "prepared_files": 3,
+      "mismatched_prepared_files": [],
+      "passed": true
+    },
+    {
+      "archive": "output/vmax_requalification_2026_11_09",
+      "pinned_live_inputs": 221,
+      "mismatched_inputs": [],
+      "prepared_check": "source_seal",
+      "prepared_files": 3,
+      "mismatched_prepared_files": [],
+      "passed": true
+    },
+    {
+      "archive": "output/vmax_corrected_search_2026_11_10",
+      "pinned_live_inputs": 236,
+      "mismatched_inputs": [],
+      "prepared_check": "source_seal",
+      "prepared_files": 2,
+      "mismatched_prepared_files": [],
+      "passed": true
+    },
+    {
+      "archive": "output/atp_attribution_2026_11_10",
+      "pinned_live_inputs": 28,
+      "mismatched_inputs": [],
+      "prepared_check": "complete_flat_manifest_no_source_seal_in_this_archive_schema",
+      "prepared_files": 11,
+      "mismatched_prepared_files": [],
+      "passed": true
+    }
+  ],
+  "passed": true
+}

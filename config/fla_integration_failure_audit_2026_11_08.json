@@ -1,0 +1,14 @@
+{
+  "parent_archive": "output/reaction_threshold_sensitivity_2026_11_07",
+  "thresholds_mM": [0.0001, 0.00001, 0.000001],
+  "profiles": ["strict", "ultrastrict"],
+  "stabilized_atol_mM": {"strict": 0.000000000001, "ultrastrict": 0.0000000000001},
+  "stabilized_max_step_days": 0.05,
+  "control_parity_atol": 0.000000000001,
+  "control_parity_rtol": 0.000000000001,
+  "maximum_new_original_integrations": 12,
+  "negative_tolerance_changed": false,
+  "optimization_executed": false,
+  "production_promotion_allowed": false,
+  "J46_replayed": false
+}

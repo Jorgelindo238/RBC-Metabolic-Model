@@ -1,5 +1,215 @@
 # Flux Learning Analysis (FLA) - Progress Log
 
+## 2026-11-10 - RIB(0) latent ribose diagnostic closed: no effect
+
+Current handoff: `tasks/fla_ribose_stock_results_2026_11_10.md`.
+User-authorized. Closed archive `output/ribose_stock_2026_11_10/`; do not
+overwrite or rerun. Fixed kinetics at the working center, only RIB(0)
+changed: 0.0023 mM (JA value) and 0.1 mM (probe) versus sealed control 1.0.
+Four integrations, all numerically valid. Registered class
+`no_supported_effect`; monotone response; both arms `early_only`,
+`production_compensation` true, original guards fail (F6P J4/J11, B23PG,
+PEP, G6P). Gap 12.0892 -> 12.0593/12.0575; ATP J15 +2.7%.
+
+J1-J4, JA arm: RKa -0.998, gross ATP consumption -0.697, production -0.686,
+net unchanged (-0.898 versus -0.909); AMP 2.50 mM at J4 as in every other
+trajectory. Same pattern as the guanylate diagnostic: about 1 mM of early
+demand removed, production falls with it. Center and J1 conventions
+retained; nothing promoted; no calibration.
+
+Receipt `output/ribose_stock_decision_2026_11_10/`: 110 measured-J1 checks,
+6,328/6,328 balances, 22,400 quadratures, 36 checkpoints. 17 targeted tests;
+full suite not run. Post hoc only (coded law at Sheet1 values, no
+integration): coded AK has Vf/Vr = 10.766; at observed adenylates on
+J1/J4/J8/J11/J15 it would run 2 ADP -> ATP + AMP at 1.05-1.49 mM/day, and
+the balancing ratio is 0.66-0.72 at every date. AK and NDPK forward/reverse
+Vmax share one factor in all searches, so the ratio never moved. Next is a
+USER DECISION, nothing launched: ungrouped AK ratio diagnostic (changes the
+search design), read-only rate-law/RBC-GEM review, or observation contract.
+
+## 2026-11-10 - RIB(0) latent ribose diagnostic PREPARED, not executed
+
+Protocol `tasks/fla_ribose_stock_protocol_2026_11_10.md`, config
+`config/fla_ribose_stock_2026_11_10.json`. Implements the RIB(0) test
+foreseen on 2026-10-27 under its conditions. Fixed kinetics at the working
+center, only RIB(0) changed: control 1.0 mM (generic default, sealed, not
+reintegrated), hypothesis arm 0.0023 mM (historical JA workbook value,
+unproven as a measurement), monotonicity arm 0.1 mM (numerical probe). Four
+integrations planned. Registered demand-side AND production-side
+compensation flags; classes numerical_failure / ribose_stock_effect_supported
+/ no_supported_effect; no promotion or calibration whatever the class.
+
+Workbooks read this time: Sheet1 lacks RIB, R5P, PRPP, GDP, GTP, ADESUC,
+R1P; HYPX B42, IMP B43, B13PG B10, B23PG B11. JA lists RIB 0.0023, R5P
+0.0127, PRPP 0.0049, GDP 0.015, GTP 0.056, ADESUC 1, R1P 0.06. Frozen
+R5P(0) is 1.6110905 mM (non-default latent, absent from Sheet1) and stays
+unchanged: PRPPASe is R5P-saturated whatever RIB(0) is. Raw RKa at J1:
+1.853 / 1.019 / 0.046 mM/day for RIB 1 / 0.1 / 0.0023.
+
+Written: `src/fla_ribose_stock.py`, runner and verifier under `scripts/`,
+17 targeted tests. Dry checks only, no arm integrated, no archive created.
+Awaiting user authorization to launch.
+
+## 2026-11-10 - Latent guanylate partition diagnostic closed: no effect
+
+Current handoff: `tasks/fla_guanylate_partition_results_2026_11_10.md`.
+User-authorized. Closed archive `output/guanylate_partition_2026_11_10/`;
+do not overwrite or rerun. Preceded by a read-only J1 provenance audit:
+GDP/GTP/RIB/PRPP/ADESUC = 1 mM are the generic software default (absent
+from Sheet1); HYPX, IMP, B13PG are exact Sheet1 J1 (B13PG duplicated with
+B23PG). JA workbook not loaded in the FLA chain.
+
+Fixed kinetics at the working center, only GDP(0)/GTP(0) changed to the
+zero of the executable NDPK law at J1: arm A total 2 mM (0.067476/1.932524,
+delta_E_G +0.9325), arm B E_G 3 mM (0.062507/1.468747, delta_E_G 0). Four
+integrations, all numerically valid. Registered class `no_supported_effect`;
+both arms `early_only` and fail original guards (F6P J4, B23PG, PEP, G6P).
+Gap 12.0892 -> 12.0710/12.0706; ATP J15 +1.7%. J1-J4: NDPK 1.92 -> 1.00,
+gross ATP consumption -0.72 and production -0.72, net unchanged (-0.90).
+A and B nearly identical: neither partition nor inventory. Center and J1
+convention retained; nothing promoted; no calibration.
+
+Receipt `output/guanylate_partition_decision_2026_11_10/`: 220 measured-J1
+identity checks, 6,328/6,328 balances, 22,400 quadratures, 36 checkpoints.
+22 targeted tests; full suite not run. Post hoc only: RKa integrates to
+1.0000 mM in all arms (latent RIB default), PRPPASe sends 0.77-0.84 mM ATP
+to AMP. Next is a USER DECISION, nothing launched: RIB(0)-only diagnostic
+(conditions of 2026-10-27), purine-branch structural review, or return to
+the observation contract.
+
+## 2026-11-10 - Executed ATP attribution closed: early deficit, NDPK/GTP
+
+Current handoff: `tasks/fla_atp_attribution_results_2026_11_10.md`. Closed
+read-only archive `output/atp_attribution_2026_11_10/`; do not overwrite or
+rerun. No integration, no parameter/state/threshold change. Sealed evidence
+of fixed reference, working center and search-selected point, J1-J15.
+
+Collapse is early: ADP 1.169 -> 0.153 mM in day 1 (leaves window at day
+1.14), ATP below window at day 2.07; 0.909 of the 0.933 mM ATP deficit by
+J4. J1-J4 bond equivalents: 3.63 produced, 6.61 consumed. Gross ATP
+consumption 5.656 mM: NDPK 33.9%, RKa 17.7%, PFK 14.9%, PRPPASe 13.6%.
+NDPK 1.916 mM = 0.834 charging latent GTP (1.00 -> 1.83) + 1.082 to ADSS.
+Registered expectation of a closed purine nucleotide cycle REFUTED:
+throughput 0.144 (ADSL) versus ADSS 1.082; ADESUC accumulates; IMP mainly
+from HGPRT1 1.320. AK runs 2 ADP -> ATP + AMP (1.121); AMP +1.786.
+
+No ATP/ADP gate limitation in J1-J4 (PGK loses 1.193 mM to B13PG only).
+After J4 PGK is ADP-limited and the Rapoport-Luebering bypass reaches 77%
+then 99.7%. Same structure in all three trajectories. Descriptive, not
+causal. Receipt `output/atp_attribution_decision_2026_11_10/`: 3,456 ledger
+values, 198/198 closures, 18 published budget rows, 306 gate identities.
+13 targeted tests; full suite not run. Next is a USER DECISION, nothing
+launched: read-only J1 provenance audit of GDP/GTP/RIB/PRPP/HYPX/IMP/
+ADESUC/B13PG, then a reversible latent-guanylate diagnostic.
+
+## 2026-11-10 - Corrected-engine Vmax search closed; original box exhausted
+
+Current handoff: `tasks/fla_vmax_corrected_search_results_2026_11_10.md`.
+Closed campaign `output/vmax_corrected_search_2026_11_10/`; do not overwrite
+or rerun. Controls bitwise equal to sealed requalification controls. 59 of
+80 integrations, 0 numerical rejects, 14/14 derivatives in every round.
+Rounds 1-2 accepted (attempts 17, 36); rounds 3-4 none: LP predicts no gain
+at any radius, guard-limited stationary point.
+
+Selected attempt 55, audited strict/ultrastrict: gap 12.08727944 versus
+center 12.08918013 (ATP +0.124%, ADP +0.190%), worst dated ratio 0.94168527
+versus 0.93446340. Classification `no_improvement` plus registered
+`original_box_local_search_exhausted`. Working center (attempt 76) retained;
+no target attained, no promotion, no J46.
+
+Local sensitivities of ADP:lower/ATP:lower per unit log factor: PRPP
++1.504/+1.145, PGK +0.431/-0.065 (on lower bound), SAM +0.317/+0.236, NDPK
+-0.189/+0.048 (on upper bound). Linear whole-box extrapolation ignoring all
+guards covers only about 4.65 of 12.09 (ADP) and 3.87 of 9.04 (ATP) log
+units: diagnostic, not a prediction.
+
+Independent receipt `output/vmax_corrected_search_decision_2026_11_10/`:
+5,124 guard values, 4,928 Jacobian entries, 4 LP witnesses, 3,164/3,164
+daily balances, 11,200 quadrature values, 18 native checkpoints. 27 targeted
+tests; full suite not run. Next is a USER DECISION, nothing launched:
+PRPPASe/ATP-demand attribution J8-J15, registered box widening, latent
+GDP/GTP contract, or availability-gate formulation.
+
+## 2026-11-10 - Corrected-engine Vmax search PREPARED, not executed
+
+Protocol `tasks/fla_vmax_corrected_search_protocol_2026_11_10.md`, config
+`config/fla_vmax_corrected_search_2026_11_10.json`. Successor to the closed
+requalification: same 14 groups/17 Vmax, original boxes, Km, exact J1,
+observations, network, threshold 1e-3 and dated guards; qualified Radau/
+bounded-Jacobian strict recipe now used INSIDE the search. Start = working
+center (absolute attempt 76). Budget 2 controls + 4 rounds x (14 differences
++ 5 backtracks) = 78 <= 80, plus at most two audit integrations.
+
+Registered expectation: target not reachable in this box (old campaign gained
+0.36 of 12.09 log units; ADP:lower binds; PGK/NDPK on bounds). Futility rule:
+final worst-profile gap above 11.089180125660619 classifies
+`original_box_local_search_exhausted`; then no further same-box search, and
+the next reversible alternative is the user's decision.
+
+Written: `src/fla_vmax_corrected_search.py`, runner and independent verifier
+under `scripts/`, 27 targeted tests (66 pass with related suites). Scoring and
+independent rescoring agree on both sealed controls. One scratch strict
+integration of the fixed reference (about 21 s, deleted) was bitwise identical
+to the sealed control. Search loop, audit stage and round verifier NOT run end
+to end. No archive created, no optimization, no default change, full suite
+not run. Runner/verifier hashes are frozen at launch.
+
+## 2026-11-10 - Vmax requalification closed; working center retained
+
+Current handoff: `tasks/fla_vmax_requalification_results_2026_11_09.md`.
+Closed campaign `output/vmax_requalification_2026_11_09/`; do not overwrite
+or rerun. Computations completed2026-11-09; documentation/closeout resumed
+2026-11-10 after interruption. Sixteen distinct old numerical rejects
+(9 temporal,5 absolute,2 PGK/NDPK), same literal vectors/data/J1/Km/boxes/
+network. Eight full/compiled controls certified first; then32 candidate
+replays. All40 numerical gates and16 candidate profile comparisons pass.
+Historical availability1e-3 and original guard reference/caps unchanged.
+
+Independent complete receipt `output/vmax_requalification_decision_2026_11_09/`:
+63,280 daily balances,224,000 quadrature values,360 native checkpoints,
+2,688 guard values;8,800 source-comparison rows. Nine candidates pass
+relative guards/reserve; seven fail metabolic guards. No recovered candidate
+beats the existing center on absolute ATP/ADP or worst dated error ratio.
+First recovered candidate13 (old absolute attempt78) has J15 ATP+1.2521%
+but ADP-7.9134%; joint gap12.17162 versus center12.08918. No absolute
+target attained; keep old attempt76 as working center, not a new default.
+
+All saved physical supports are finite and >=0 in this campaign; global
+minimum0mM. ATP/ADP minima8.342043e-5/9.375530e-7mM: positive but depleted.
+Policy still-1e-10mM; no proof of continuous positivity or threshold plateau.
+198 targeted tests pass; closure and center comparison in
+`output/vmax_requalification_validation_2026_11_09/`. No new optimization,
+default promotion or J46 simulation. Recommended next execution: fresh
+Vmax-only absolute-target search with the corrected optional engine,
+recomputed sensitivities and unchanged multi-date guards/bounds; do not
+reuse numerical-failure-driven search decisions as valid sensitivities.
+
+## 2026-11-08 - Integration instrumentation and fine-Jacobian confirmation
+
+Current handoff: `tasks/fla_integration_failure_results_2026_11_08.md`.
+Historical rejects localized to O2/H2O2 near J12.45-J13.30; ATP/ADP positive
+on their saved supports. Successful reproduction controls are bitwise equal.
+First BDF refinement and ordinary Radau reveal internal adaptive-FD overflow
+(ELAC=inf, finite accepted states); constant RHS reproduces it at Jacobian
+call317 in SciPy1.17.1. Public steppers now retain accepted partial history;
+rejected evidence is quarantined before flux admission.
+
+Closed BDF12 and Radau6 archives verified. Coarse bounded-FD archive has
+three passed cases and three stopped/incomplete cases, separately sealed.
+Final fine bounded-Jacobian Radau confirmation PASSES all six runs and
+three paired comparisons. Recipe: rtol1e-8/1e-9, atol1e-12/1e-13,
+max_step0.05 day, FD floors1e-15/1e-16. Worst checked physical value
+O2=-3.80748e-12 mM remains within unchanged -1e-10 tolerance, not exact
+nonnegativity. ATP/ADP remain positive on retained supports, but depleted.
+
+Independent final checks:9,492 balances/33,600 quadratures/54 native
+checkpoints. All three completed archives:23,730 balances/84,000
+quadratures/135 checkpoints. 190 targeted tests pass. All Vmax/Km/J1
+unchanged; no threshold plateau, biological rescue, default promotion,
+optimization or J46 run. Next: certify the unchanged working-threshold
+control with this optional recipe, then requalify old numerical rejects at
+the same threshold/guards before considering another optimization.
+
 ## 2026-11-07 - Fixed-parameter reaction-threshold sensitivity
 
 Current handoff: `tasks/fla_reaction_threshold_results_2026_11_07.md`.

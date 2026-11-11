@@ -1,0 +1,11 @@
+{
+  "parent_archive": "output/integration_failure_audit_2026_11_08",
+  "method": "Radau",
+  "profiles": {"strict": {"rtol": 0.00000001, "atol": 0.000000000001, "max_step": 0.05},
+               "ultrastrict": {"rtol": 0.000000001, "atol": 0.0000000000001, "max_step": 0.05}},
+  "jacobian_minimum_step_mM": {"strict": 0.000000001, "ultrastrict": 0.0000000001},
+  "maximum_new_original_integrations": 6,
+  "production_promotion_allowed": false,
+  "optimization_executed": false,
+  "J46_replayed": false
+}
