@@ -10,6 +10,7 @@ import {
   type CalibrationParameterChange,
   type CalibrationRunStatus,
 } from '@/lib/robocop/calibration-provenance'
+import { interpretPersistedCalibration } from '@/lib/calibration-journey.mjs'
 
 export const RESEARCH_CALIBRATION_STORAGE_KEY = 'clawblood.research.activeCalibration'
 export const RESEARCH_CALIBRATION_CHANGE_EVENT = 'clawblood:research-calibration-change'
@@ -51,6 +52,10 @@ export interface ActiveResearchCalibration {
   parameterChanges?: CalibrationParameterChange[]
   initialVsFinalComparison?: CalibrationParameterChange[]
   activatedAt: string
+  /** No verified activation exists yet: 'not_activated' for new records, 'legacy_unverified' for old "applied" flags. */
+  activationStatus?: 'not_activated' | 'legacy_unverified'
+  /** Original flags of a legacy record, kept as history (never re-applied). */
+  legacyFlags?: { calibrationApplied: boolean; calibratedParametersActive: boolean }
 }
 
 export interface CalibrationResultShape {
@@ -82,10 +87,10 @@ export function readPersistedResearchCalibration(): ActiveResearchCalibration | 
     const raw =
       window.localStorage.getItem(RESEARCH_CALIBRATION_STORAGE_KEY) ??
       window.sessionStorage.getItem(RESEARCH_CALIBRATION_STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as ActiveResearchCalibration) : null
+    // Legacy "applied/active" flags are kept as history but never treated as a verified activation.
+    return raw ? (interpretPersistedCalibration(JSON.parse(raw)) as ActiveResearchCalibration | null) : null
   } catch {
-    window.localStorage.removeItem(RESEARCH_CALIBRATION_STORAGE_KEY)
-    window.sessionStorage.removeItem(RESEARCH_CALIBRATION_STORAGE_KEY)
+    // Keep unreadable historical records intact; loading must not delete user history.
     return null
   }
 }
@@ -148,9 +153,10 @@ export function buildActiveResearchCalibration(
     datasetApplied: researchDataMode === 'custom_user_data_mode',
     defaultFallbackUsed: researchDataMode !== 'custom_user_data_mode',
     datasetFallbackReason: null,
-    calibrationApplied: true,
+    // A finished run is loaded for inspection, not applied: activation needs an eligible, explicit decision.
+    calibrationApplied: false,
     calibrationSource: 'provided',
-    calibratedParametersActive: true,
+    calibratedParametersActive: false,
     latestCalibrationLoaded: true,
   }
   const parameterChanges = buildCalibrationParameterChanges(result.optimized_params, result.initial_params)
@@ -219,5 +225,6 @@ export function buildActiveResearchCalibration(
     parameterChanges,
     initialVsFinalComparison: parameterChanges,
     activatedAt: new Date().toISOString(),
+    activationStatus: 'not_activated',
   }
 }

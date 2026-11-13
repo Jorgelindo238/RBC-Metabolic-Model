@@ -1,5 +1,467 @@
 # Flux Learning Analysis (FLA) - Progress Log
 
+## 2026-11-12 - Research UI simplified and verified locally
+
+Implemented minimal work surfaces across all seven Research routes, compact
+dataset context, visible Calibration and Results navigation, real section links
+and collapsed provenance/advanced legacy controls. Import preview preserves
+parsed numeric precision and discloses undeclared units/compartments. Existing
+calibration/activation safety gates remain unchanged. Scientific plots/controls
+replace introductory hero/card stacks; default compact network layout now uses
+a readable connector ring, accurate bridge counts and auto-opening selection
+details. RoBoCop remains available as a compact icon launcher. No chat messages
+were sent. Existing URLs and Home/Monitoring product branding preserved.
+
+QA revealed the network endpoint's old regex reader failed after intervening
+reaction_audit updates. Only display-registry extraction was replaced by AST;
+113 nodes/108 reaction nodes are served again. No ODE source/solver, kinetics,
+stoichiometry, J1 values, observation source or sealed archive changes.
+143 Python tests,42 Node tests, TypeScript and diff checks pass.16 new Research
+desktop/mobile browser scenarios and six existing strict Calibration/Monitoring
+scenarios pass; real test-only CSV parsing/mapping, exact values, section links,
+disabled gates, graph modes and nonblank points checked.320/390px supplementary
+checks pass with no page/console errors and cover overflow, graph selection
+and chat open/close. Capture preserves initial caret styles to avoid an
+SSR-input mutation by Playwright; hydration is verified via file selection
+without submission. Temporary visual
+evidence is outside Git. Backend restarted at8010; web remains3100. No scientific
+run, database campaign import, agents, commit/push or deployment. Next: user UX
+review, then explicit upload metadata and contract integration.
+
+## 2026-11-12 - Vercel Supabase URL/public key aligned; no deployment
+
+User authorized Vercel configuration before returning to RESEARCH. Verified
+project `web` / `apps/web`, then changed only `NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` in development, preview and production. Six
+values read back exactly match `rbc-metabolic-model`; each remote pair passes
+Auth health/registry GET with HTTP200 and zero visible runs. Eight other
+variables and all variable IDs/scopes/types unchanged; no key printed or
+service-role credential retrieved. Applied2026-11-13 01:23 UTC (Nov12 Toronto).
+No deploy, commit/push, scientific run, archive/default or activation change.
+Existing deployments retain their old values. Next product tranche: Research,
+starting from Data Upload and explicit metadata toward Calibration/Monitoring.
+
+## 2026-11-12 - Reference Supabase approved and local registry provisioned
+
+User confirmed `rbc-metabolic-model` (`hniqmghepbygphbswwvx`) as the reference.
+Applied registry migration `20261113005444` with private-by-default RLS,
+public/owner reads and no browser writes. No workspace-sharing foundation or
+scientific data import. Corrected the ignored local URL/public-key pair; actual
+Auth health/registry reads return200, with zero persisted campaigns. SQL role
+checks pass using rolled-back fixtures. Missing workspace schema now preserves
+authenticated personal scope.42 Node tests, TypeScript and all six strict
+connected desktop/mobile browser scenarios pass. No fixture rows persist.
+Vercel config/deployment unchanged; old remote project values still need a
+separate authorized switch. Pre-existing security advisories documented under
+`supabase/README.md`. No optimization, agents, defaults or sealed archive edits.
+
+## 2026-11-12 - Calibration/Monitoring local implementation and QA completed
+
+Codex continued WITHOUT Claude.135 targeted Python tests,38 Node tests,
+TypeScript and six desktop/mobile Playwright interaction scenarios pass.
+Real profile API and sparse-upload preflight exercised; no ODE/job launched.
+Fixed actual Monitoring run loading/error states, Unknown instead of false zero
+counts on source failure, stale preflight replies, malformed reference display,
+context activation claims and automatic inactive parameter reuse in Simulation/
+Flux. Calibration/Monitoring open directly on work surfaces. Historical profile
+is read-only, not active. Local servers3100/8010 available.
+Supabase read fails in this environment; QA explicitly verifies the unavailable
+state, not populated or authenticated remote data. New contractual calibration
+remains engine-gated. Report `tasks/fla_calibration_monitoring_validation_2026_11_12.md`.
+No scientific changes, agents, archive edits, commit/push or deployment.
+
+## 2026-11-12 - Calibration/Monitoring application tranche (NOT executed)
+
+Delivery `tasks/fla_calibration_monitoring_delivery_2026_11_12.md`:
+- **Reference registry:** read-only and allowlisted, at `GET /calibration/reference-profiles[/{id}]`. It checks the receipt→manifest→release chain and returns honest missing, corrupt, blocked or unsupported states, without paths.
+- **Calibration journey:** `CalibrationJourney` covers Data → Verification → Calibration → Results. Preflight answers are shown separately, the contractual launch stays disabled, and the reference profile is preview-only with activation forbidden.
+- **Legacy flags:** `calibrationApplied: true` was removed; legacy flags are kept as unverified history.
+- **Monitoring:** shows real runs only; progress comes from real counters, otherwise it is indeterminate.
+
+API, node and Playwright tests written, not run. No science change.
+
+## 2026-11-12 - Extracellular /2 executed and independently verified; freeze fallback
+
+51 module/verifier tests pass.38 new numerically valid ODEs (4 restoration/replay,
+34 search). Two source replays bitwise equal;145 old rows treated as hints, not
+qualified cache. No new release-admissible seed, one optimized start, no new
+finalist. Retained ONE audited working_centre vector under
+`output/extracellular_release_2026_11_12/release/provisional_extracellular_reference.json`.
+Independent receipt passes1,162,575 supports,56 Jacobian columns and17 Vmax
+exports. Zero new qualification integrations/daily balances; historical fallback
+receipts remain explicit. Report `tasks/fla_extracellular_release_results_2026_11_12.md`.
+No accuracy claim for all channels: EINO remains poorly fitted, ATP/ADP unmet,
+units assumed historical mM, H borrowed and donor unknown. Activation/default
+replacement false. Close this bounded optimization tranche; next is read-only
+profile integration and truthful Calibration/Monitoring, not an automatic refit.
+No agents, UI change, commit or push in this execution.
+
+## 2026-11-12 - Extracellular verifier gate closed (NOT executed)
+
+Codex's `qualified_references` extraction fix is kept.
+
+`verify_extracellular_release.py` now independently checks:
+- the accepted/dense/q4/q8 supports of every attempt, with rejects classified;
+- every Jacobian column and half-step check;
+- the incumbent and start-best rules;
+- seed admission (guards, global cap, focus protection, separation);
+- source/context resolution;
+- the flux integrals and daily balances of NEW finalists only (zero when there is none);
+- the exported Vmax values themselves.
+
+22 adversarial tests written, not run (`qa/test_verify_extracellular_release.py`). The objective, budgets, algorithm and archives are unchanged.
+
+## 2026-11-12 - Extracellular pre-run corrections: objective extracellular_first/2 (NOT executed)
+
+Applied `tasks/fla_extracellular_prerun_review_2026_11_12.md` with file tools only. No campaign existed, so the pre-registration was revised and versioned /2.
+- **Objective:** the log1p utility, finite at exact fit, with threshold log1p(0.001) in utility units.
+- **Focus protection:** EGLC/ELAC RMSE, J15 residual and slope error must stay within the fallback value plus allowances from the inherited atol/rtol. The global worst-channel cap is renamed as such.
+- **Units:** `unit_status` is "assumed mM" (no unit recorded in the source).
+- **Cache:** reuse is qualified on the transitive import closure. The archives lack the RHS/positivity hashes, so their rows become hints plus at most 8 matched replays, with drift detection.
+- **Activation:** `activation_allowed:false` cannot be overridden by a click.
+
+33 tests written, not run. Delivery: `tasks/fla_extracellular_release_delivery_2026_11_12.md`.
+
+## 2026-11-12 - Extracellular-first release successor prepared (NOT executed)
+
+Code delivery only (Claude, file tools; no shell, test, ODE or optimizer run).
+Protocol `tasks/fla_extracellular_release_protocol_2026_11_12.md`, config
+`config/fla_extracellular_release_2026_11_12.json`, module
+`src/fla_extracellular_release.py`, runner/verifier
+`scripts/{run,verify}_extracellular_release.py`, 26 tests written and not run,
+application handoff `tasks/fla_application_return_handoff_2026_11_12.md`.
+- **Channels:** 19 observed extracellular channels (registry ∩ panel).
+- **Primary objective:** per-channel log-ratio against the qualified working centre; worst channel constrained.
+- **Constraints:** the 84 guards with reserve are kept.
+- **Starts:** restored with projection, backtracking and Phase-I, and admitted only after a real replay.
+- **Budget:** 80 + 160 new ODE, at most 12 qualification integrations.
+- **Release:** one vector exported as `provisional_extracellular_reference`. Without an improvement, the best verified fallback is kept; with nothing qualified, the status is explicitly blocked.
+
+ATP/ADP remain unmet. No activation. Awaiting Codex review.
+
+## 2026-11-12 - User-directed extracellular release scope dispatched to Claude
+
+User prioritizes feasible-start reconstruction, revised optimization strategy,
+retaining the best coherent extracellular calibration, then returning to the
+application. Updated project skill and sent
+`tasks/fla_extracellular_release_dispatch_2026_11_12.md` to the existing Claude
+Desktop conversation; delivery confirmed with Working status. Code-preparation
+only; Codex reviews and executes later. No new simulations, candidate ranking,
+profile selection or promotion claimed in this dispatch. Restoration and a
+versioned extracellular-first objective are separated from historical energy
+mode. One compatible verified parameter vector, explicit unresolved ATP/ADP,
+bounded search with fallback and an application handoff; no automatic activation.
+
+## 2026-11-12 - Claude multistart implementation executed: no new finalist
+
+Codex reviewed the delivery, required both validation profiles for admissibility,
+and ran62 targeted tests (pass). Campaign `output/multistart_vmax_2026_11_12/`:
+87 numerically valid search integrations, two optimized starts and three rejected
+infeasible seeds. Both registered derivative checks pass; five Jacobians.
+No new point beats candidate35 by the required1e-6 objective gain. No new
+finalist, full validation integration or promotion; prior candidate35 remains
+the retained comparator. Independent verification passes2,659,753 support points,
+five Jacobians and30 events; zero new daily balances because no finalist exists.
+Report: `tasks/fla_multistart_vmax_results_2026_11_12.md`. Do not claim five
+optimized basins or global infeasibility. Next method option is preregistered
+feasibility restoration of seeds under unchanged guards, not blind SLSQP repeats.
+No agents, active defaults/UI changes, commit or push.
+
+## 2026-11-12 - Multistart SLSQP Vmax successor prepared (NOT executed)
+
+Code delivery only (Claude, file tools; no shell, test, ODE or optimizer run).
+Protocol `tasks/fla_multistart_vmax_protocol_2026_11_12.md`, config
+`config/fla_multistart_vmax_2026_11_12.json`, driver `src/fla_multistart_vmax.py`,
+runner `scripts/run_multistart_vmax.py`, verifier
+`scripts/verify_multistart_vmax.py`, tests `qa/test_fla_multistart_vmax.py`
+(written, not run).
+- **Optimizer:** SLSQP on the epigraph of the inherited absolute ATP/ADP J15 minimax, with the 84 guards as hard constraints (full reserve).
+- **Starts:** candidate35, the working centre and three seeds from bounded joint directions.
+- **Budget:** at most 240 distinct search integrations, plus at most 10 validation integrations (ceiling 12).
+- **Derivative check:** 0.006/0.003 built into the first Jacobian of each start; a group that fails it is frozen.
+- **Failures:** invalid integrations are never scored and halve the box around the start's best point.
+- **Resume:** by deterministic replay from cache, with checkpoints.
+
+Unchanged: groups, boxes, Km, J1, transport, threshold, AK/NDPK pairing.
+Awaiting Codex review and execution.
+
+## 2026-11-12 - Corrected-solver sensitivity/search complete: admissible tiny gain
+
+Report `tasks/fla_corrected_vmax_results_2026_11_12.md`. Four-round Vmax-only
+continuation, unchanged84 dated constraints/bounds/J1/Km, corrected recorded
+Radau solver.58 search integrations (42 unique sensitivity probes),2 full
+finalist validations,32 targeted tests. Candidate35 is admissible under the
+inherited reserved guards and paired convergence, but ATP/ADP J15 improve only
+0.1238%/0.1902%; absolute biological targets remain far away. J4/J8 gains decline
+slightly within unchanged guard allowances. Independent verification passes
+1,857,599 support points and3,164 daily balances. Artifacts sealed under
+`output/corrected_vmax_2026_11_12/`, separate verifier and CSV exports retained.
+No promotion, active parameter change, agents, J46 replay, commit or push.
+Next: attribute local plateau and check leading sensitivity step robustness,
+not simply increase the same local optimizer budget. Shifted-origin user-engine
+qualification is still pending separately.
+
+## 2026-11-12 - Immutable successor contracts and explicit parameters: PASS
+
+Report: `tasks/fla_engine_integrity_results_2026_11_12.md`.
+Added opt-in `fla_user_engine_v2` around the untouched v1 engine: immutable
+canonical input snapshot, full-contract fingerprint, source pinning, malformed
+input rejection and RHS parameter/kinetic mutation checks. Added explicit AST
+default resolution: 118 archived supplied entries -> 283 explicit parameters,
+165 kernel defaults with provenance. Twenty fixed-state joint/full checkpoints
+at five dates and two archived profiles preserve raw/executed rates,
+availability and derivatives exactly. Receipt sealed under
+`output/effective_parameters_2026_11_12/`. 319 targeted tests and diff checks
+pass. No new integrations, refit, agents, source archive changes, production
+activation, commit or push. Next: shifted-first-sample recorded-solver successor,
+without resetting the absolute kinetic storage clock. Biological gates remain.
+
+## 2026-11-12 - Codex execution: successor historical parity PASS, no promotion
+
+Completed Claude's pending execution without agents. Report:
+`tasks/fla_user_engine_qualification_results_2026_11_12.md`.
+Two fixed-parameter recorded Radau replays through the successor engine;
+strict/ultrastrict each reproduce archived working-centre states exactly at
+five dates (570 values each). 55 measured J1 values preserved. Accepted,
+dense, order-4/order-8 supports finite and nonnegative where sampled.
+Independent verifier passes; archive and receipt under
+`output/user_engine_qualification_2026_11_12/` and
+`output/user_engine_qualification_verification_2026_11_12/`.
+
+283 targeted Python tests and 21 lifecycle tests pass; TypeScript and diff
+checks pass. Fixed missing-completion/unknown-contract activation loopholes
+and identity-free monitoring activation. No new layout or rendered UI testing.
+No source overwrite, refit, J1/parameter change, promotion, commit or push.
+API compatibility remains false. Next: full prepared-run integrity and effective
+parameter resolution (historical 118 overrides still depend on kernel defaults),
+then shifted-origin recorded-solver qualification. ATP collapse unchanged;
+historical reproduction is software evidence only.
+
+## 2026-11-12 - Successor engine, lifecycle layer, R5P trace: WRITTEN, NOT EXECUTED
+
+Delivery note: `tasks/fla_engine_successor_lifecycle_delivery_2026_11_12.md`.
+File tools only; nothing executed. Previous tranche: Codex reported 213
+targeted tests passing (software contracts only, not run by me).
+
+R5P(0) 1.6110905 traced (`tasks/fla_r5p_transfer_trace_2026_11_12.md`):
+unpromoted 2026-08-11 candidate `constrained_balanced_teacher__v6pgd_0.9000x`,
+carried through five scripts into the 2026-10-06 frozen state. Historical
+comparator only; not an eligible biological initialization; value unchanged.
+
+New opt-in `src/fla_user_engine.py` (prepare/validate/run; complete declared
+initial state, measured lock, t0 at first sample, declared geometry, one
+donor, absolute mM only, fixed parameters, injected RHS and solver; reuses
+`GemCorrectionRHS` lazily). Not wired, not qualified; engine_compatibility
+stays false. New `apps/web/lib/calibration-lifecycle.mjs` (seven states,
+activation decision, separate fit/free-ODE scores, monitoring view,
+journey); `ParameterCalibration.tsx` no longer activates any run
+automatically. Tests written, not run: `qa/test_fla_user_engine.py`,
+`apps/web/lib/calibration-lifecycle.test.mjs`. Next single execution:
+engine qualification replay of the sealed working-centre control.
+
+## 2026-11-12 - Latent inventory contract, strict Vmax-only entry points, user-data preflight: WRITTEN, NOT EXECUTED
+
+Delivery note: `tasks/fla_user_calibration_contract_delivery_2026_11_12.md`.
+Mandate in three lots, file tools only: no shell, no execution, no ODE, no
+optimization, no commit. Every test below is written and not run. No claim
+that user-data calibration is validated.
+
+Lot A: `config/fla_latent_inventory_contract_2026_11_12.json` and
+`tasks/fla_latent_inventory_contract_2026_11_12.md`. ADO, EADO, RIB, PRPP
+= 1.0 mM at J1, latent, convention, provenance unresolved, no justified
+bound, no reference-state change. R5P 1.6110905 is the unpromoted August
+balanced-teacher latent solve, not a generic value. Blockage: workbooks and
+npz not readable with the permitted tools; loader not re-executed.
+
+Lot B: `apps/api/services/vmax_only_contract.py` (separate layer, core
+untouched) wired into the adapter, orchestrator and router: strategy
+conflicts refused with 400, caller non-Vmax parameters refused, auto-scope
+and profile additions reduced to Vmax and reported, no strategy memory read
+or write, stage plan checked, post-run exact audit. Historical path kept
+and labelled `legacy_unconstrained`.
+
+Lot C: `config/user_calibration_data_schema_v1.json`,
+`apps/api/services/user_data_contract.py`, `POST /calibration/preflight`,
+and a gate on `/calibration/run`: invalid data 400, valid data but
+incompatible engine 409. Engine compatibility is false for every dataset
+(initial state, volumes, time origin, relative model), so the contractual
+path is blocked on purpose; the historical path runs with its limits
+stated in the response.
+
+Tests written, not executed: `qa/robocop/test_vmax_only_contract.py`,
+`qa/test_user_data_contract.py`, `qa/test_calibration_preflight_api.py`,
+additions in `qa/robocop/test_strategy_orchestrator.py` and
+`qa/test_auto_param_scope.py`. Next: run them, then an engine successor
+module that accepts a declared initial state, volumes and time origin.
+
+## 2026-11-11 - AK ratio x PEP phosphatase diagnostic closed: hypothesis refuted
+
+Current handoff: `tasks/fla_ak_pepase_results_2026_11_11.md`.
+User-authorized. Closed archive `output/ak_pepase_2026_11_11/`; do not
+overwrite or rerun. Fixed kinetics, only vmax_VAK, vmax_VAK_rev and
+vmax_VPEP_PASE changed inside unchanged boxes. Six integrations, all
+numerically valid, paired. Registered class `no_supported_effect`; monotone
+response in the direction opposite to the hypothesis; all arms `early_only`
+with PEP guards failed.
+
+Gap: control 12.0892, ak_only (sealed) 7.5002, PEPase floor alone 11.9016,
+balanced AK + PEPase 2.530 10.0561, balanced AK + PEPase floor 10.6583.
+Hypothesis arm: PK share 0.814 on J1-J4 (ak_only 0.361), PK 5.18 versus
+2.35 mM on J1-J8, gross ATP production +2.4 mM, consumption +2.4 (NDPK
++1.04, PRPPASe +0.55); ADP J8 0.0067 versus 0.355; ATP J15 2.7e-4 versus
+4.4e-3; PEP 0.26-0.92 mM against observed 0.16-0.05. GAPDH unchanged.
+`beyond_reference` false. Center, grouped design and J1 conventions
+retained; nothing promoted; no calibration.
+
+Receipt `output/ak_pepase_decision_2026_11_11/`: 55 measured-J1 checks, 3
+arm vectors, 9,492/9,492 balances, 33,600 quadratures, 54 checkpoints, 504
+guard values. 19 targeted tests; full suite not run. Post hoc only (sealed
+states, no volume conversion): every trajectory imports ~2.9 mM glucose on
+J1-J15 and phosphorylates 0.25-0.72 (vmax_VHK 0.098 mM/day); intracellular
+GLC 1.12 -> 3.3-3.7 against observed 1.18; LDH 6.7-6.8 mM, so lactate and
+lower-glycolysis ATP come mostly from initial stocks. Next is a USER
+DECISION, nothing launched: read-only carbon/glucose budget, read-only
+review of NDPK/ADSS and PRPPASe sinks, AK-ungrouped search, or observation
+contract.
+
+## 2026-11-11 - AK ratio x PEP phosphatase diagnostic PREPARED, not executed
+
+Protocol `tasks/fla_ak_pepase_protocol_2026_11_11.md`, config
+`config/fla_ak_pepase_2026_11_11.json`. Preparation authorized by the user
+("Oui, prépare"); launch not authorized yet. Fixed kinetics at the working
+center, Vmax only, inside the unchanged boxes; only vmax_VAK, vmax_VAK_rev
+and vmax_VPEP_PASE change. Two sealed trajectories are reused and not
+reintegrated: the control and `balanced_forward_lowered` of
+`output/ak_ratio_2026_11_11/` (ak_only reference).
+
+New arms: `pepase_floor_only` (AK at center, PEPase 0.8356 = box floor,
+0.109 x center); hypothesis `ak_balanced_pepase_floor` (sealed balanced AK
+pair, PEPase floor); monotonicity `ak_balanced_pepase_intermediate`
+(PEPase 2.5300, geometric mean). Six integrations planned. Classes
+numerical_failure / combined_effect_supported / pepase_alone_effect_only /
+no_supported_effect, always against the sealed control; flags
+beyond_reference, pk_share (J1-J4, J1-J15), pk_share_raised,
+pep_guard_failed, net_ATP_change, early_only, monotone_response. No
+promotion or calibration whatever the class; grouped search design
+retained (literal vectors, 14 log factors at zero).
+
+Written: `src/fla_ak_pepase.py`, runner and verifier under `scripts/`, 19
+targeted tests. Dry derivation only (`run_ak_pepase.py --dry`) and the
+verifier's arm-rule check; no arm integrated, no archive created. Awaiting
+user authorization to launch.
+
+## 2026-11-11 - Read-only review of VPEP_PASE and the B13PG/B23PG convention
+
+Current handoff: `tasks/fla_pep_pase_b13pg_review_2026_11_11.md`.
+User-chosen. No integration, no archive, no change; one evaluation of the
+coded rates at frozen J1. Not a registered result.
+
+VPEP_PASE (PEP -> PYR, no ADP/ATP, shares km_PEP with PK) has no RBC-GEM
+counterpart (`no_single_reaction_match`; GEM PEP consumers are PYK, ENO,
+NANS). Working center 7.660 against PK 0.657 (11.7x) and code default 0.1;
+box floor 0.836 still above PK center. Raw J1: PK 0.900, PEPase 1.339.
+Provenance of the frozen base 8.356 not traced.
+
+B13PG(0) = 3.584 is the duplicated B23PG row (Sheet1 rows 10/11 identical
+at 14 dates). Raw J1: PGK 16.15, DPGM 4.49 against GAPDH 1.75; stock gone
+within hours, then B13PG at the gate below km_B13PG 0.00284 (shared by PGK
+and DPGM). About 84% of J1-J4 B13PG throughput is the stock; it feeds both
+the PGK ATP pulse and DPGM supply to B23PG. Already found on 2026-08-11
+(QSS root 1.77e-4 mM, rejected on B23PG). vmax_VDPGM 4.4916 is the "3x, do
+not promote" anchor chosen in the QSS-B13PG context, now frozen together
+with the stock; DPGM and 23DPGP are in no search group. GEM reactions
+absent from the ODE: ACYP (inactive optional branch), DPG3P, HB23DPGB.
+
+Next is a USER DECISION, nothing launched: in-box fixed-kinetics AK ratio x
+PEPase lower bound diagnostic, AK-ungrouped search (design change),
+reversible B13PG(0) latent diagnostic (revisits a standing decision), or
+observation contract.
+
+## 2026-11-11 - Read-only attribution of the AK ratio arms closed
+
+Current handoff: `tasks/fla_ak_arm_attribution_results_2026_11_11.md`.
+User-chosen. Closed read-only archive
+`output/ak_arm_attribution_2026_11_11/`; do not overwrite or rerun. No
+integration, no parameter/state/threshold change. Sealed evidence of the
+joint-backend control and the three AK ratio arms, J1-J15, analysed with
+the unchanged 2026-11-10 attribution code plus arm-minus-control contrasts.
+Descriptive only; AK class `no_supported_effect` not reopened.
+
+Reading flag `NDPK_purine_cycle` alone in all four cases. Primary arm
+(Vf/Vr 0.667), J1-J4: 2 ATP + ADP changes by -1.832 (control -2.982);
+sinks PRPPASe 1.514, NDPK 1.450 (ADSS 1.058 + GTP charging 0.392), RKa
+1.000, PFK 0.865; sources PGK 2.989, PK 1.320. Demand reactions move by
+less than 0.03 mM versus control. Expectations: NDPK >= 25% confirmed
+(27.7%); PRPPASe top bond-equivalent sink confirmed narrowly; yield > 1
+confirmed (3.90); lower PGK gate loss after J4 REFUTED (3.09/5.25 versus
+1.21/1.64, limiting pool B13PG instead of ADP).
+
+GAPDH identical to control (0.681 on J1-J4); PGK in day 1 is the initial
+B13PG stock (duplicated Sheet1 row), then B13PG-gated at 0.09 mM/day.
+VPEP_PASE takes 64%/73%/84% of PEP outflow with PK not ADP-gated. HK stays
+near 0.24 per window, G6P accumulates, B23PG drained by 23DPGP. ADP below
+gate at day 13.83 (control 4.64).
+
+Receipt `output/ak_arm_attribution_decision_2026_11_11/`: 6,912 ledger
+values, 384/384 closures, 24 budget rows, 408 gate identities, 6,318
+contrast values. 9 targeted tests; full suite not run. Next is a USER
+DECISION, nothing launched: Vmax-only search with AK ungrouped (design
+change), read-only review of VPEP_PASE and the B13PG/B23PG convention, or
+observation contract.
+
+## 2026-11-11 - AK forward/reverse ratio diagnostic closed: guards fail, large partition effect
+
+Current handoff: `tasks/fla_ak_ratio_results_2026_11_11.md`.
+User-authorized. Closed archive `output/ak_ratio_2026_11_11/`; do not
+overwrite or rerun. Fixed kinetics at the working center, only vmax_VAK and
+vmax_VAK_rev changed inside the unchanged box. Six integrations, all
+numerically valid, paired. Registered class `no_supported_effect`
+(hypothesis and capacity arms fail original guards: G6P, F6P, PEP, B23PG,
+EINO, INO, P3G, PYR, GLN, GLU); monotone response; all arms `early_only`;
+`consumption_compensation` false.
+
+Gap 12.0892 -> 7.5002 (ratio 0.667, reverse at center) / 8.3943 (same
+ratio, reverse on upper bound) / 11.4403 (ratio 2.68). Hypothesis arm: ATP
+J15 4.4e-3 mM (x49, still ~170x below window), ADP J4 0.977 versus 0.006,
+E_A J4 1.20 versus 0.05, ADP gone by J15. ATP J4 still 0.113; J1-J4 net ATP
+-0.820 versus -0.909: AK -1.047, consumption -0.423, production -0.333.
+Collapse delayed, not avoided. Center, grouped design and J1 conventions
+retained; nothing promoted; no calibration.
+
+Receipt `output/ak_ratio_decision_2026_11_11/`: 55 measured-J1 checks, 3
+arm vectors, 9,492/9,492 balances, 33,600 quadratures, 54 checkpoints, 504
+guard values. 21 targeted tests; full suite not run. Next is a USER
+DECISION, nothing launched: Vmax-only search with AK ungrouped (design
+change), read-only attribution of the hypothesis arm, or observation
+contract.
+
+## 2026-11-11 - AK forward/reverse ratio diagnostic PREPARED, not executed
+
+Protocol `tasks/fla_ak_ratio_protocol_2026_11_11.md`, config
+`config/fla_ak_ratio_2026_11_11.json`. Preparation authorized by the user
+("Oui, prépare"); launch not authorized yet. Fixed kinetics at the working
+center, only vmax_VAK and vmax_VAK_rev changed, inside the unchanged AK box
+[0.05, 2.0]. Control (sealed, not reintegrated) Vf/Vr 10.766. Balancing
+ratio of the coded law at frozen J1, derived from the executable rate
+function on both backends: 0.6669045865.
+
+Arms (factors vs frozen base, forward/reverse): hypothesis
+`balanced_forward_lowered` 0.0680/1.0981; capacity
+`balanced_reverse_upper_bound` 0.1239/2.0000, same ratio; monotonicity
+`intermediate_ratio` 0.2733/1.0981, ratio 2.6795. Six integrations planned.
+Classes numerical_failure / ak_ratio_effect_supported /
+capacity_dependent_effect_only / no_supported_effect; flags ak_flux_reduced,
+consumption_compensation, net_ATP_change, early_only, monotone_response. No
+promotion or calibration whatever the class. The grouped search design is
+retained: arms are literal vectors replayed with all 14 log factors at zero;
+ungrouping AK in a search stays a separate user decision.
+
+Written: `src/fla_ak_ratio.py`, runner and verifier under `scripts/`, 21
+targeted tests. Dry derivation only (`run_ak_ratio.py --dry`), no arm
+integrated, no archive created. Work was interrupted after the tests and
+resumed the same day; the five code files were kept as written. Awaiting
+user authorization to launch.
+
 ## 2026-11-10 - RIB(0) latent ribose diagnostic closed: no effect
 
 Current handoff: `tasks/fla_ribose_stock_results_2026_11_10.md`.

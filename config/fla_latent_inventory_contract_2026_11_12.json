@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "contract": "fla_latent_inventory_contract",
+  "date": "2026-11-12",
+  "note": "tasks/fla_latent_inventory_contract_2026_11_12.md",
+  "status": "contract_only_no_integration_no_state_change",
+  "scope": ["ADO", "EADO", "RIB", "PRPP"],
+  "context_only": ["R5P"],
+  "frozen_state_reference": {
+    "campaign_design": "output/ak_pepase_2026_11_11/execution_design.json",
+    "initial_day": 1.0,
+    "initial_context": "output/exploratory_energy_sensitivity_J1_J4_2026_10_06",
+    "inventory_table": "output/exploratory_energy_sensitivity_J1_J4_2026_10_06/initialization_inventory.csv",
+    "prior_state_table": "output/ppp_numerical_audit_2026_10_05/fixed_initial_state.csv",
+    "measured_channels": "output/ak_pepase_2026_11_11/observations.json",
+    "measured_channel_count": 55
+  },
+  "geometry": {
+    "hematocrit": 0.58,
+    "intracellular_volume_L_per_L_bag": 0.58,
+    "extracellular_volume_L_per_L_bag": 0.42,
+    "provenance": "borrowed_working_geometry_not_matched_Bordbar_donor",
+    "use": "bag amounts below are conditional on this geometry and are not measurements"
+  },
+  "status_vocabulary": {
+    "measured": "exact value of a source row recorded as an observation channel",
+    "convention": "value assigned by a software rule, not by a measurement",
+    "latent": "unobserved model state; any value is a modelling choice",
+    "provenance_unresolved": "the assignment path of the archived value was not fully reconstructed with the permitted tools"
+  },
+  "pools": {
+    "ADO": {
+      "compartment": "intracellular",
+      "unit": "mM (per L intracellular volume, nominal model unit)",
+      "J1_value": 1.0,
+      "J1_amount_mmol_per_L_bag_conditional": 0.58,
+      "status": ["latent", "convention", "provenance_unresolved"],
+      "in_measured_panel": false,
+      "source": "carried unchanged from the 2026-10-05 fixed state; equals the generic default of src/parse_initial_conditions.py (value = 1.0, source 'generic_1mM', lines 66-71) reached through MM_calibration.load_initial_conditions() with policy legacy_experimental_alias",
+      "evidence": [
+        "initialization_inventory.csv line 68: ADO,unchanged_frozen_unmeasured_pool,,1.0,1.0,False,False",
+        "fixed_initial_state.csv line 28: ADO,1.0",
+        "observations.json has no ADO key (ADE, EADE, INO, EINO, HYPX, EHYPX, SAH present)",
+        "tasks/fla_purine_ribose_results_2026_11_11.md line 56: initial intracellular ADO 0.580000 mmol/L bag"
+      ],
+      "generic_1mM_assignment_proven": false,
+      "bounds": null,
+      "bounds_reason": "no measurement, no source-backed range and no conservation relation with a measured pool is recorded in the repository; the loader floor 1e-6 mM is numerical, not physiological",
+      "change_allowed": {
+        "reference_or_production_state": false,
+        "registered_reversible_sensitivity": "only with explicit user authorization, declared values with provenance, sealed control as revert branch",
+        "zero_as_default": false,
+        "scenario_value_as_physiological": false
+      }
+    },
+    "EADO": {
+      "compartment": "extracellular",
+      "unit": "mM (per L extracellular volume, nominal model unit)",
+      "J1_value": 1.0,
+      "J1_amount_mmol_per_L_bag_conditional": 0.42,
+      "status": ["latent", "convention", "provenance_unresolved"],
+      "in_measured_panel": false,
+      "source": "same path as ADO; under policy legacy_experimental_alias an E-prefixed name would take the intracellular Sheet1 value if 'ADO' were a workbook row (parse_initial_conditions.py lines 78-81); it is not, so the generic default applies by code reading",
+      "evidence": [
+        "initialization_inventory.csv line 108: EADO,unchanged_frozen_unmeasured_pool,,1.0,1.0,False,False",
+        "fixed_initial_state.csv line 90: EADO,1.0",
+        "observations.json has no EADO key",
+        "tasks/fla_purine_ribose_results_2026_11_11.md line 63: extracellular ADO starts at 0.420000 mmol/L bag (1 mM in its own phase) and is almost exhausted; net import 0.419900 by J15"
+      ],
+      "generic_1mM_assignment_proven": false,
+      "bounds": null,
+      "bounds_reason": "as ADO; additionally the additive-solution composition of the bag is not recorded in the repository, so no formulation-based value is available here",
+      "change_allowed": {
+        "reference_or_production_state": false,
+        "registered_reversible_sensitivity": "only with explicit user authorization; never tested so far",
+        "zero_as_default": false,
+        "scenario_value_as_physiological": false
+      }
+    },
+    "RIB": {
+      "compartment": "intracellular",
+      "unit": "mM (per L intracellular volume, nominal model unit)",
+      "J1_value": 1.0,
+      "J1_amount_mmol_per_L_bag_conditional": 0.58,
+      "status": ["latent", "convention", "provenance_unresolved"],
+      "in_measured_panel": false,
+      "source": "same path as ADO",
+      "evidence": [
+        "initialization_inventory.csv line 104: RIB,unchanged_frozen_unmeasured_pool,,1.0,1.0,False,False",
+        "fixed_initial_state.csv line 84: RIB,1.0",
+        "observations.json has no RIB key",
+        "tasks/fla_purine_ribose_results_2026_11_11.md line 97: free RIB begins at 0.580 mmol/L bag and is essentially consumed by J4"
+      ],
+      "generic_1mM_assignment_proven": false,
+      "bounds": null,
+      "bounds_reason": "no source-backed range; the values 0.0023 and 0.1 mM used on 2026-11-10 were a historical-workbook value of unproven measurement status and a numerical probe, neither is a bound",
+      "prior_sensitivity": {
+        "results": "tasks/fla_ribose_stock_results_2026_11_10.md",
+        "class": "no_supported_effect",
+        "consequence": "do not re-propose the RIB(0) stock size alone as the cause of the ATP loss"
+      },
+      "change_allowed": {
+        "reference_or_production_state": false,
+        "registered_reversible_sensitivity": "only with explicit user authorization and a question not already answered on 2026-11-10",
+        "zero_as_default": false,
+        "scenario_value_as_physiological": false
+      }
+    },
+    "PRPP": {
+      "compartment": "intracellular",
+      "unit": "mM (per L intracellular volume, nominal model unit)",
+      "J1_value": 1.0,
+      "J1_amount_mmol_per_L_bag_conditional": 0.58,
+      "status": ["latent", "convention", "provenance_unresolved"],
+      "in_measured_panel": false,
+      "source": "same path as ADO",
+      "evidence": [
+        "initialization_inventory.csv line 75: PRPP,unchanged_frozen_unmeasured_pool,,1.0,1.0,False,False",
+        "fixed_initial_state.csv line 43: PRPP,1.0",
+        "output/ak_pepase_2026_11_11/levels_by_day.csv line 127: control,ultrastrict,PRPP,1,1.0",
+        "observations.json has no PRPP key",
+        "tasks/fla_purine_ribose_results_2026_11_11.md lines 106-108: PRPP inventory decrease 0.579987 mmol/L bag against 0.456334 newly synthesized"
+      ],
+      "generic_1mM_assignment_proven": false,
+      "bounds": null,
+      "bounds_reason": "no source-backed range recorded in the repository",
+      "change_allowed": {
+        "reference_or_production_state": false,
+        "registered_reversible_sensitivity": "only with explicit user authorization; never tested alone so far",
+        "zero_as_default": false,
+        "scenario_value_as_physiological": false
+      }
+    }
+  },
+  "context": {
+    "R5P": {
+      "compartment": "intracellular",
+      "unit": "mM (per L intracellular volume, nominal model unit)",
+      "J1_value": 1.6110905450195272,
+      "J1_amount_mmol_per_L_bag_conditional": 0.934433,
+      "status": ["latent", "solved_diagnostic_initialization_not_generic"],
+      "in_measured_panel": false,
+      "source": "one of seven latent pentose-phosphate states solved by the constrained balanced-teacher initialization at vmax_V6PGD = 9.0 (0.900x) on 2026-08-11; that candidate was recorded as diagnostic and not promoted, and is nevertheless the value carried into the frozen context",
+      "evidence": [
+        "Simulations/brodbar/hermes/v6pgd_constrained_transition_refinement_46d/diagnostic_candidates.json lines 30-35: constrained_balanced_teacher__v6pgd_0.9000x, R5P 1.6110905450195272",
+        "fixed_initial_state.csv line 8 and initialization_inventory.csv line 59: R5P 1.6110905450195272",
+        "output/ak_pepase_2026_11_11/levels_by_day.csv line 122: control,ultrastrict,R5P,1,1.6110905450195272",
+        "fla_progress_log.md, 2026-08-11 entries on the V6PGD constrained initialization: 'promoted neither kinetic parameters nor initial conditions'"
+      ],
+      "bounds": null,
+      "bounds_reason": "the solve used model-internal bounds for latent states (GL6P <= 2 mM is recorded; the R5P bound was not read); these are solver bounds, not physiological ranges",
+      "transfer_trace": "tasks/fla_r5p_transfer_trace_2026_11_12.md",
+      "roles": {
+        "historical_comparator": "exact value of every sealed campaign since 2026-10-06; keep unchanged for comparisons",
+        "eligible_biological_initialization": false,
+        "biological_provenance_resolved": false
+      },
+      "change_allowed": {
+        "reference_or_production_state": false,
+        "overwrite_with_generic_1mM": false,
+        "registered_reversible_sensitivity": "only with explicit user authorization; must state that RU5P, X5P, E4P, S7P, GA3P and GL6P came from the same solve"
+      }
+    }
+  },
+  "invariants": [
+    "the 55 measured J1 values are immutable; none of the pools above is one of them",
+    "absence of a pool from the 55-channel panel does not by itself prove a generic_1mM assignment",
+    "no value in this contract is a physiological prior, and no scenario value may be reported as one",
+    "zero is never a default replacement for an unmeasured stock",
+    "intracellular and extracellular concentrations are converted to bag amounts with distinct volumes; they are never summed as mM",
+    "any change is a registered, reversible, user-authorized diagnostic in a fresh dated archive; sealed archives and the working center stay untouched"
+  ],
+  "unresolved": [
+    "src/Data_Bordbar_et_al_exp.xlsx, src/Initial_conditions_JA_Final.xls and *.npz files cannot be opened with the permitted tools: workbook absence of ADO, EADO, RIB, PRPP and R5P is established only through the archived 55-channel observations and the inventory table",
+    "the path from fixed_initial_state.csv back to the loader goes through scripts/audit_ppp_constraints_and_numerics.py (_fixed_context), scripts/screen_amp_nucleotidase_fixed_purine.py (_build_anchor) and scripts/audit_atp_partition_vdpgm_3x_qss_b13pg.py (_build_contract, line 85); the last step was not read to its end and nothing was re-executed, so equality of the archived 1.0 values with the loader default is a code-reading inference",
+    "no file hash was recomputed in this pass",
+    "values of ADO and EADO in the historical JA workbook are unknown to this contract"
+  ],
+  "integration_performed": false,
+  "state_changed": false,
+  "bounds_changed": false,
+  "km_changed": false,
+  "promotion_allowed": false
+}

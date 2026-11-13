@@ -9,6 +9,8 @@ import type {
 } from '@/lib/monitoring-alerts'
 import { ArrowRight, Layers3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ResearchDatasetBanner } from './ResearchDatasetBanner'
+import { ResearchSectionNav } from './ResearchSectionNav'
 import type { PlatformNavItem, PlatformNavSubsection, ProductContextShape } from './platform-shell.types'
 
 interface WorkspaceFeatureSurfaceProps {
@@ -22,6 +24,7 @@ interface WorkspaceFeatureSurfaceProps {
   }
   productContext: ProductContextShape
   runs: any[]
+  runsError?: string | null
   subsection: PlatformNavSubsection | null
   workspaceLabel: string
 }
@@ -193,6 +196,7 @@ export function WorkspaceFeatureSurface({
   alertsData,
   productContext,
   runs,
+  runsError,
   subsection,
   workspaceLabel,
 }: WorkspaceFeatureSurfaceProps) {
@@ -201,6 +205,28 @@ export function WorkspaceFeatureSurface({
   }
 
   const selectedSubsection = subsection ?? feature.children?.[0] ?? null
+  if (feature.href.startsWith('/research')) {
+    const title = feature.id === 'research-overview' ? 'Research' : feature.title
+    return <div className="research-workspace" data-testid="research-workspace" data-feature={feature.id}>
+      <header className="research-page-header">
+        <h1>{title}</h1>
+        <ResearchDatasetBanner />
+      </header>
+      {/* Task pages own their structure: no visible jump links, but historical ?subsection=/#id links still
+          scroll (Calibration maps them to its views itself). Only Overview keeps visible links. */}
+      {feature.children?.length && feature.id !== 'parameter-calibration'
+        ? <ResearchSectionNav key={feature.id} sections={feature.children}
+            hidden={feature.id !== 'research-overview'} /> : null}
+      <WorkspaceFeatureContent access={access} alertsData={alertsData} detail={detail}
+        detailFields={detailFields} feature={feature} runs={runs} runsError={runsError} />
+    </div>
+  }
+  if (feature.id === 'monitoring-overview') {
+    return <>
+      <WorkspaceFeatureContent access={access} alertsData={alertsData} detail={detail}
+        detailFields={detailFields} feature={feature} runs={runs} runsError={runsError} />
+    </>
+  }
   const isHomeFeature = feature.id === 'home'
   const sectionCount = feature.children?.length ?? 0
   const surfaceTheme = getFeatureSurfaceTheme(feature.id)

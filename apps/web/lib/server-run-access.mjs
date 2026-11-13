@@ -54,8 +54,9 @@ export function resolveServerRunAccess(productContext) {
   }
 
   if (productContext.contextState === 'product_schema_unavailable') {
-    return buildAccessDescriptor('transitional_public_fallback', {
-      fallbackMode: 'public_read_model',
+    return buildAccessDescriptor('authenticated_personal', {
+      scope: { userId: productContext.user.id },
+      fallbackMode: 'workspace_schema_unavailable',
       error: productContext.contextError || null,
     })
   }

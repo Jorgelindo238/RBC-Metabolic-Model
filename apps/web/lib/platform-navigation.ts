@@ -134,17 +134,17 @@ const RESEARCH_ITEMS: readonly PlatformNavItem[] = Object.freeze([
     children: [
       {
         id: 'research-map',
-        title: 'Research map',
+        title: 'Prepare',
         description: 'Open the live analysis pages from one place before drilling into a focused task.',
       },
       {
         id: 'workflow-orientation',
-        title: 'Workflow orientation',
+        title: 'Simulate',
         description: 'Move from uploads and calibration into simulation, then onward to flux and pathway work.',
       },
       {
         id: 'advanced-analysis',
-        title: 'Advanced analysis',
+        title: 'Analyse & review',
         description: 'Keep the deeper tools aligned as the research set expands.',
       },
     ],
@@ -156,12 +156,10 @@ const RESEARCH_ITEMS: readonly PlatformNavItem[] = Object.freeze([
     status: 'live',
     description: 'Import experimental RBC storage series, map them to model metabolites, and stage them for comparison or calibration.',
     icon: 'data',
-    badgeText: 'Primary',
-    badgeCount: 2,
     children: [
       {
         id: 'dataset-intake',
-        title: 'Upload & parse',
+        title: 'File & preview',
         description: 'Upload time-series data with automatic parsing, preview, and validation.',
       },
       {
@@ -171,34 +169,32 @@ const RESEARCH_ITEMS: readonly PlatformNavItem[] = Object.freeze([
       },
       {
         id: 'data-readiness',
-        title: 'Data validation',
+        title: 'Review',
         description: 'Check structure, time alignment, and concentration units before analysis.',
       },
     ],
   },
   {
     id: 'calibration-registry',
-    title: 'Calibration Registry',
+    title: 'Results',
     href: buildPlatformFeatureHref('calibration-registry'),
     status: 'live',
     description: 'Inspect the historical calibration ledger, compare benchmark outcomes, and trace each record back to its evidence.',
     icon: 'calibration',
-    badgeText: 'Live',
-    badgeCount: 3,
     children: [
       {
         id: 'latest-record',
-        title: 'Latest record',
+        title: 'Summary',
         description: 'Inspect the newest visible calibration record, its benchmark status, and its core metrics.',
       },
       {
         id: 'benchmark-ledger',
-        title: 'Benchmark ledger',
+        title: 'Runs',
         description: 'Review grouped comparison lanes for baseline, keep, discard, and other benchmark outcomes.',
       },
       {
         id: 'artifact-trace',
-        title: 'Artifact trail',
+        title: 'Evidence',
         description: 'Open the manifests, reports, and trace references that anchor each result.',
       },
     ],
@@ -213,17 +209,12 @@ const RESEARCH_ITEMS: readonly PlatformNavItem[] = Object.freeze([
     children: [
       {
         id: 'scenario-setup',
-        title: 'Storage scenario',
+        title: 'Run settings',
         description: 'Shape the horizon, perturbation, fit strength, and initial conditions for each run.',
       },
       {
-        id: 'solver-controls',
-        title: 'Solver & tolerances',
-        description: 'Pick the integrator and numerical limits that control the solve.',
-      },
-      {
         id: 'trajectory-review',
-        title: 'Metabolite trajectories',
+        title: 'Trajectories & log',
         description: 'Track glucose, lactate, ATP, 2,3-BPG, glutathione, and the rest of the network over time.',
       },
     ],
@@ -238,24 +229,24 @@ const RESEARCH_ITEMS: readonly PlatformNavItem[] = Object.freeze([
     children: [
       {
         id: 'pathway-activity',
-        title: 'Pathway fluxes',
+        title: 'Snapshot',
         description: 'View Michaelis-Menten flux estimates grouped by metabolic subsystem.',
       },
       {
         id: 'reaction-tracing',
-        title: 'Reaction-level detail',
+        title: 'Pathway fluxes',
         description: 'Inspect key reaction rates across glycolysis, glutathione, and nucleotide reactions.',
       },
       {
         id: 'comparison-view',
-        title: 'Flux comparison',
+        title: 'Provenance',
         description: 'Compare simulated fluxes against reference estimates to spot pathway gaps.',
       },
     ],
   },
   {
     id: 'pathway-visualization',
-    title: 'Pathway Visualization',
+    title: 'Pathway Map',
     href: buildPlatformFeatureHref('pathway-visualization'),
     status: 'live',
     description: 'Explore the RBC metabolic network as a pathway map with metabolite nodes and enzyme reactions colored by subsystem.',
@@ -263,17 +254,17 @@ const RESEARCH_ITEMS: readonly PlatformNavItem[] = Object.freeze([
     children: [
       {
         id: 'network-state',
-        title: 'Metabolic network',
+        title: 'Network',
         description: 'View the complete RBC pathway map and its major reaction chains.',
       },
       {
         id: 'time-navigation',
-        title: 'Concentration state',
+        title: 'Playback & selection',
         description: 'Overlay live metabolite concentrations to see how storage reshapes the map.',
       },
       {
         id: 'pathway-story',
-        title: 'Network summary',
+        title: 'Provenance',
         description: 'Review node count, reaction count, and pathway coverage at a glance.',
       },
     ],
@@ -389,26 +380,26 @@ export const MONITORING_ITEMS: readonly PlatformNavItem[] = Object.freeze([
 const HIDDEN_FEATURE_ITEMS: readonly PlatformNavItem[] = Object.freeze([
   {
     id: 'parameter-calibration',
-    title: 'Parameter Calibration',
+    title: 'Calibration',
     href: buildPlatformFeatureHref('parameter-calibration'),
     status: 'live',
     description: 'Optimize kinetic parameters against experimental storage data to improve agreement with observed trajectories.',
     icon: 'calibration',
     children: [
       {
-        id: 'target-scope',
-        title: 'Parameter selection',
-        description: 'Choose the Vmax and Km parameters to fit across glycolysis, transport, and salvage reactions.',
+        id: 'data-verification',
+        title: 'Data verification',
+        description: 'Data-contract validity and engine compatibility.',
       },
       {
-        id: 'parameter-scope',
-        title: 'Optimization method',
-        description: 'Select the optimization strategy and iteration budget for the search.',
+        id: 'reference-profile',
+        title: 'Reference profile',
+        description: 'Read-only historical reference and limitations.',
       },
       {
-        id: 'benchmark-review',
-        title: 'Calibration results',
-        description: 'Review optimized values, fit quality, and relative parameter shifts.',
+        id: 'legacy-calibration',
+        title: 'Advanced',
+        description: 'Historical calibration controls and results.',
       },
     ],
   },
@@ -446,7 +437,8 @@ export const PLATFORM_NAV_SECTIONS: readonly PlatformNavSection[] = Object.freez
     id: 'research',
     label: 'RESEARCH',
     collapsible: false,
-    items: [...RESEARCH_ITEMS],
+    items: ['research-overview', 'data-upload', 'parameter-calibration', 'simulation-workspace', 'flux-analysis', 'pathway-visualization', 'calibration-registry']
+      .map(id => [...RESEARCH_ITEMS, ...HIDDEN_FEATURE_ITEMS].find(item => item.id === id)!),
   },
   {
     id: 'monitoring',
@@ -456,7 +448,8 @@ export const PLATFORM_NAV_SECTIONS: readonly PlatformNavSection[] = Object.freez
   },
 ])
 
-const PLATFORM_NAV_ITEMS = [...PLATFORM_NAV_SECTIONS.flatMap(section => section.items), ...HIDDEN_FEATURE_ITEMS]
+const PLATFORM_NAV_ITEMS = [...PLATFORM_NAV_SECTIONS.flatMap(section => section.items),
+  ...HIDDEN_FEATURE_ITEMS.filter(item => !PLATFORM_NAV_SECTIONS.some(section => section.items.some(visible => visible.id === item.id)))]
 
 export function getPlatformFeatureById(featureId?: string | null) {
   const normalizedFeatureId = normalizePlatformFeatureId(featureId)

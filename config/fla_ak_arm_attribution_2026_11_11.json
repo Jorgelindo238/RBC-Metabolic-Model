@@ -1,0 +1,43 @@
+{
+  "protocol": "tasks/fla_ak_arm_attribution_protocol_2026_11_11.md",
+  "archives": ["output/vmax_requalification_2026_11_09", "output/ak_ratio_2026_11_11"],
+  "cases": {
+    "control": {"folder": "output/vmax_requalification_2026_11_09/controls/working_center", "backend": "joint"},
+    "balanced_forward_lowered": {"folder": "output/ak_ratio_2026_11_11/candidates/balanced_forward_lowered", "backend": "joint"},
+    "balanced_reverse_upper_bound": {"folder": "output/ak_ratio_2026_11_11/candidates/balanced_reverse_upper_bound", "backend": "joint"},
+    "intermediate_ratio": {"folder": "output/ak_ratio_2026_11_11/candidates/intermediate_ratio", "backend": "joint"}
+  },
+  "control_case": "control",
+  "primary_case": "balanced_forward_lowered",
+  "profiles": ["strict", "ultrastrict"],
+  "primary_profile": "ultrastrict",
+  "published_summary": "output/ak_ratio_2026_11_11/summary.json",
+  "windows": {"J1_J4": [1, 4], "J4_J8": [4, 8], "J8_J15": [8, 15]},
+  "primary_window": "J1_J4",
+  "daily_resolution": true,
+  "ledger_pools": ["ATP", "ADP", "AMP", "GTP", "GDP", "GMP", "IMP", "PRPP", "ADESUC", "B13PG", "B23PG", "G6P", "F6P", "PEP"],
+  "lumped_pools": {"adenylate_total": {"ATP": 1, "ADP": 1, "AMP": 1}, "phosphate_bond_equivalents": {"ATP": 2, "ADP": 1}},
+  "contrast_pools": ["ATP", "phosphate_bond_equivalents", "adenylate_total"],
+  "gate_threshold_mM": 0.001,
+  "gate_tabulated_reactions": ["VPGK", "VPK", "VHK", "VPFK", "VNDPK", "VAK", "VPRPPASe"],
+  "cycles": {
+    "purine_nucleotide_cycle": ["VAMPD1", "VADSS", "VADSL"],
+    "NDPK_coupling": {"transfer": "VNDPK", "GTP_sinks": ["VADSS"], "GDP_sources": ["VADSS", "VGMPK"]},
+    "adenylate_kinase": ["VAK", "VAK2"],
+    "PRPP": {"source": "VPRPPASe", "sinks": ["VHGPRT1", "VHGPRT2", "VAPRT"]},
+    "glycolytic_yield": {"return": ["VPGK", "VPK"], "investment": ["VHK", "VPFK"]},
+    "rapoport_luebering": {"bypass": "VDPGM", "direct": "VPGK", "return": "V23DPGP"}
+  },
+  "reading_thresholds": {
+    "dominant_consumer_share": 0.25,
+    "glycolytic_yield_below": 1.0,
+    "bypass_share_above": 0.5
+  },
+  "closure_atol_mM": 0.000001,
+  "closure_rtol": 0.001,
+  "new_integrations": 0,
+  "parameters_changed": false,
+  "optimization_executed": false,
+  "production_promotion_allowed": false,
+  "J46_replayed": false
+}

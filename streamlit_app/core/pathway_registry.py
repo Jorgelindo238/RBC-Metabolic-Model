@@ -11,6 +11,7 @@ Pathway replay/network-state projection used by the web app.
 
 from __future__ import annotations
 
+import ast
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
@@ -386,15 +387,36 @@ def _load_rxn_catalog() -> List[Tuple[str, str, List[str], List[str], bool]]:
     return catalog
 
 
+def _extract_declared_flux_names(text: str) -> List[str]:
+    """Read literal tracker keys without executing the ODE or depending on audit statements."""
+    declarations = []
+    for node in ast.walk(ast.parse(text)):
+        if isinstance(node, ast.Assign):
+            targets = node.targets
+        elif isinstance(node, ast.AnnAssign):
+            targets = [node.target]
+        else:
+            continue
+        if any(isinstance(target, ast.Name) and target.id == "flux_dict" for target in targets):
+            declarations.append(node.value)
+    if len(declarations) != 1 or not isinstance(declarations[0], ast.Dict):
+        raise RuntimeError("Expected one literal flux_dict declaration in equadiff_brodbar.py")
+    keys = declarations[0].keys
+    if not keys or any(
+        not isinstance(key, ast.Constant) or not isinstance(key.value, str) or not key.value
+        for key in keys
+    ):
+        raise RuntimeError("Expected literal nonempty string keys in flux_dict")
+    names = [key.value for key in keys]
+    if len(set(names)) != len(names):
+        raise RuntimeError("Duplicate flux_dict reaction keys")
+    return names
+
+
 @lru_cache(maxsize=1)
 def _load_equadiff_reaction_names() -> List[str]:
     """Extract flux keys from equadiff_brodbar.py in declaration order."""
-    text = EQ_FILE.read_text(encoding="utf-8", errors="ignore")
-    match = re.search(r"flux_dict\s*=\s*\{(.*?)\n\s*\}\s*\n\s*_flux\.add_timepoint", text, re.S)
-    if not match:
-        raise RuntimeError("Could not locate flux_dict block in equadiff_brodbar.py")
-    block = match.group(1)
-    return re.findall(r"'([A-Za-z0-9_]+)'\s*:", block)
+    return _extract_declared_flux_names(EQ_FILE.read_text(encoding="utf-8"))
 
 
 @lru_cache(maxsize=1)

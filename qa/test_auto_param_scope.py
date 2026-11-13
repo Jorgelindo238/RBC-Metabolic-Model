@@ -633,3 +633,136 @@ class TestAutoScopeEglcProtection:
 
         assert accepted is True
         assert "accepted on pure fit objective" in reason
+
+
+# ---------------------------------------------------------------------------
+# Strict Vmax-only (fixed Km) entry points — added 2026-11-12, NOT executed by
+# their author. The calibration core is replaced by a stub: no solver runs.
+# ---------------------------------------------------------------------------
+
+
+class _CoreReached(Exception):
+    """Raised by the stubbed core so a test stops right after the stage plan is built."""
+
+
+class TestFixedKmEntryPoints:
+    @staticmethod
+    def _stub_core(monkeypatch):
+        captured = {}
+
+        def fake_run_calibration(**kwargs):
+            captured.update(kwargs)
+            raise _CoreReached()
+
+        monkeypatch.setattr(adapter.mm, "run_calibration", fake_run_calibration)
+        return captured
+
+    @staticmethod
+    def _forbid_core(monkeypatch):
+        def forbidden(**kwargs):
+            pytest.fail("a refused request must never reach the calibration core")
+
+        monkeypatch.setattr(adapter.mm, "run_calibration", forbidden)
+
+    @pytest.mark.parametrize("fields", [
+        {"optimization_strategy": "vmax_only", "method": "km_only"},
+        {"optimization_strategy": "joint_vmax_km", "method": "vmax_only"},
+        {"parameter_contract": "vmax_only_fixed_km", "optimization_strategy": "vmax_then_km"},
+        {"parameter_contract": "legacy_unconstrained", "method": "vmax_only"},
+        {"parameter_contract": "not_a_contract"},
+    ])
+    @pytest.mark.parametrize("orchestration_mode", ["single_run", "strategy_race"])
+    def test_strategy_conflicts_are_refused_with_400_at_both_entry_points(self, monkeypatch, fields, orchestration_mode):
+        from fastapi import HTTPException
+
+        self._forbid_core(monkeypatch)
+        request = _make_request(orchestration_mode=orchestration_mode, **fields)
+        with pytest.raises(HTTPException) as error:
+            adapter.run_web_calibration(request)
+        assert error.value.status_code == 400
+        with pytest.raises(HTTPException):
+            adapter._run_single_web_calibration(_make_request(**fields))
+
+    @pytest.mark.parametrize("bad", ["km_ATP", "ki_ATP_PK"])
+    def test_explicit_non_vmax_parameter_is_refused_under_fixed_km(self, monkeypatch, bad):
+        from fastapi import HTTPException
+
+        self._forbid_core(monkeypatch)
+        request = _make_request(
+            optimization_strategy="vmax_only",
+            params_to_optimize={"vmax_VHK": [1.0, 0.1, 5.0], bad: [1.0, 0.1, 5.0]},
+        )
+        with pytest.raises(HTTPException) as error:
+            adapter.run_web_calibration(request)
+        assert error.value.status_code == 400 and bad in str(error.value.detail)
+
+    @pytest.mark.parametrize("fields", [
+        {"optimization_strategy": "vmax_only"},
+        {"method": "vmax_only"},
+        {"parameter_contract": "vmax_only_fixed_km"},
+    ])
+    @pytest.mark.parametrize("auto_param_scope", [None, True])
+    def test_auto_scope_cannot_reopen_km_or_regulation_under_fixed_km(self, monkeypatch, fields, auto_param_scope):
+        captured = self._stub_core(monkeypatch)
+        request = _make_request(
+            target_metabolites=ENERGY_METABOLITES + GLYCOLYSIS_METABOLITES + EXTRACELLULAR_METABOLITES,
+            auto_param_scope=auto_param_scope,
+            **fields,
+        )
+        with pytest.raises(_CoreReached):
+            adapter.run_web_calibration(request)
+        assert captured["optimization_strategy"] == "vmax_only"
+        stages = captured["stage_plan"]
+        assert stages
+        for stage in stages:
+            assert stage["include_params"]
+            for name in stage["include_params"]:
+                assert name.startswith("vmax_")
+                classes = set(mm.get_parameter_classes(name))
+                assert mm.PARAM_CLASS_VMAX in classes
+                assert not classes & {mm.PARAM_CLASS_KM, mm.PARAM_CLASS_REGULATION, mm.PARAM_CLASS_HYBRID}
+
+    def test_explicit_vmax_selection_is_passed_through_unchanged_apart_from_vmax_additions(self, monkeypatch):
+        captured = self._stub_core(monkeypatch)
+        request = _make_request(
+            optimization_strategy="vmax_only",
+            params_to_optimize={"vmax_VHK": [1.0, 0.1, 5.0], "vmax_VPK": [1.0, 0.1, 5.0]},
+        )
+        with pytest.raises(_CoreReached):
+            adapter.run_web_calibration(request)
+        included = {name for stage in captured["stage_plan"] for name in stage["include_params"]}
+        assert {"vmax_VHK", "vmax_VPK"} <= included
+        assert all(name.startswith("vmax_") for name in included)
+
+    def test_fixed_km_race_runs_one_vmax_only_candidate_without_memory_and_keeps_the_request(self, monkeypatch):
+        seen = []
+
+        def fake_single_run(candidate):
+            seen.append(candidate)
+            return {"success": True, "final_loss": 1.0, "combined_triage": {"overall": "needs_review"}}
+
+        monkeypatch.setattr(adapter, "_run_single_web_calibration", fake_single_run)
+        request = _make_request(
+            parameter_contract="vmax_only_fixed_km",
+            orchestration_mode="strategy_race",
+            enable_teacher_flux_rescue=True,
+            strategy_race_budget=8,
+        )
+        before = request.model_dump()
+        result = adapter.run_web_calibration(request)
+        assert request.model_dump() == before
+        assert len(seen) == 1
+        assert seen[0].optimization_strategy == seen[0].method == "vmax_only"
+        assert seen[0].enable_strategy_memory is False
+        assert result["orchestration"]["strategies_considered"] == ["vmax_only"]
+        assert result["orchestration"]["fixed_km"] is True
+        assert result["orchestration"]["teacher_flux_rescue"] is None
+
+    def test_historical_path_still_reaches_the_core_and_is_not_forced_to_vmax_only(self, monkeypatch):
+        captured = self._stub_core(monkeypatch)
+        request = _make_request(optimization_strategy="vmax_then_km")
+        with pytest.raises(_CoreReached):
+            adapter.run_web_calibration(request)
+        assert captured["optimization_strategy"] == "vmax_then_km"
+        included = {name for stage in captured["stage_plan"] for name in stage["include_params"]}
+        assert included

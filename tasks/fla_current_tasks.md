@@ -1,6 +1,233 @@
 # FLA Current Tasks
 
-Last updated: 2026-11-04
+Last updated: 2026-11-12
+
+## Current: Minimal Research Pages Implemented Locally
+
+Seven Research pages now use one compact header/dataset line, real section
+anchors and unframed work areas. Visible sidebar order: Overview, Data Upload,
+Calibration, Simulation, Flux Analysis, Pathway Map, Results. Removed decorative
+route heroes/context panels and fake sidebar counts; preserved existing URLs.
+Overview groups Prepare / Simulate / Analyse & review. Import has File & preview,
+Metabolite mapping and Review; preview values are not rounded and missing units/
+compartments are disclosed. Advanced legacy calibration is collapsed, not removed.
+Reference activation and contractual launch gates remain blocked as before.
+
+Flux controls and scientific plots precede provenance disclosures. Pathway Map
+starts in compact display mode, uses a readable circular connector layout and
+reports connector/bridge counts, not full-model reaction counts. Full map,
+playback, selection inspector and graph zoom remain accessible. Selection opens
+the inspector. RoBoCop stays available through a small labelled launcher in
+Research, with no message sent by the tests. Mobile header/navigation simplified.
+
+QA found a pre-existing network-reader failure: a regex expected flux_dict to
+be immediately followed by the tracker call, but reaction-consistent audit code
+now intervenes. Replaced only that read-only extraction with Python AST parsing;
+no execution of ODE source. Eight regression cases cover audit statements,
+quotes, ambiguous/dynamic keys and the current graph. API restarted at8010;
+real /api/pathway/network returns200 with113 nodes and108 reaction nodes/edges.
+No stoichiometry, kinetics, initial conditions, source data or archives changed.
+
+Validation:143 targeted Python tests,42 Node tests, TypeScript and diff check
+pass. All16 Research browser scenarios (seven routes + real test-only CSV intake
+per desktop/mobile) pass; the six existing Calibration/Monitoring scenarios also
+pass with strict live Supabase reads. Additional narrow-screen graph/inspector/
+chat checks pass at320/390px with no page or console errors. Capture uses the
+initial caret style to avoid Playwright mutating SSR inputs before hydration;
+file-input hydration is additionally exercised without submitting a file.
+No fabricated registry rows, scientific ODE or
+calibration job created. Browser/Playwright used because Browser plugin absent.
+Screenshots/concept remain outside the repository; accepted operational layout
+preserves existing Home/Monitoring branding rather than rebranding the app.
+
+NEXT: review the new Research UX with the user, then implement explicit upload
+metadata (units, absolute/relative observations, compartments and cohort keys)
+and its contract flow. Worker persistence, engine qualification and pre-existing
+Supabase security debt remain open. Local web3100 / API8010; no deployment,
+commit/push, Claude, subagents, scientific default promotion or new optimization.
+
+## Current: Vercel Supabase Configuration Aligned; Research Next
+
+User authorized the Vercel configuration update, then a return to RESEARCH.
+Project `web` / root `apps/web`: updated URL/public anon key in development,
+preview and production (six values). Independent read-back matches the local
+reference project; Auth health and registry GET return200 for each remote pair.
+Eight unrelated variables, IDs, target scopes and types are unchanged.
+No deployment, commit/push, scientific run or model activation. Existing
+deployments still use their old environment until redeployed; live production
+connectivity is not established by these configuration/API checks.
+NEXT APPLICATION: begin Research with Data Upload, observation metadata and
+the path to Calibration/Monitoring. Preserve raw/relative values, explicit
+units/compartments, missing initialization/geometry and engine launch gates.
+Registry worker writes and existing security advisories remain separate open
+items. See `supabase/README.md` for configuration and access boundaries.
+
+## Current: Reference Supabase Selected; Local Registry Connected
+
+User confirmed `rbc-metabolic-model` (`hniqmghepbygphbswwvx`) as the reference.
+Applied migration `20261113005444_calibration_run_registry.sql`. RLS limits
+reads to explicitly public/own rows; browser roles cannot write. Workspace
+sharing is not enabled. Local ignored URL/public-key pair corrected; real
+Auth health and registry REST reads return200. Registry is genuinely empty;
+no scientific archives or synthetic runs imported. Details: `supabase/README.md`.
+Transactional SQL role tests pass and roll back all fixtures. Authenticated
+personal scope is preserved when workspace/profile tables are unavailable.
+42 Node tests, TypeScript and all six strict connected desktop/mobile browser
+scenarios pass. RLS test rollback verified: zero persisted fixtures/runs. Browser
+sign-in and populated worker writes remain unverified; no worker writer is wired.
+FOLLOW-UP: the Vercel URL/key switch is now complete as recorded above, without
+deployment. Pre-existing security debt and authenticated campaign persistence
+remain open. No science change or activation.
+
+## Current: Application Local QA Completed by Codex, Without Claude
+
+Report `tasks/fla_calibration_monitoring_validation_2026_11_12.md`.135 targeted
+Python tests,38 Node tests, TypeScript and six desktop/mobile Playwright scenarios
+pass. Fixed Monitoring's missing actual run load, error propagation/Unknown
+counters, stale preflight responses, malformed-profile handling and implicit
+activation claims/parameter reuse. Compact work surfaces replace route hero
+panels for Calibration/Monitoring. Historical profile remains read-only.
+
+Local web http://127.0.0.1:3100, API http://127.0.0.1:8010.
+KNOWN ENVIRONMENT GAP: Supabase hostname returns DNS ENOTFOUND; URL/key are
+configured but no credentials changed. Unavailable state is verified,
+populated remote records/authenticated access are not. NEXT application task:
+diagnose run-registry connectivity without changing auth. NEXT engine task:
+shifted-origin qualification before new contractual calibration launch.
+No scientific optimization, archive/default changes, agents, commit/push/deploy.
+
+## Active Application Tranche: Calibration / Monitoring
+
+User explicitly requests Claude implementation. Dispatch:
+`tasks/fla_calibration_monitoring_dispatch_2026_11_12.md`. Scope: read-only
+verified reference registry, preflight wiring, safe launch gates, truthful
+common lifecycle/monitoring and removal of unconditional applied/fake data.
+Claude prepares code/tests with file tools; Codex reviews and executes checks.
+The provisional profile remains non-activatable, and new user calibration stays
+blocked wherever engine compatibility is not qualified. No new scientific runs,
+solver/default changes or automatic profile promotion authorized in this tranche.
+
+## Latest Completed: Extracellular Reference Frozen, Return to Application
+
+Supersedes pending verifier gates below.51 module/verifier tests pass. Bounded
+extracellular /2 campaign completed:38 numerically valid ODEs, no distinct
+release-admissible new seed, one optimized start, no new finalist or improvement.
+Selected audited working_centre fallback as ONE provisional vector. Independent
+verification passes1,162,575 support points,56 reconstructed Jacobian columns,
+17 exported Vmax values. No new flux balances or full qualification replays:
+fallback qualification comes from historical sealed receipts.
+Report: `tasks/fla_extracellular_release_results_2026_11_12.md`.
+Artifact: `output/extracellular_release_2026_11_12/release/provisional_extracellular_reference.json`.
+
+NEXT: application simplification/read-only reference integration per
+`tasks/fla_application_return_handoff_2026_11_12.md`. Activation remains forbidden;
+preserve its flag, unit assumptions, unknown donor, borrowed geometry, unmet
+ATP/ADP and poor EINO fit. No automatic next optimization. Do not claim good fit
+for all19 channels. User-data launch remains gated by actual engine compatibility.
+No active scientific defaults, UI, commit or push changed in this execution.
+
+## Execution Gate: Extracellular /2 Tests Pass, Verifier Completion Pending
+
+Codex ran Claude's corrected delivery. Fixed historical control-gate prediction
+extraction (`metrics.prediction_mM`, not top level);65 combined targeted tests
+pass. No new ODE campaign launched. The actual independent verifier still lacks
+full-support, Jacobian and flux-balance reconstruction. Bounded correction:
+`tasks/fla_extracellular_execution_gate_2026_11_12.md`. Complete those checks
+and adversarial tests only, then execute the existing bounded campaign; no new
+objective/algorithm/UI redesign or scientific contract change.
+
+## Pending Claude Correction: Extracellular Pre-Run Review
+
+The extracellular successor is written, not numerically executed. Codex reviewed
+the actual scoring/cache/application handoff and dispatched
+`tasks/fla_extracellular_prerun_review_2026_11_12.md` to Claude (receipt observed).
+Before execution: finite log1p utility at exact fit, explicit EGLC/ELAC regression
+checks, honest unit provenance, transitive source-qualified cache and no UI click
+overriding activation_allowed=false. Claude prepares corrections/tests with file
+tools only; Codex then reviews and executes. Preserve the bounded extracellular
+release/fallback goal and return to application, not another open-ended ATP loop.
+
+## User Direction: Extracellular Release and Application
+
+Latest authorization: reconstruct feasible starts, reconsider the search strategy,
+retain the best coherent extracellular calibration and return to the application.
+Claude's new bounded code-preparation dispatch:
+`tasks/fla_extracellular_release_dispatch_2026_11_12.md`. Codex executes after
+review. No new numerical campaign or baseline promotion yet. Historic energy
+mode remains intact; the proposed release objective is explicitly extracellular-
+first with intracellular safety guards and ATP failure disclosed. One compatible
+verified parameter vector, never per-species curve stitching. If no improvement,
+freeze the best verified fallback provisionally and proceed to the application;
+do not make ATP rescue a prerequisite for all software delivery.
+
+## Latest Execution: Multistart SLSQP Complete, No New Finalist
+
+Claude implementation reviewed and executed by Codex. Report:
+`tasks/fla_multistart_vmax_results_2026_11_12.md`.62 targeted tests pass;
+admissibility strengthened to require both strict/ultrastrict profiles.
+87 distinct search integrations, all numerically valid; two optimized starts,
+three additional seeds failing metabolic guards and therefore not optimized.
+Both leading-group derivative-step checks pass. Five Jacobians computed.
+No improvement exceeding the1e-6 incumbent threshold vs candidate35; no new
+finalist or validation integration, active Vmax change or promotion.
+Independent verification passes2,659,753 support points, five Jacobians and30
+events. No new daily flux balances were audited because there was no finalist.
+
+NEXT OPTIMIZATION-METHOD OPTION: explicitly register feasibility restoration of
+joint seeds under unchanged original guards, then rerun multistart only from
+replayed feasible seeds. Do not describe the current run as five explored basins
+or global infeasibility. No automatic repeat/bound relaxation. Biological ATP/ADP
+targets remain open. Separate shifted-origin user-engine qualification remains
+pending. No agents, UI changes, commit or push in this pass.
+
+## Latest Execution: Corrected-Solver Vmax Continuation Complete
+
+Supersedes pending scientific execution below. Report:
+`tasks/fla_corrected_vmax_results_2026_11_12.md`. Recalculated14 grouped Vmax
+sensitivities with qualified Radau/bounded Jacobian and completed four trust
+rounds under the same84 multidate constraints, bounds, Km and J1. 58 search
+integrations +2 full-backend strict/ultrastrict validation runs. Candidate35
+passes unchanged reserved guards and convergence; independent verification
+checks1,857,599 support points and3,164 daily balances. ATP J15+0.1238%,
+ADP+0.1902% vs current centre: tiny gain, absolute targets still missed by orders
+of magnitude. J4/J8 slightly worsen inside existing guard allowances. No active
+parameter replacement, promotion, agents, commit or push.32 targeted tests pass.
+
+NEXT SCIENTIFIC: explain the local constrained plateau from stored guard and
+objective Jacobians; verify leading sensitivities at another finite-difference
+step before any new search. Do not confuse this local plateau with global
+infeasibility or automatically relax bounds/guards. Candidate35 remains only a
+comparator. NEXT SOFTWARE remains shifted-origin recorded-solver qualification.
+
+## Current Handoff: Successor Engine Qualification
+
+Supersedes the historical active handoff below. Codex resumed after Claude's
+handoff and completed the two historical working-centre replays through the
+opt-in successor engine. Strict/ultrastrict each match their archived reference
+exactly at J1/J4/J8/J11/J15 (1140 state values total); 55 measured J1 values
+unchanged. Recorded accepted/dense/quadrature supports pass positivity and
+finite-state gates. Independent receipt and full limits:
+`tasks/fla_user_engine_qualification_results_2026_11_12.md`.
+
+283 targeted Python tests, 21 lifecycle tests, TypeScript and diff checks pass.
+Lifecycle now rejects missing completion and unknown contracts for activation;
+monitoring requires explicit, identity-matched activation evidence. No agents,
+optimization, parameter/J1 change, production promotion, commit or push.
+
+FOLLOW-UP COMPLETED: immutable v2 prepared-run envelope and explicit effective
+parameter manifest. 118 historical overrides expanded to 283 explicit entries
+(165 kernel defaults), without changing supplied values. Twenty archived-state
+checkpoints match raw/executed rates and derivatives exactly on joint/full
+backends. 319 targeted tests pass. No new integration or scientific changes.
+Report: `tasks/fla_engine_integrity_results_2026_11_12.md`.
+
+NEXT: implement and qualify a recorded solver successor at a non-J1 first
+sample, retaining absolute storage time in time-dependent kinetics. First
+injected systems, then fixed-parameter v2 replay with physical-support evidence.
+Public engine compatibility stays false. Biological ATP/ADP, latent-inventory
+and observation-contract gates remain open. Historical parity is not calibration
+success. UI simplification must use real job states, not demonstration bags or
+automatic applied flags.
 
 ## Active Handoff (Supersedes Historical Next Steps Below)
 

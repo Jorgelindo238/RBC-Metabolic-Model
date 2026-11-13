@@ -4,9 +4,11 @@ import type { ReactNode } from 'react'
 import { useResearchContext } from '@/contexts/ResearchContextProvider'
 import { RoBoCopChat } from '@/components/features/robocop/RoBoCopChat'
 import { sendRoBoCopChatMessage } from '@/lib/robocop/chat-client'
+import { usePathname } from 'next/navigation'
 
 export function PlatformShellWithRoBoCop({ children }: { children: ReactNode }) {
   const { context } = useResearchContext()
+  const isResearch = usePathname().startsWith('/research')
   
   const handleSendMessage = async (message: string): Promise<string> => {
     if (!context) {
@@ -28,6 +30,7 @@ export function PlatformShellWithRoBoCop({ children }: { children: ReactNode }) 
       <RoBoCopChat
         context={context}
         onSendMessage={handleSendMessage}
+        className={isResearch ? 'research-chat' : undefined}
       />
     </>
   )
