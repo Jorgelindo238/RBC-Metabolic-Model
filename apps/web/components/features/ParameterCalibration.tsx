@@ -17,7 +17,22 @@ import { buildCalibrationExperimentPayload, summarizeResearchDataset } from '@/l
 import { buildActiveResearchCalibration } from '@/lib/research-calibration'
 import { activationDecision, classifyCalibrationRecord, lifecycleLabel } from '@/lib/calibration-lifecycle.mjs'
 import { launchGate } from '@/lib/calibration-journey.mjs'
-import { CalibrationJourney } from './CalibrationJourney'
+import { CalibrationJourney, type CalibrationView } from './CalibrationJourney'
+import { SegmentedControl } from '@/components/platform/research/SegmentedControl'
+import { useSearchParams } from 'next/navigation'
+
+const CALIBRATION_VIEWS = [
+  { id: 'data', label: 'Your data', panelId: 'data-verification' },
+  { id: 'reference', label: 'Reference', panelId: 'reference-profile' },
+  { id: 'legacy', label: 'Legacy', panelId: 'legacy-calibration' },
+] as const
+
+// Former section ids and ?subsection= aliases keep opening the matching view.
+const VIEW_ALIASES: Record<string, CalibrationView> = {
+  'data-verification': 'data', 'target-scope': 'data',
+  'reference-profile': 'reference', 'benchmark-review': 'reference',
+  'legacy-calibration': 'legacy', 'parameter-scope': 'legacy',
+}
 import {
   buildCalibrationSelectionProvenance,
   getCalibrationRunStatusLabel,
@@ -301,6 +316,21 @@ export function ParameterCalibration() {
   const resolvedDatasetSummary = useMemo(() => summarizeResearchDataset(resolvedDataset), [resolvedDataset])
   const resolvedResearchDataMode = researchDataMode
   const journeyIsUserDataset = resolvedResearchDataMode === 'custom_user_data_mode' && Boolean(resolvedDataset)
+  const requestedSubsection = useSearchParams().get('subsection')
+  const [requestedView, setRequestedView] = useState<CalibrationView | null>(null)
+  useEffect(() => {
+    const syncHash = () => {
+      const fromHash = VIEW_ALIASES[window.location.hash.slice(1)]
+      if (fromHash) setRequestedView(fromHash)
+    }
+    const fromQuery = requestedSubsection ? VIEW_ALIASES[requestedSubsection] : undefined
+    if (fromQuery) setRequestedView(fromQuery)
+    else syncHash()
+    window.addEventListener('hashchange', syncHash)
+    return () => window.removeEventListener('hashchange', syncHash)
+  }, [requestedSubsection])
+  // Default view shows real content first: the user's data if any, otherwise the reference.
+  const calibrationView: CalibrationView = requestedView ?? (journeyIsUserDataset ? 'data' : 'reference')
   const journeyExperiment = useMemo(
     () => (journeyIsUserDataset && resolvedDataset ? buildCalibrationExperimentPayload(resolvedDataset) : null),
     [journeyIsUserDataset, resolvedDataset]
@@ -633,14 +663,19 @@ export function ParameterCalibration() {
 
   return (
     <div className="grid gap-5">
+      <SegmentedControl label="Calibration views" options={CALIBRATION_VIEWS} value={calibrationView}
+        onChange={setRequestedView} />
       <CalibrationJourney
+        view={calibrationView}
         datasetId={resolvedDatasetSummary.datasetId ?? null}
         datasetLabel={resolvedDatasetSummary.label}
         isUserDataset={journeyIsUserDataset}
         experiment={journeyExperiment}
       />
-      <details id="legacy-calibration" className="research-disclosure">
-        <summary>Advanced / legacy calibration</summary>
+      <section id="legacy-calibration" role="tabpanel" aria-labelledby="legacy-calibration-tab" hidden={calibrationView !== 'legacy'} tabIndex={0}>
+        <p className="research-muted" data-testid="legacy-view-notice">
+          Legacy path without a data contract: results are unverified and never activated automatically.
+        </p>
         <div className="research-legacy-content">
       <Card>
         <CardHeader>
@@ -1162,7 +1197,7 @@ export function ParameterCalibration() {
         </Card>
       ) : null}
         </div>
-      </details>
+      </section>
     </div>
   )
 }

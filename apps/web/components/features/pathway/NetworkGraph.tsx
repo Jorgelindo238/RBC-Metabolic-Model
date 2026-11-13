@@ -417,7 +417,9 @@ export function NetworkGraph({ data, selectedEntity, onSelectionChange, showReac
         `${node.label ?? node.id} • ${node.pathway ?? 'Other'}`,
       ] satisfies PlotlySelectionPayload),
       text: data.nodes.map((node) => node.label ?? node.id),
-      textposition: 'middle center',
+      // Visual legibility only: anchor each label away from its node (same positions, ids and data).
+      textposition: data.nodes.map((node) =>
+        `${node.y >= bounds.yCenter ? 'top' : 'bottom'} ${node.x >= bounds.xCenter ? 'right' : 'left'}`),
       hoverinfo: 'skip',
       textfont: {
         size: 10,

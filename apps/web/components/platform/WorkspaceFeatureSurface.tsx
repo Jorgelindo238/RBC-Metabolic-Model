@@ -212,7 +212,11 @@ export function WorkspaceFeatureSurface({
         <h1>{title}</h1>
         <ResearchDatasetBanner />
       </header>
-      {feature.children?.length ? <ResearchSectionNav key={feature.id} sections={feature.children} /> : null}
+      {/* Task pages own their structure: no visible jump links, but historical ?subsection=/#id links still
+          scroll (Calibration maps them to its views itself). Only Overview keeps visible links. */}
+      {feature.children?.length && feature.id !== 'parameter-calibration'
+        ? <ResearchSectionNav key={feature.id} sections={feature.children}
+            hidden={feature.id !== 'research-overview'} /> : null}
       <WorkspaceFeatureContent access={access} alertsData={alertsData} detail={detail}
         detailFields={detailFields} feature={feature} runs={runs} runsError={runsError} />
     </div>

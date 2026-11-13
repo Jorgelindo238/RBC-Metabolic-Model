@@ -15,7 +15,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
-import { AlertCircle, Loader2, Network, Pause, Play, RefreshCw, SkipBack, Sparkles } from 'lucide-react'
+import { AlertCircle, Loader2, Network, Pause, Play, RefreshCw, SkipBack } from 'lucide-react'
+import { WithInspector } from '@/components/platform/research/Inspector'
 import type { PathwayCompactOverviewItem } from '@/types/pathway-network'
 import type { PathwayVisualizationSelection } from '@/types/research-context'
 import type { PathwayNetworkState } from '@/types/pathway-network'
@@ -303,10 +304,11 @@ export function PathwayVisualization() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [selectedEntity, setSelectedEntity] = useState<PathwayVisualizationSelection | null>(null)
   const [pathwayViewMode, setPathwayViewMode] = useState<'compact' | 'full'>('compact')
+  const [inspectorOpen, setInspectorOpen] = useState(false)
+  // A graph selection opens the shared inspector (single place for details).
   const handleGraphSelection = useCallback((selection: PathwayVisualizationSelection | null) => {
     setSelectedEntity(selection)
-    const inspector = document.getElementById('time-navigation')
-    if (selection && inspector instanceof HTMLDetailsElement) inspector.open = true
+    if (selection) setInspectorOpen(true)
   }, [])
   const requestIdRef = useRef(0)
 
@@ -519,349 +521,188 @@ export function PathwayVisualization() {
 
   const legendItems = network?.legend ?? LEGEND
   const explorerHeading = pathwayViewMode === 'compact' ? 'RBC compact graph' : 'RBC metabolic map'
+  const graphNodeCount = graphNetwork?.nodes?.length ?? 0
 
-  return (
-    <div className="grid w-full gap-6">
-      <div className="research-toolbar">
-        <Button type="button" variant="outline" onClick={() => void loadNetwork()} className="gap-2">
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-          {loading ? 'Refreshing...' : 'Refresh network'}
-        </Button>
-        <span className="research-muted" role="status">{pathwayStatusLabel}</span>
-        <span className="research-muted">{formatCount(nodeCount)} {pathwayViewMode === 'compact' ? 'connectors' : 'metabolites'} / {formatCount(reactionCount)} {pathwayViewMode === 'compact' ? 'bridges' : 'reactions'}</span>
-      </div>
-      <details id="pathway-story" className="research-disclosure">
-        <summary>Provenance</summary>
+  const inspector = (
+    <div className="grid gap-5" data-testid="pathway-inspector">
+      <section className="grid gap-2" aria-label="Selection">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-[13px] font-semibold">Selection</h3>
+          {selectedEntityDetails ? (
+            <Button type="button" size="sm" variant="ghost" onClick={() => setSelectedEntity(null)}>Clear</Button>
+          ) : null}
+        </div>
+        {selectedEntityDetails ? (
+          <dl className="research-review" data-testid="pathway-selection">
+            <div><dt>Name</dt><dd>{selectedEntityDetails.label}</dd></div>
+            <div><dt>Type</dt><dd className="capitalize">{selectedEntityDetails.kind}</dd></div>
+            <div><dt>Pathway</dt><dd>{selectedEntityDetails.pathway}</dd></div>
+            {selectedEntityDetails.kind === 'metabolite' ? <>
+              <div><dt>Concentration</dt><dd className="r-num" title={String(selectedEntityDetails.concentration ?? '')}>{formatScientificValue(selectedEntityDetails.concentration)} mM</dd></div>
+              <div><dt>Compartment</dt><dd>{selectedEntityDetails.source}</dd></div>
+            </> : <>
+              <div><dt>Flux</dt><dd className="r-num" title={String(selectedEntityDetails.flux ?? '')}>{formatScientificValue(selectedEntityDetails.flux)}</dd></div>
+              <div><dt>Reaction</dt><dd>{selectedEntityDetails.source} → {selectedEntityDetails.target}</dd></div>
+            </>}
+            {selectedEntityDetails.summary ? <div><dt>Summary</dt><dd>{selectedEntityDetails.summary}</dd></div> : null}
+          </dl>
+        ) : (
+          <p className="research-muted">Click a node or reaction in the graph, or use quick select below.</p>
+        )}
+      </section>
+
+      <section className="grid gap-2" aria-label="Quick select">
+        <h3 className="text-[13px] font-semibold">Quick select</h3>
+        <p className="r-legend">Metabolites</p>
+        <div className="flex flex-wrap gap-2">
+          {featuredMetabolites.map((node) => {
+            const label = node.label ?? node.id
+            return (
+              <SelectionChip key={node.id} label={label}
+                active={selectedEntity?.kind === 'metabolite' && selectedEntity.id === node.id}
+                onClick={() => setSelectedEntity({ kind: 'metabolite', id: node.id, label, pathway: node.pathway ?? null,
+                  summary: `${label} • ${node.pathway ?? 'Other'}` })} />
+            )
+          })}
+        </div>
+        <p className="r-legend">Reactions</p>
+        <div className="flex flex-wrap gap-2">
+          {featuredReactions.map((reaction) => (
+            <SelectionChip key={reaction.id} label={reaction.label}
+              active={selectedEntity?.kind === 'reaction' && selectedEntity.id === reaction.id}
+              onClick={() => setSelectedEntity({ kind: 'reaction', id: reaction.id, label: reaction.label,
+                pathway: reaction.pathway ?? null, summary: `${reaction.label} • ${reaction.source} → ${reaction.target}` })} />
+          ))}
+        </div>
+      </section>
+
+      {pathwayViewMode === 'compact' ? (
+        <section className="grid gap-2" aria-label="Compact bridge atlas">
+          <h3 className="text-[13px] font-semibold">Compact bridge atlas</h3>
+          <p className="r-legend">One connector metabolite per pathway group; display grouping only.</p>
+          <div className="grid max-h-[480px] gap-2 overflow-y-auto pr-1">
+            {compactOverview.map((item) => (
+              <CompactOverviewCard key={item.pathway} item={item}
+                selected={(selectedEntity?.kind === 'metabolite' && selectedEntity.id === item.connectorMetabolite)
+                  || selectedEntity?.pathway === item.pathway}
+                onSelect={() => {
+                  if (!item.connectorMetabolite) return
+                  setSelectedEntity({ kind: 'metabolite', id: item.connectorMetabolite, label: item.connectorMetabolite,
+                    pathway: item.pathway, summary: item.bridgeSummary })
+                }} />
+            ))}
+          </div>
+          {compactOverview.length === 0 ? <p className="research-muted">No compact grouping in the current registry snapshot.</p> : null}
+        </section>
+      ) : (
+        <section className="grid gap-2" aria-label="Pathway groups">
+          <h3 className="text-[13px] font-semibold">Pathway groups</h3>
+          <ol className="grid gap-1 text-[13px]">
+            {ranks.map((entry) => (
+              <li key={entry.pathway} className="flex justify-between gap-3 border-b border-[color:var(--r-line)] py-1">
+                <span>{entry.pathway}</span><span className="r-num research-muted">{entry.count} nodes</span>
+              </li>
+            ))}
+          </ol>
+          {ranks.length === 0 ? <p className="research-muted">No pathway groups in the current snapshot.</p> : null}
+        </section>
+      )}
+
+      <section className="grid gap-2" aria-label="Provenance">
+        <h3 className="text-[13px] font-semibold">Provenance</h3>
         <dl className="research-review">
           <div><dt>Dataset</dt><dd>{datasetLabel}</dd></div>
           <div><dt>Calibration</dt><dd>{calibrationStatusLabel}</dd></div>
-          <div><dt>Playback source</dt><dd>{playbackSourceLabel}</dd></div>
+          <div><dt>Playback source</dt><dd>{playbackAvailable ? playbackSourceLabel : 'No simulation trajectory in this session'}</dd></div>
           <div><dt>Network</dt><dd>{pathwayStatusLine}</dd></div>
+          <div><dt>Layout</dt><dd>Display layout only; positions carry no kinetic meaning.</dd></div>
         </dl>
-      </details>
+      </section>
+    </div>
+  )
 
-      {error && (
-        <Card className="border-destructive/40 bg-destructive/5 shadow-sm">
-          <CardContent className="flex items-start gap-3 pt-6">
-            <AlertCircle className="h-5 w-5 shrink-0 text-destructive" />
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-destructive">Pathway visualization error</p>
-              <p className="text-sm text-destructive/90">{error}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <section id="network-state" className="research-section space-y-4">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="space-y-1">
-            <h2 className="section-heading">{explorerHeading}</h2>
-          </div>
+  return (
+    <WithInspector title="Pathway details" anchorId="pathway-story" inspector={inspector}
+      open={inspectorOpen} onOpenChange={setInspectorOpen}>
+      <div className="grid w-full gap-4" data-testid="research-pathway">
+        <div className="research-toolbar">
+          <Button type="button" variant="outline" onClick={() => void loadNetwork()} className="gap-2" disabled={loading}>
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+            {loading ? 'Refreshing...' : 'Refresh network'}
+          </Button>
+          <span className="research-muted" role="status">{pathwayStatusLabel}</span>
+          {network ? (
+            <span className="research-muted r-num">
+              {formatCount(nodeCount)} {pathwayViewMode === 'compact' ? 'connectors' : 'metabolites'} / {formatCount(reactionCount)} {pathwayViewMode === 'compact' ? 'bridges' : 'reactions'}
+            </span>
+          ) : null}
         </div>
 
-        {loading && !network ? (
-          <Card className="border-white/10 bg-slate-950/60">
-            <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-              <Loader2 className="h-6 w-6 animate-spin text-cyan-300" />
-              <p className="text-sm font-medium text-white">Loading pathway network...</p>
-              <p className="max-w-md text-sm leading-6 text-slate-400">The network explorer will populate once the graph snapshot finishes loading.</p>
-            </CardContent>
-          </Card>
-        ) : network ? (
-          <div className="grid gap-4">
+        {error ? (
+          <p role="alert" className="flex items-start gap-2 text-sm text-destructive" data-testid="pathway-error">
+            <AlertCircle size={16} className="mt-0.5 shrink-0" />
+            <span className="min-w-0 break-words"><strong>Pathway visualization error.</strong> {error} Use Refresh network to retry.</span>
+          </p>
+        ) : null}
+
+        <section id="network-state" className="grid gap-3" aria-label="Network" aria-busy={loading}>
+          <h2>{explorerHeading}</h2>
+          {loading && !network ? (
+            <p className="research-empty" role="status"><Loader2 size={16} className="animate-spin" />Loading pathway network...</p>
+          ) : network ? (
             <div className="research-network-panel">
-              <div className="research-toolbar">
+              <div id="time-navigation" className="research-toolbar">
                 <div className="research-filter-group" role="group" aria-label="Network view">
                   <button type="button" aria-pressed={pathwayViewMode === 'compact'} onClick={() => setPathwayViewMode('compact')}>Compact graph</button>
                   <button type="button" aria-pressed={pathwayViewMode === 'full'} onClick={() => setPathwayViewMode('full')}>Full model map</button>
                 </div>
-                <span className="research-muted">{playbackAvailable && currentTime !== null ? `Day ${formatPlaybackTime(currentTime)} / frame ${frameIndex + 1}` : 'Static network'}</span>
-                <Button type="button" size="icon" variant="outline" title={isPlaying ? 'Pause playback' : 'Play playback'}
-                  aria-label={isPlaying ? 'Pause playback' : 'Play playback'} disabled={!playbackAvailable}
-                  onClick={() => {
-                    if (!playbackAvailable) return
-                    if (isPlaying) { setIsPlaying(false); return }
-                    setPlaybackIndex((current) => current >= timepoints.length - 1 ? 0 : current)
-                    setIsPlaying(true)
-                  }}>
-                  {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-                </Button>
-                <Button type="button" size="icon" variant="ghost" title="Restart playback" aria-label="Restart playback"
-                  disabled={!playbackAvailable} onClick={() => { setPlaybackIndex(0); setIsPlaying(false) }}><SkipBack size={16} /></Button>
+                {playbackAvailable ? (
+                  <>
+                    <Button type="button" size="icon" variant="outline" title={isPlaying ? 'Pause playback' : 'Play playback'}
+                      aria-label={isPlaying ? 'Pause playback' : 'Play playback'}
+                      onClick={() => {
+                        if (isPlaying) { setIsPlaying(false); return }
+                        setPlaybackIndex((current) => current >= timepoints.length - 1 ? 0 : current)
+                        setIsPlaying(true)
+                      }}>
+                      {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                    </Button>
+                    <Button type="button" size="icon" variant="ghost" title="Restart playback" aria-label="Restart playback"
+                      onClick={() => { setPlaybackIndex(0); setIsPlaying(false) }}><SkipBack size={16} /></Button>
+                    <span className="research-muted r-num">Day {formatPlaybackTime(currentTime)} / frame {frameIndex + 1} of {timepoints.length}</span>
+                  </>
+                ) : null}
               </div>
               {playbackAvailable ? <Slider aria-label="Simulation frame" min={0} max={Math.max(timepoints.length - 1, 0)} step={1}
                 value={[frameIndex]} onValueChange={([value]) => { setPlaybackIndex(value); setIsPlaying(false) }}
                 disabled={timepoints.length < 2} /> : null}
-              {graphNetwork ? <NetworkGraph data={graphNetwork} selectedEntity={selectedEntity}
-                showReactionLabels={pathwayViewMode === 'full'} onSelectionChange={handleGraphSelection} /> : null}
-              <div className="flex flex-wrap gap-x-4 gap-y-2">
-                {legendItems.map((legend) => <div key={legend.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="inline-block h-0.5 w-3" style={{ background: legend.color }} />{legend.label}
-                </div>)}
-              </div>
-            </div>
-
-            <details id="time-navigation" className="research-disclosure">
-              <summary>Selection & details</summary>
-            <Card className="border-white/10 bg-slate-950/70 shadow-[0_20px_60px_-34px_rgba(8,15,40,0.8)]">
-              <CardHeader className="border-b border-white/10 bg-white/[0.03] px-5 py-4">
-                <div className="flex items-center gap-2">
-                  <span className="grid size-8 place-items-center rounded-2xl border border-white/10 bg-white/5 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-200">02</span>
-                  <CardTitle className="text-white">Pathway detail</CardTitle>
-                </div>
-                <CardDescription className="text-slate-400">
-                  {pathwayViewMode === 'compact'
-                    ? 'Click a bridge node to focus its connector metabolite, or switch to full model for node-level inspection.'
-                    : 'Click a metabolite circle, reaction diamond, or edge to inspect the selected entity. The graph stays the scientific focus.'}
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent className="space-y-4 px-5 py-4">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-200/75">Selected entity</p>
-                      <p className="text-sm font-semibold text-white">
-                        {selectedEntityDetails ? selectedEntityDetails.label : 'Nothing selected yet'}
-                      </p>
-                    </div>
-                    {selectedEntityDetails ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setSelectedEntity(null)}
-                        className="rounded-full px-3 text-xs text-slate-300 hover:bg-white/[0.06] hover:text-white"
-                      >
-                        Clear
-                      </Button>
-                    ) : (
-                      <Badge variant="outline" className="rounded-full border-white/10 bg-white/[0.04] text-slate-300">
-                        Click graph
-                      </Badge>
-                    )}
-                  </div>
-
-                  {selectedEntityDetails ? (
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Type</p>
-                        <p className="mt-1 text-sm font-semibold text-white capitalize">{selectedEntityDetails.kind}</p>
-                      </div>
-                      <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Pathway</p>
-                        <p className="mt-1 text-sm font-semibold text-white">{selectedEntityDetails.pathway}</p>
-                      </div>
-                      {selectedEntityDetails.kind === 'metabolite' ? (
-                        <>
-                          <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Concentration</p>
-                            <p className="mt-1 text-sm font-semibold text-white">
-                              {formatScientificValue(selectedEntityDetails.concentration)} mM
-                            </p>
-                          </div>
-                          <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Compartment</p>
-                            <p className="mt-1 text-sm font-semibold text-white">{selectedEntityDetails.source}</p>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Flux</p>
-                            <p className="mt-1 text-sm font-semibold text-white">
-                              {formatScientificValue(selectedEntityDetails.flux)}
-                            </p>
-                          </div>
-                          <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Reaction</p>
-                            <p className="mt-1 text-sm font-semibold text-white">
-                              {selectedEntityDetails.source} → {selectedEntityDetails.target}
-                            </p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm leading-6 text-slate-400">
-                      Choose a node or reaction to see a compact scientific readout here. The selected entity will be mirrored in RoBoCop as part of the same Pathway context.
-                    </p>
-                  )}
-
-                  {selectedEntityDetails?.summary ? (
-                    <p className="mt-3 text-sm leading-6 text-slate-300">{selectedEntityDetails.summary}</p>
-                  ) : null}
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Quick select</p>
-                      <p className="mt-1 text-sm text-slate-300">Pick a visible metabolite or reaction to highlight it in the graph.</p>
-                    </div>
-                    <Badge variant="outline" className="rounded-full border-white/10 bg-white/[0.04] text-slate-200">
-                      {featuredMetabolites.length + featuredReactions.length} targets
-                    </Badge>
-                  </div>
-
-                  <div className="mt-3 space-y-3">
-                    <div className="space-y-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Metabolites</p>
-                      <div className="flex flex-wrap gap-2">
-                        {featuredMetabolites.map((node) => {
-                          const label = node.label ?? node.id
-                          const active = selectedEntity?.kind === 'metabolite' && selectedEntity.id === node.id
-                          return (
-                            <SelectionChip
-                              key={node.id}
-                              label={label}
-                              active={active}
-                              onClick={() =>
-                                setSelectedEntity({
-                                  kind: 'metabolite',
-                                  id: node.id,
-                                  label,
-                                  pathway: node.pathway ?? null,
-                                  summary: `${label} • ${node.pathway ?? 'Other'}`,
-                                })
-                              }
-                            />
-                          )
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Reactions</p>
-                      <div className="flex flex-wrap gap-2">
-                        {featuredReactions.map((reaction) => {
-                          const active = selectedEntity?.kind === 'reaction' && selectedEntity.id === reaction.id
-                          return (
-                            <SelectionChip
-                              key={reaction.id}
-                              label={reaction.label}
-                              active={active}
-                              onClick={() =>
-                                setSelectedEntity({
-                                  kind: 'reaction',
-                                  id: reaction.id,
-                                  label: reaction.label,
-                                  pathway: reaction.pathway ?? null,
-                                  summary: `${reaction.label} • ${reaction.source} → ${reaction.target}`,
-                                })
-                              }
-                            />
-                          )
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {pathwayViewMode === 'compact' ? (
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Compact bridge atlas</p>
-                        <p className="mt-1 text-sm text-slate-300">One connector metabolite per pathway group</p>
-                      </div>
-                      <Badge variant="outline" className="rounded-full border-white/10 bg-white/[0.04] text-slate-200">
-                        {compactOverview.length} groups
-                      </Badge>
-                    </div>
-
-                    <div className="mt-3 max-h-[640px] space-y-3 overflow-y-auto pr-1">
-                      {compactOverview.map((item) => {
-                        const selected =
-                          (selectedEntity?.kind === 'metabolite' && selectedEntity.id === item.connectorMetabolite) ||
-                          selectedEntity?.pathway === item.pathway
-
-                        return (
-                          <CompactOverviewCard
-                            key={item.pathway}
-                            item={item}
-                            selected={selected}
-                            onSelect={() => {
-                              if (!item.connectorMetabolite) return
-                              setSelectedEntity({
-                                kind: 'metabolite',
-                                id: item.connectorMetabolite,
-                                label: item.connectorMetabolite,
-                                pathway: item.pathway,
-                                summary: item.bridgeSummary,
-                              })
-                            }}
-                          />
-                        )
-                      })}
-                    </div>
-
-                    {compactOverview.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-sm text-slate-400">
-                        No compact pathway graph is available for the current registry snapshot.
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Pathway groups</p>
-                        <p className="mt-1 text-sm text-slate-300">Ranked by node count</p>
-                      </div>
-                      <Badge variant="outline" className="rounded-full border-white/10 bg-white/[0.04] text-slate-200">
-                        {ranks.length} groups
-                      </Badge>
-                    </div>
-
-                    <div className="mt-3 space-y-3">
-                      {ranks.slice(0, 5).map((entry, index) => (
-                        <div
-                          key={entry.pathway}
-                          className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 ${
-                            index === 0 ? 'border-cyan-400/20 bg-cyan-400/10' : 'border-white/10 bg-slate-950/55'
-                          }`}
-                        >
-                          <div>
-                            <p className="text-sm font-medium text-white">{entry.pathway}</p>
-                            <p className="text-xs text-slate-400">{entry.count} nodes represented</p>
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className={`rounded-full ${
-                              index === 0 ? 'border-cyan-400/20 bg-cyan-400/10 text-cyan-100' : 'border-white/10 bg-white/[0.04] text-slate-200'
-                            }`}
-                          >
-                            {index === 0 ? 'Top group' : `#${index + 1}`}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-
-                    {ranks.length === 0 && (
-                      <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-sm text-slate-400">
-                        No pathway groups were detected in the current snapshot.
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            </details>
-          </div>
-        ) : (
-          <Card className="border-dashed border-white/10 bg-slate-950/50">
-            <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-              <Sparkles className="h-6 w-6 text-cyan-300" />
-              <p className="text-sm font-medium text-white">No pathway snapshot yet</p>
-              <p className="max-w-md text-sm leading-6 text-slate-400">
-                Refresh the network to populate the map and unlock the assistant-ready provenance snapshot.
+              <p className="r-legend" data-testid="pathway-mode-note">
+                {playbackAvailable
+                  ? `Playback of the latest simulation trajectory${playbackFluxAware ? ' with its fluxes' : ''}.`
+                  : 'Static network: no simulation trajectory in this session, so there is no playback.'}
+                {pathwayViewMode === 'compact'
+                  ? ' Compact view: connectors and bridges are display-only groupings, not kinetic reactions.'
+                  : ' Full view: model metabolites and reactions as returned by the pathway registry.'}
               </p>
-            </CardContent>
-          </Card>
-        )}
-        {!network ? <details id="time-navigation" className="research-disclosure"><summary>Selection & details</summary><p className="research-empty">No network state available</p></details> : null}
-      </section>
-    </div>
+              {graphNetwork && graphNodeCount > 0 ? (
+                <NetworkGraph data={graphNetwork} selectedEntity={selectedEntity}
+                  showReactionLabels={pathwayViewMode === 'full'} onSelectionChange={handleGraphSelection} />
+              ) : (
+                <p className="research-empty" data-testid="pathway-graph-empty">
+                  No nodes are available for the {pathwayViewMode === 'compact' ? 'compact' : 'full'} view of this snapshot.
+                </p>
+              )}
+              <ul className="flex flex-wrap gap-x-4 gap-y-2" aria-label="Pathway colours">
+                {legendItems.map((legend) => <li key={legend.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="inline-block h-0.5 w-3" style={{ background: legend.color }} aria-hidden="true" />{legend.label}
+                </li>)}
+              </ul>
+            </div>
+          ) : !error ? (
+            <p className="research-empty" data-testid="pathway-empty">No pathway snapshot yet. Use Refresh network.</p>
+          ) : null}
+        </section>
+      </div>
+    </WithInspector>
   )
 }

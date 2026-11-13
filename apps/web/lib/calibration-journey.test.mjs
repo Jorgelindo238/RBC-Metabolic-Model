@@ -169,10 +169,13 @@ test('monitoring overview contains no fabricated bags, forecasts or alerts', () 
   assert.ok(source.includes('monitoringRunState'))
 })
 
-test('the reference view never renders an enabled activation control', () => {
+test('the reference view renders no activation or contractual launch control at all', () => {
   const source = readFileSync(join(here, '..', 'components', 'features', 'CalibrationJourney.tsx'), 'utf8')
-  const activate = source.slice(source.indexOf('data-testid="reference-activate"') - 80, source.indexOf('data-testid="reference-activate"'))
-  assert.match(activate, /disabled/)
+  assert.ok(!source.includes('data-testid="reference-activate"'))
+  assert.ok(!source.includes('data-testid="contract-launch"'))
+  assert.ok(source.includes('data-testid="reference-activation-status"'))
+  assert.ok(source.includes('data-testid="contract-launch-status"'))
+  assert.ok(!/>\s*Activate\s*</.test(source))
   assert.ok(!source.includes('activateCalibration'))
 })
 

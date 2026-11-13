@@ -30,17 +30,20 @@ async function calibrationScenario(page, viewport) {
   await page.goto(`${BASE_URL}/research/parameter-calibration`, { waitUntil: 'networkidle' })
   const journey = page.getByTestId('calibration-journey')
   await journey.waitFor()
-  for (const step of ['Data', 'Verification', 'Calibration', 'Results']) {
-    check(await journey.getByText(step, { exact: true }).isVisible(), `${viewport.name}: step ${step} missing`)
+  const tabs = page.getByRole('tablist', { name: 'Calibration views' })
+  for (const view of ['Your data', 'Reference', 'Legacy']) {
+    check(await tabs.getByRole('tab', { name: view, exact: true }).isVisible(), `${viewport.name}: view ${view} missing`)
   }
+  await tabs.getByRole('tab', { name: 'Reference', exact: true }).click()
   const reference = page.getByTestId('reference-profile')
   await reference.waitFor()
   await page.waitForFunction(() => !document.querySelector('[data-testid="reference-profile"]')?.textContent?.includes('Loading registry'))
-  const activate = page.getByTestId('reference-activate')
-  if (await activate.count()) {
-    check(await activate.isDisabled(), `${viewport.name}: reference activation is enabled`)
-    await activate.click({ force: true }).catch(() => {})
-    check(await activate.isDisabled(), `${viewport.name}: activation became enabled after a click`)
+  // No activation control exists for the reference, disabled or not.
+  check((await page.getByTestId('reference-activate').count()) === 0, `${viewport.name}: an activation control exists`)
+  check((await reference.getByRole('button', { name: /activate/i }).count()) === 0, `${viewport.name}: an activation button exists`)
+  const status = page.getByTestId('reference-activation-status')
+  if (await status.count()) {
+    check((await status.textContent()).includes('cannot be activated'), 'activation prohibition not stated')
     check((await reference.textContent()).includes('Preview only'), 'preview label missing')
     check((await page.getByTestId('reference-limitations').textContent()).includes('ATP/ADP'), 'ATP/ADP limitation missing')
     const species = page.locator('#reference-species')
@@ -53,8 +56,9 @@ async function calibrationScenario(page, viewport) {
     const unavailable = page.getByTestId('reference-unavailable')
     check((await unavailable.count()) === 1, `${viewport.name}: neither a profile nor an unavailable state`)
   }
-  const contractLaunch = page.getByTestId('contract-launch')
-  if (await contractLaunch.count()) check(await contractLaunch.isDisabled(), 'contractual launch enabled without a qualified engine')
+  check((await page.getByTestId('contract-launch').count()) === 0, 'a contractual launch control exists')
+  await tabs.getByRole('tab', { name: 'Legacy', exact: true }).click()
+  check((await page.getByTestId('legacy-view-notice').textContent()).includes('Legacy path'), 'legacy view not labelled')
   check((await page.getByTestId('legacy-path-label').textContent()).includes('Legacy path'), 'legacy path not labelled')
   await noHorizontalOverflow(page, `${viewport.name} calibration`)
   await page.screenshot({ path: join(SCREEN_DIR, `calibration-${viewport.name}.png`), fullPage: true })
@@ -69,7 +73,7 @@ async function preflightScenario(page, viewport) {
     rawColumns: ['EGLC'], rawSeriesByColumn: { EGLC: [25, 24, 22] }, mappings: {}, preview: [], activatedAt: 'test-only',
   })))
   await page.reload({ waitUntil: 'networkidle' })
-  const launch = page.getByTestId('contract-launch')
+  const launch = page.getByTestId('contract-launch-status')
   await launch.waitFor()
   const response = page.waitForResponse(r => r.url().includes('/calibration/preflight') && r.request().method() === 'POST')
   await page.getByRole('button', { name: 'Check data contract' }).click()
@@ -81,7 +85,8 @@ async function preflightScenario(page, viewport) {
   const verdict = await reply.json()
   check(verdict.data_valid === false && verdict.launch_allowed === false, 'sparse unlabelled upload incorrectly launchable')
   await page.getByTestId('preflight-issues').waitFor()
-  check(await launch.isDisabled(), 'contract launch enabled despite missing metadata')
+  check((await page.getByTestId('contract-launch').count()) === 0, 'a contract launch control appeared despite missing metadata')
+  check((await page.getByTestId('preflight-answers').getByText('No', { exact: true }).count()) >= 2, 'preflight answers not shown as No')
   await noHorizontalOverflow(page, `${viewport.name} preflight`)
   await page.screenshot({ path: join(SCREEN_DIR, `preflight-${viewport.name}.png`), fullPage: true })
 }

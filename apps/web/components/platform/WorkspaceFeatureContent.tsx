@@ -22,6 +22,7 @@ import type {
 import Link from 'next/link'
 import type { PlatformNavItem } from './platform-shell.types'
 import { ArrowRight } from 'lucide-react'
+import { WithInspector } from './research/Inspector'
 
 interface WorkspaceFeatureContentProps {
   access: { mode?: string | null } | null
@@ -162,113 +163,113 @@ function matchesRegistryFilter(run: any, filter: RegistryFilterKey) {
 }
 
 
-function RegistryLedgerRow({ run, isLead = false }: { run: any; isLead?: boolean }) {
-  const benchmarkStatus = run?.benchmarkStatus ?? run?.status ?? 'unknown'
-  const completionStatus = run?.completionStatus ?? 'unknown'
-  const score = formatNumber(run?.aggregateScore)
-  const finalLoss = formatNumber(run?.meanFinalLoss)
-  const label = run?.label ?? run?.runId ?? 'Calibration run'
-  const scope = [run?.targetScope, run?.paramScope].filter(Boolean).join(' · ')
-  const recorded = run?.runTimestampUtc ?? run?.recordedAt
-
-  return (
-    <div className={cn(
-      'group grid gap-4 border-t border-white/10 px-1 py-4 transition-colors duration-200 hover:bg-white/[0.025] md:grid-cols-[minmax(0,1.6fr)_0.7fr_0.7fr_0.6fr_auto] md:items-center md:px-3',
-      isLead && 'bg-red-400/[0.04]'
-    )}>
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]', getRegistryStatusTone(benchmarkStatus))}>
-            {getRegistryStatusLabel(benchmarkStatus)}
-          </span>
-          {isLead ? (
-            <span className="inline-flex items-center rounded-full border border-red-300/30 bg-red-400/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-red-100">
-              Latest
-            </span>
-          ) : null}
-          <span className="truncate text-sm font-semibold text-white">{label}</span>
-        </div>
-        <p className="mt-1 truncate text-xs leading-5 text-slate-500">
-          {scope || run?.policyName || 'Scope not recorded'}
-        </p>
-      </div>
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-600 md:hidden">Score</p>
-        <p className="font-mono text-sm text-slate-100">{score}</p>
-      </div>
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-600 md:hidden">Final loss</p>
-        <p className="font-mono text-sm text-slate-300">{finalLoss}</p>
-      </div>
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-600 md:hidden">Cases</p>
-        <p className="font-mono text-sm text-slate-300">{formatRunCaseLabel(run)}</p>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
-        <span className="text-xs text-slate-500">{recorded ? String(recorded).slice(0, 10) : getRegistryStatusLabel(completionStatus)}</span>
-        <Link
-          className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors hover:border-red-300/30 hover:bg-red-400/10 hover:text-white"
-          href={`/runs/${run.runId}`}
-        >
-          Inspect
-          <ArrowRight className="size-3" />
-        </Link>
-      </div>
-    </div>
-  )
+function completionLabel(run: any) {
+  const status = normalizeRegistryStatus(run?.completionStatus)
+  // Completion is neither numerical/biological validation nor activation.
+  return status === 'completed' ? 'Completed (unverified)' : status === 'unknown' ? '—' : getRegistryStatusLabel(status)
 }
 
-function RegistrySurface({ access, detail, runs }: Omit<WorkspaceFeatureContentProps, 'feature' | 'detailFields'>) {
+function RegistrySurface({ access, detail, runs, runsError }: Omit<WorkspaceFeatureContentProps, 'feature' | 'detailFields'>) {
   const { setContext } = useResearchContext()
   const registryContext = useMemo(() => buildCalibrationRegistryResearchContext(detail, runs), [detail, runs])
   const [filter, setFilter] = useState<RegistryFilterKey>('all')
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null)
+  const [inspectorOpen, setInspectorOpen] = useState(false)
   const leadRunId = detail?.summary?.runId ?? null
   const totalCompleted = runs.filter(run => normalizeRegistryStatus(run?.completionStatus) === 'completed').length
   const filteredRuns = useMemo(() => runs.filter(run => matchesRegistryFilter(run, filter)).sort(sortRegistryRuns), [runs, filter])
+  const selectedRun = runs.find((run) => run?.runId === selectedRunId) ?? null
 
   useEffect(() => {
     setContext(registryContext)
     return () => setContext(null)
   }, [registryContext, setContext])
 
-  return <div className="grid gap-6">
-    <section id="latest-record" className="research-section">
-      <div className="research-section-heading"><h2>Summary</h2>
-        <Link className="research-text-link inline-flex items-center gap-2" href="/research/parameter-calibration">Calibration <ArrowRight size={14} /></Link>
-      </div>
-      <dl className="research-metrics">
-        <div><dt>Recorded runs</dt><dd>{runs.length}</dd></div>
-        <div><dt>Completed (unverified)</dt><dd>{totalCompleted}</dd></div>
-        <div><dt>Latest score</dt><dd>{formatNumber(detail?.summary?.aggregateScore)}</dd></div>
-      </dl>
-    </section>
-    <section id="benchmark-ledger" className="research-section">
-      <div className="research-section-heading"><h2>Runs</h2>
-        <div className="research-filter-group" role="group" aria-label="Run outcome filter">
+  if (runsError) {
+    return <div role="alert" className="grid gap-2" data-testid="registry-error">
+      <p className="text-sm text-destructive"><strong>Results registry unavailable.</strong> {runsError}</p>
+      <p className="r-legend">This is not an empty registry: the records could not be read.</p>
+      <div><button type="button" className="research-text-link" onClick={() => window.location.reload()}>Retry</button></div>
+    </div>
+  }
+
+  if (!runs.length) {
+    return <p className="research-empty" id="latest-record" data-testid="registry-empty">
+      {access?.mode === 'workspace_selection_required'
+        ? 'No visible records: workspace selection pending.'
+        : 'No calibration runs recorded yet.'}
+      <Link className="research-text-link inline-flex items-center gap-1" href="/research/parameter-calibration">Calibration <ArrowRight size={14} /></Link>
+    </p>
+  }
+
+  const evidenceRun = selectedRun ?? (leadRunId ? runs.find((run) => run?.runId === leadRunId) ?? null : null)
+  const evidenceIsLead = Boolean(evidenceRun && evidenceRun.runId === leadRunId)
+  const inspector = evidenceRun ? (
+    <dl className="research-review" data-testid="registry-evidence">
+      <div><dt>Run</dt><dd>{evidenceRun.label ?? evidenceRun.runId}</dd></div>
+      <div><dt>Verdict</dt><dd>{getRegistryStatusLabel(evidenceRun.benchmarkStatus ?? evidenceRun.status)}</dd></div>
+      <div><dt>Completion</dt><dd>{completionLabel(evidenceRun)}</dd></div>
+      <div><dt>Score</dt><dd className="r-num" title={String(evidenceRun.aggregateScore ?? '')}>{formatNumber(evidenceRun.aggregateScore)}</dd></div>
+      <div><dt>Mean final loss</dt><dd className="r-num" title={String(evidenceRun.meanFinalLoss ?? '')}>{formatNumber(evidenceRun.meanFinalLoss)}</dd></div>
+      <div><dt>Cases</dt><dd className="r-num">{formatRunCaseLabel(evidenceRun)}</dd></div>
+      <div><dt>Scope</dt><dd>{[evidenceRun.targetScope, evidenceRun.paramScope].filter(Boolean).join(' · ') || evidenceRun.policyName || 'Not recorded'}</dd></div>
+      <div><dt>Strategy</dt><dd>{evidenceRun.optimizationStrategy ?? 'Not recorded'}</dd></div>
+      {evidenceIsLead ? <div><dt>Manifest</dt><dd className="break-all">{detail?.artifacts?.manifestPath ?? 'Not recorded'}</dd></div> : null}
+      <div><dt>Biological validation</dt><dd>Not established by registry completion</dd></div>
+      <div><dt>Evidence</dt><dd><Link className="research-text-link" href={`/runs/${evidenceRun.runId}`}>Inspect run</Link></dd></div>
+    </dl>
+  ) : <p className="research-muted">Select a run to see its evidence.</p>
+
+  return <WithInspector title="Run evidence" anchorId="artifact-trace" inspector={inspector}
+    open={inspectorOpen} onOpenChange={setInspectorOpen}>
+    <div className="grid gap-4">
+      <p className="r-legend" id="latest-record" data-testid="registry-summary">
+        <span className="r-num">{runs.length}</span> recorded run{runs.length === 1 ? '' : 's'} · <span className="r-num">{totalCompleted}</span> completed (unverified)
+      </p>
+      <section id="benchmark-ledger" className="grid gap-3" aria-label="Runs">
+        <div className="research-filter-group w-fit" role="group" aria-label="Run outcome filter">
           {REGISTRY_FILTERS.map(({ key, label }) => <button key={key} onClick={() => setFilter(key)} type="button" aria-pressed={filter === key}>{label}</button>)}
         </div>
-      </div>
-      {filteredRuns.length ? <div className="overflow-x-auto">
-        <div className="hidden border-b border-white/10 px-3 py-3 text-xs text-muted-foreground md:grid md:grid-cols-[minmax(0,1.6fr)_0.7fr_0.7fr_0.6fr_auto]">
-          <span>Run</span><span>Score</span><span>Final loss</span><span>Cases</span><span>Detail</span>
-        </div>
-        {filteredRuns.map((run: any) => <RegistryLedgerRow key={run.runId} run={run} isLead={leadRunId !== null && run.runId === leadRunId} />)}
-      </div> : <p className="research-empty">{runs.length ? 'No records match this filter' :
-        access?.mode === 'workspace_selection_required' ? 'No visible records / workspace selection pending' : 'No calibration runs recorded yet'}</p>}
-    </section>
-    <section id="artifact-trace" className="research-section">
-      <div className="research-section-heading"><h2>Evidence</h2>
-        {leadRunId ? <Link className="research-text-link" href={`/runs/${leadRunId}`}>Inspect latest run</Link> : null}
-      </div>
-      {detail ? <dl className="research-review">
-        <div><dt>Run</dt><dd>{detail.summary?.label ?? leadRunId}</dd></div>
-        <div><dt>Manifest</dt><dd>{detail.artifacts?.manifestPath ?? 'Not recorded'}</dd></div>
-        <div><dt>Completion</dt><dd>{detail.summary?.completionStatus ?? 'Unknown'}</dd></div>
-        <div><dt>Biological validation</dt><dd>Not established by registry completion</dd></div>
-      </dl> : <p className="research-empty">No run evidence available</p>}
-    </section>
-  </div>
+        {filteredRuns.length ? <div className="r-table-scroll">
+          <table className="w-full min-w-[640px] text-left text-[13px]" data-testid="registry-table">
+            <thead className="text-[12px] text-[color:var(--r-text-2)]">
+              <tr className="border-b border-[color:var(--r-line)]">
+                <th className="py-2 pr-3 font-normal">Run</th>
+                <th className="py-2 pr-3 font-normal">Verdict</th>
+                <th className="py-2 pr-3 font-normal">Completion</th>
+                <th className="py-2 pr-3 text-right font-normal">Score</th>
+                <th className="py-2 pr-3 text-right font-normal">Final loss</th>
+                <th className="py-2 pr-3 text-right font-normal">Cases</th>
+                <th className="py-2 font-normal">Recorded</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRuns.map((run: any) => {
+                const recorded = run?.runTimestampUtc ?? run?.recordedAt
+                return <tr key={run.runId} className="border-b border-[color:var(--r-line)]" aria-selected={run.runId === selectedRunId}>
+                  <td className="py-2 pr-3">
+                    <button type="button" className="research-text-link text-left" aria-pressed={run.runId === selectedRunId}
+                      onClick={() => { setSelectedRunId(run.runId); setInspectorOpen(true) }}>
+                      {run.label ?? run.runId}
+                    </button>
+                    {run.runId === leadRunId ? <span className="ml-2 r-legend">latest</span> : null}
+                  </td>
+                  <td className="py-2 pr-3">{getRegistryStatusLabel(run.benchmarkStatus ?? run.status)}</td>
+                  <td className="py-2 pr-3">{completionLabel(run)}</td>
+                  <td className="r-num py-2 pr-3 text-right" title={String(run.aggregateScore ?? '')}>{formatNumber(run.aggregateScore)}</td>
+                  <td className="r-num py-2 pr-3 text-right" title={String(run.meanFinalLoss ?? '')}>{formatNumber(run.meanFinalLoss)}</td>
+                  <td className="r-num py-2 pr-3 text-right">{formatRunCaseLabel(run)}</td>
+                  <td className="py-2 whitespace-nowrap">{recorded ? String(recorded).slice(0, 10) : '—'}</td>
+                </tr>
+              })}
+            </tbody>
+          </table>
+        </div> : <p className="research-empty">No records match this filter.</p>}
+      </section>
+    </div>
+  </WithInspector>
 }
+
 
 function getPlaceholderTheme(feature: PlatformNavItem) {
   switch (feature.id) {
@@ -431,7 +432,7 @@ export function WorkspaceFeatureContent({
   }
 
   if (feature.id === 'calibration-registry') {
-    return <RegistrySurface access={access} detail={detail} runs={runs} />
+    return <RegistrySurface access={access} detail={detail} runs={runs} runsError={runsError} />
   }
 
   if (feature.id === 'simulation-workspace') {

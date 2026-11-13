@@ -11,12 +11,11 @@ import { generateSimulationInterpretation } from '@/lib/robocop/interpretation-s
 import { buildSimulationResearchContext } from '@/lib/robocop/research-context-builders'
 import { useResearchContext } from '@/contexts/ResearchContextProvider'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Loader2, Play, AlertCircle, CheckCircle2, Terminal } from 'lucide-react'
+import { Loader2, Play, AlertCircle } from 'lucide-react'
+import { WithInspector } from '@/components/platform/research/Inspector'
 import { useResearchDataset } from '@/contexts/ResearchDatasetProvider'
 import { buildSimulationDatasetPayload, summarizeResearchDataset } from '@/lib/research-dataset'
 import { buildResearchSimulationSnapshot, persistLatestResearchSimulationSnapshot } from '@/lib/research-simulation'
@@ -179,67 +178,64 @@ export function SimulationWorkspace() {
     setContext(buildSimulationResearchContext(result, activeParams, selection, resolvedDatasetSummary, activeCalibration))
   }, [activeCalibration, resolvedDatasetSummary, result, selectedMetabolites, setContext])
 
+  const customMode = resolvedResearchDataMode === 'custom_user_data_mode'
+  const paramLabel = (value: number) => (Number.isFinite(value) ? String(value) : '—')
+  const requestedParameterSource = activeCalibrationParams
+    ? 'Explicitly active calibration parameters for this dataset'
+    : 'Bordbar default parameters (no active calibration)'
+  const reportedParameterSource = result?.custom_params_source === 'provided'
+    ? 'Parameters provided in the request'
+    : result?.custom_params_source === 'auto_loaded'
+      ? 'Parameters auto-loaded by the engine'
+      : result?.custom_params_source === 'defaults'
+        ? 'Bordbar default parameters'
+        : 'Not reported by the engine'
+
+  const inspector = (
+    <dl className="research-review" data-testid="simulation-provenance">
+      <div><dt>Dataset context</dt><dd>{resolvedDatasetSummary.label} ({customMode ? 'uploaded data' : 'reference data'})</dd></div>
+      <div><dt>Requested parameters</dt><dd>{requestedParameterSource}</dd></div>
+      {result?.success ? <div><dt>Engine parameters</dt><dd>{reportedParameterSource}</dd></div> : null}
+      <div><dt>Upload in the request</dt><dd>{customMode
+        ? 'Sent as context. It counts as applied to the ODE only if the result reports it.'
+        : 'None'}</dd></div>
+      {result?.success ? <>
+        <div><dt>Dataset applied by the engine</dt><dd>{result.dataset_applied
+          ? `Yes: ${result.active_dataset_label ?? resolvedDatasetSummary.label}` : 'No'}</dd></div>
+        {result.custom_params_source ? <div><dt>Parameter source reported</dt><dd>{result.custom_params_source}</dd></div> : null}
+        {result.dataset_fallback_reason ? <div><dt>Fallback reason</dt><dd>{result.dataset_fallback_reason}</dd></div> : null}
+        <div><dt>Solver</dt><dd>{result.solver}</dd></div>
+        <div><dt>Output</dt><dd>{result.n_points} points · {result.n_metabolites} metabolites · {result.duration.toFixed(1)} s runtime</dd></div>
+      </> : <div><dt>Result</dt><dd>No run in this session</dd></div>}
+      <div><dt>Note</dt><dd>A completed run is a model trajectory, not a biological validation.</dd></div>
+    </dl>
+  )
+
   return (
-    <div className="relative isolate grid gap-5">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_42%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.08),transparent_38%)]"
-      />
-        <Card id="scenario-setup">
-          <CardHeader>
-            <CardTitle role="heading" aria-level={2}>Run settings</CardTitle>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Badge
-                variant={resolvedResearchDataMode === 'custom_user_data_mode' ? 'default' : 'secondary'}
-                className="rounded-full"
-              >
-                {resolvedDatasetSummary.label}
-              </Badge>
-              {activeCalibrationParams ? (
-                <Badge variant="default" className="rounded-full">
-                  Calibrated ODE parameters active
-                </Badge>
-              ) : resolvedResearchDataMode === 'custom_user_data_mode' ? (
-                <Badge variant="secondary" className="rounded-full">
-                  Bordbar defaults active · calibration optional
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="rounded-full">
-                  Bordbar defaults active
-                </Badge>
-              )}
+    <WithInspector title="Run details" anchorId="simulation-details" inspector={inspector}>
+      <div className="r-split" data-testid="research-simulation">
+        <section id="scenario-setup" className="r-settings" aria-label="Run settings">
+          <h2>Run settings</h2>
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <Label id="sim-duration-label">Storage duration</Label>
+              <span className="r-num text-[13px]">{paramLabel(params.t_max)} days</span>
             </div>
-          </CardHeader>
-        <CardContent className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Storage Duration</Label>
-              <Badge variant="secondary" className="font-mono text-[11px]">{params.t_max} days</Badge>
+            <Slider aria-labelledby="sim-duration-label" min={2} max={60} step={1} value={[params.t_max]}
+              onValueChange={([v]) => updateParam('t_max', v)} />
+          </div>
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <Label id="sim-fit-label">Curve fit strength</Label>
+              <span className="r-num text-[13px]">{params.curve_fit_strength.toFixed(2)}</span>
             </div>
-            <Slider min={2} max={60} step={1} value={[params.t_max]} onValueChange={([v]) => updateParam('t_max', v)} />
+            <Slider aria-labelledby="sim-fit-label" min={0} max={1} step={0.05} value={[params.curve_fit_strength]}
+              onValueChange={([v]) => updateParam('curve_fit_strength', v)} />
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Curve Fit Strength</Label>
-              <Badge variant="secondary" className="font-mono text-[11px]">{params.curve_fit_strength.toFixed(2)}</Badge>
-            </div>
-            <Slider min={0} max={1} step={0.05} value={[params.curve_fit_strength]} onValueChange={([v]) => updateParam('curve_fit_strength', v)} />
-          </div>
-          <div className="space-y-2">
-            <Label>ODE Solver</Label>
-            <Select value={params.solver_method} onValueChange={(v) => updateParam('solver_method', v)}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="RK45">RK45</SelectItem>
-                <SelectItem value="BDF">BDF (stiff)</SelectItem>
-                <SelectItem value="LSODA">LSODA (auto)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>pH Perturbation</Label>
+          <div className="grid gap-2">
+            <Label>pH perturbation</Label>
             <Select value={params.ph_perturbation_type} onValueChange={(v) => updateParam('ph_perturbation_type', v)}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full" aria-label="pH perturbation"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {['None', 'Acidosis', 'Alkalosis', 'Step', 'Ramp'].map((v) => (
                   <SelectItem key={v} value={v}>{v}</SelectItem>
@@ -249,10 +245,10 @@ export function SimulationWorkspace() {
           </div>
           {params.ph_perturbation_type !== 'None' && (
             <>
-              <div className="space-y-2">
-                <Label>pH Severity</Label>
+              <div className="grid gap-2">
+                <Label>pH severity</Label>
                 <Select value={params.ph_severity} onValueChange={(v) => updateParam('ph_severity', v)}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full" aria-label="pH severity"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {['Mild', 'Moderate', 'Severe'].map((v) => (
                       <SelectItem key={v} value={v}>{v}</SelectItem>
@@ -260,161 +256,97 @@ export function SimulationWorkspace() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>pH Duration</Label>
-                  <Badge variant="secondary" className="font-mono text-[11px]">{params.ph_duration} hrs</Badge>
+              <div className="grid gap-2">
+                <div className="flex items-center justify-between gap-3">
+                  <Label id="sim-ph-duration-label">pH duration</Label>
+                  <span className="r-num text-[13px]">{params.ph_duration} hrs</span>
                 </div>
-                <Slider min={1} max={24} step={0.5} value={[params.ph_duration]} onValueChange={([v]) => updateParam('ph_duration', v)} />
+                <Slider aria-labelledby="sim-ph-duration-label" min={1} max={24} step={0.5} value={[params.ph_duration]}
+                  onValueChange={([v]) => updateParam('ph_duration', v)} />
               </div>
             </>
           )}
-        </CardContent>
-        <CardFooter className="flex items-center gap-3 border-t pt-5">
-          <Button
-            onClick={() => run(simulationRequestMetadata)}
-            disabled={loading}
-            className="gap-2"
-          >
+          <details className="research-disclosure">
+            <summary>Solver</summary>
+            <div className="grid gap-2">
+              <Label>ODE solver</Label>
+              <Select value={params.solver_method} onValueChange={(v) => updateParam('solver_method', v)}>
+                <SelectTrigger className="w-full" aria-label="ODE solver"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="RK45">RK45</SelectItem>
+                  <SelectItem value="BDF">BDF (stiff)</SelectItem>
+                  <SelectItem value="LSODA">LSODA (auto)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </details>
+          <p className="r-legend">
+            Requested parameters: {activeCalibrationParams ? 'active calibration' : 'Bordbar defaults'}
+            {customMode ? ' · upload sent as context' : ''}
+          </p>
+          <Button onClick={() => run(simulationRequestMetadata)} disabled={loading} className="r-primary gap-2">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
             {loading ? 'Running...' : 'Run Simulation'}
           </Button>
-          {result?.success && (
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="gap-1.5 text-emerald-600 border-emerald-200 bg-emerald-50">
-                <CheckCircle2 className="h-3 w-3" />
-                {result.duration.toFixed(1)}s — {result.n_points} pts, {result.n_metabolites} metabolites
-              </Badge>
-                <Badge
-                  variant={result.dataset_applied ? 'default' : 'secondary'}
-                  className="rounded-full"
-                >
-                  {result.dataset_applied
-                  ? `Dataset applied: ${result.active_dataset_label ?? resolvedDatasetSummary.label}`
-                  : resolvedResearchDataMode === 'custom_user_data_mode'
-                    ? 'Custom mode pending dataset application'
-                    : 'Bordbar default mode'}
-                </Badge>
-                {result.custom_params_source && (
-                  <Badge
-                    variant="outline"
-                    className="rounded-full border-violet-300/20 bg-violet-400/10 text-violet-100"
-                  >
-                    {result.custom_params_source === 'provided'
-                      ? 'Latest calibration parameters applied'
-                      : result.custom_params_source === 'auto_loaded'
-                        ? 'Auto-loaded calibration parameters'
-                        : 'Default Bordbar parameters'}
-                  </Badge>
-                )}
-              {result.dataset_fallback_reason && (
-                <Badge variant="outline" className="rounded-full border-amber-200 bg-amber-50 text-amber-700">
-                  {result.dataset_fallback_reason}
-                </Badge>
-              )}
+        </section>
+
+        <section id="trajectory-review" className="grid gap-4" aria-label="Trajectories and log" aria-busy={loading}>
+          <h2>Trajectories</h2>
+          {loading ? (
+            <p className="research-empty" role="status"><Loader2 className="h-4 w-4 animate-spin" />
+              Running the model. The solver reports no progress, so none is shown.</p>
+          ) : null}
+          {error ? (
+            <div role="alert" className="grid gap-1" data-testid="simulation-error">
+              <p className="flex items-center gap-2 text-sm font-medium text-destructive"><AlertCircle className="h-4 w-4 shrink-0" />Simulation error</p>
+              <p className="font-mono text-xs whitespace-pre-wrap text-destructive/80">{error}</p>
+              <p className="r-legend">Settings are kept; adjust them and run again.</p>
             </div>
-          )}
-        </CardFooter>
-      </Card>
-
-      <section id="trajectory-review" className="research-section">
-        {!result ? <><h2>Trajectories & log</h2><p className="research-empty">No simulation result</p></> : null}
-      {error && (
-        <Card className="border-destructive/40 bg-destructive/5">
-          <CardContent className="flex items-start gap-3 pt-6">
-            <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-destructive">Simulation Error</p>
-              <p className="text-xs text-destructive/70 mt-1 font-mono whitespace-pre-wrap">{error}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {result?.success && (
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.62fr)_minmax(320px,0.88fr)]">
-          <MetaboliteChart
-            result={result}
-            selectedMetabolites={selectedMetabolites}
-            onSelectionChange={setSelectedMetabolites}
-          />
-
-          <Card className="overflow-hidden border-white/10 bg-slate-950/70 shadow-2xl shadow-cyan-500/5">
-            <CardHeader className="relative overflow-hidden border-b border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(15,23,42,0.8))] px-4 py-4 sm:px-5">
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.12),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.08),transparent_30%)]"
+          ) : null}
+          {!result && !loading && !error ? <p className="research-empty" data-testid="simulation-empty">No simulation yet. Choose settings and run the model.</p> : null}
+          {result?.success ? (
+            <>
+              <p className="r-legend" data-testid="simulation-summary">
+                Completed in {result.duration.toFixed(1)} s · {result.n_points} points · {result.n_metabolites} metabolites · {result.solver}
+                {' · '}{result.dataset_applied ? 'dataset applied by the engine' : 'reference inputs'}
+              </p>
+              <MetaboliteChart
+                result={result}
+                selectedMetabolites={selectedMetabolites}
+                onSelectionChange={setSelectedMetabolites}
               />
-              <div className="relative flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <Terminal className="h-4 w-4 text-cyan-300" />
-                  <CardTitle className="text-white">Simulation Log</CardTitle>
-                </div>
-                <CardDescription className="max-w-xl text-slate-400">
-                  Runtime milestones from the latest simulation run.
-                </CardDescription>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="rounded-full border-white/10 bg-white/5 text-slate-300">
-                    {result.duration.toFixed(1)}s runtime
-                  </Badge>
-                  <Badge variant="outline" className="rounded-full border-white/10 bg-white/5 text-slate-300">
-                    {result.solver}
-                  </Badge>
-                  <Badge variant="outline" className="rounded-full border-white/10 bg-white/5 text-slate-300">
-                    {result.n_points} points
-                  </Badge>
-                  <Badge variant="outline" className="rounded-full border-white/10 bg-white/5 text-slate-300">
-                    {params.ph_perturbation_type === 'None'
-                      ? 'Baseline pH'
-                      : `${params.ph_perturbation_type} · ${params.ph_severity}`}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="px-4 py-4 sm:px-5">
-              <div className="max-h-[32rem] overflow-y-auto rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                <div className="space-y-2">
-                  {result.log?.length ? (
-                    result.log.map((msg, i) => {
+              <details className="research-disclosure">
+                <summary>Run log ({result.log?.length ?? 0})</summary>
+                {result.log?.length ? (
+                  <ol className="grid max-h-[28rem] gap-1 overflow-y-auto text-[13px]">
+                    {result.log.map((msg, i) => {
                       const { tag, body } = parseLogLine(msg)
-
                       return (
-                        <div
-                          key={i}
-                          className="flex gap-3 rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5"
-                        >
-                          <div className="mt-1 size-2 shrink-0 rounded-full bg-cyan-400/80 shadow-[0_0_0_4px_rgba(34,211,238,0.08)]" />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              {tag && (
-                                <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-100">
-                                  {tag}
-                                </span>
-                              )}
-                              <p className="text-sm leading-6 text-slate-200">{body}</p>
-                            </div>
-                          </div>
-                        </div>
+                        <li key={i} className="flex gap-3 border-b border-white/5 py-1.5">
+                          {tag ? <span className="shrink-0 font-mono text-xs text-[color:var(--r-text-3)]">{tag}</span> : null}
+                          <span className="min-w-0 break-words">{body}</span>
+                        </li>
                       )
-                    })
-                  ) : (
-                    <p className="text-sm text-slate-400">No log output was returned for this run.</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <RoBoCopAssistant
-            interpretation={robocopInterpretation}
-            analysisContext={robocopContext}
-            loading={robocopLoading}
-            error={robocopError}
-            onRefresh={() => run(simulationRequestMetadata)}
-          />
-        </div>
-      )}
-      </section>
-    </div>
+                    })}
+                  </ol>
+                ) : (
+                  <p className="research-muted">No log output was returned for this run.</p>
+                )}
+              </details>
+              <details className="research-disclosure">
+                <summary>Interpretation</summary>
+                <RoBoCopAssistant
+                  interpretation={robocopInterpretation}
+                  analysisContext={robocopContext}
+                  loading={robocopLoading}
+                  error={robocopError}
+                  onRefresh={() => run(simulationRequestMetadata)}
+                />
+              </details>
+            </>
+          ) : null}
+        </section>
+      </div>
+    </WithInspector>
   )
 }

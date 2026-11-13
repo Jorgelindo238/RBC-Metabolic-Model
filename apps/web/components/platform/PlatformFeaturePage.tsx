@@ -117,11 +117,13 @@ export async function PlatformFeaturePage({
         workflowHistory: [],
       }
 
-  if (registryData.missingCredentials && feature.id !== 'monitoring-overview') {
+  const handlesRegistryState = feature.id === 'monitoring-overview' || feature.id === 'calibration-registry'
+
+  if (registryData.missingCredentials && !handlesRegistryState) {
     return <DatabaseUnreachableState />
   }
 
-  if (registryData.error && feature.id !== 'monitoring-overview') {
+  if (registryData.error && !handlesRegistryState) {
     return <ErrorState error={registryData.error} />
   }
 

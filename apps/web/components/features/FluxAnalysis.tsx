@@ -3,12 +3,11 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import type { ActiveResearchDataset } from '@/types/research-dataset'
 import { apiClient } from '@/lib/api-client'
-import { FluxBarChart, PATHWAY_GROUPS } from './flux/FluxBarChart'
+import { PATHWAY_COLORS, PATHWAY_GROUPS } from './flux/FluxBarChart'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Loader2, BarChart3, AlertCircle, Sparkles } from 'lucide-react'
+import { Loader2, BarChart3, AlertCircle } from 'lucide-react'
+import { WithInspector } from '@/components/platform/research/Inspector'
 import { useResearchContext } from '@/contexts/ResearchContextProvider'
 import { useResearchDataset } from '@/contexts/ResearchDatasetProvider'
 import { summarizeResearchDataset } from '@/lib/research-dataset'
@@ -19,7 +18,6 @@ import {
   getFluxAnalysisStatusLabel,
   getFluxAnalysisStatusLine,
 } from '@/lib/robocop/research-provenance'
-import { cn } from '@/lib/utils'
 
 const DEFAULT_FLUX_CONCENTRATIONS: Record<string, number> = {
   GLC: 5.0,
@@ -103,7 +101,12 @@ function formatFluxValue(value: number | null | undefined) {
   return value.toFixed(3)
 }
 
-function FluxPathwayCard({
+/**
+ * Pathway flux rows: fixed-size text (never scaled down with the viewport), height grows with the
+ * number of reactions, bars centred on zero so signs stay visible. Display formatting only:
+ * the exact value returned by the API stays available in the title attribute.
+ */
+function FluxPathwayRows({
   pathway,
   rank,
   fluxes,
@@ -118,102 +121,52 @@ function FluxPathwayCard({
 }) {
   const reactions = PATHWAY_GROUPS[pathway] ?? []
   const reactionSignals = reactions
-    .map((reaction) => ({
-      reaction,
-      flux: fluxes[reaction] ?? 0,
-    }))
+    .map((reaction) => ({ reaction, flux: fluxes[reaction] ?? 0 }))
     .filter((signal) => signal.flux !== 0)
-    .sort((left, right) => Math.abs(right.flux) - Math.abs(left.flux))
-
-  const topSignal = reactionSignals[0]
+  const ranked = [...reactionSignals].sort((left, right) => Math.abs(right.flux) - Math.abs(left.flux))
+  const topSignal = ranked[0]
+  const maxAbs = Math.max(...reactionSignals.map((signal) => Math.abs(signal.flux)), Number.MIN_VALUE)
+  const color = PATHWAY_COLORS[pathway] ?? '#64748b'
   const isDominant = pathway === dominantPathway
 
   return (
-    <Card
-      className={cn(
-        'h-full overflow-hidden border-white/10 bg-slate-950/70 shadow-[0_20px_60px_-34px_rgba(8,15,40,0.8)]',
-        isDominant && 'border-cyan-400/25 bg-[linear-gradient(180deg,rgba(8,32,43,0.96),rgba(15,23,42,0.84))]'
+    <section className="grid gap-2 border-b border-[color:var(--r-line)] pb-4" aria-label={`${pathway} fluxes`} data-pathway={pathway}>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 className="text-[14px] font-semibold">
+          <span className="r-num mr-2 text-[color:var(--r-text-3)]">{rank}</span>{pathway}
+          {isDominant ? <span className="ml-2 text-[12px] font-normal text-[color:var(--r-text-2)]">largest total</span> : null}
+        </h3>
+        <p className="r-num text-[13px]" title={String(pathwayTotal)}>Total {formatFluxValue(pathwayTotal)}</p>
+      </div>
+      <p className="r-legend">
+        {reactionSignals.length} non-zero of {reactions.length} modeled reactions
+        {topSignal ? ` · largest |flux|: ${topSignal.reaction} ${formatFluxValue(topSignal.flux)}` : ''}
+      </p>
+      {reactionSignals.length > 0 ? (
+        <ol className="grid gap-1" aria-label={`${pathway} reaction fluxes`}>
+          {reactionSignals.map(({ reaction, flux }) => {
+            const share = `${(Math.abs(flux) / maxAbs) * 100}%`
+            return (
+              <li key={reaction} className="grid grid-cols-[minmax(64px,96px)_minmax(0,1fr)_minmax(64px,auto)] items-center gap-2 text-[12px]"
+                data-reaction={reaction}>
+                <span className="truncate font-mono" title={reaction}>{reaction}</span>
+                <span className="grid h-3 grid-cols-2" aria-hidden="true">
+                  <span className="flex justify-end border-r border-[color:var(--r-line-strong)]">
+                    {flux < 0 ? <span className="h-full rounded-l-sm" style={{ width: share, background: color, opacity: 0.55 }} /> : null}
+                  </span>
+                  <span className="flex">
+                    {flux > 0 ? <span className="h-full rounded-r-sm" style={{ width: share, background: color, opacity: 0.85 }} /> : null}
+                  </span>
+                </span>
+                <span className="r-num text-right" title={String(flux)}>{formatFluxValue(flux)}</span>
+              </li>
+            )
+          })}
+        </ol>
+      ) : (
+        <p className="research-muted">No non-zero flux for this pathway in the current snapshot.</p>
       )}
-    >
-      <CardHeader className="border-b border-white/10 bg-white/[0.03] px-5 py-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="grid size-8 place-items-center rounded-2xl border border-white/10 bg-white/5 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-200">
-                {String(rank).padStart(2, '0')}
-              </span>
-              <Badge
-                variant="outline"
-                className={cn(
-                  'border-white/10 bg-white/[0.04] text-[10px] uppercase tracking-[0.22em] text-slate-200',
-                  isDominant && 'border-cyan-400/20 bg-cyan-400/10 text-cyan-100'
-                )}
-              >
-                {isDominant ? 'Dominant pathway' : rank <= 3 ? 'Top pathway' : 'Comparison lane'}
-              </Badge>
-            </div>
-            <CardTitle className="text-xl text-white">{pathway}</CardTitle>
-            <CardDescription className="text-slate-400">
-              {reactionSignals.length} non-zero reactions · {reactions.length} modeled reactions
-            </CardDescription>
-          </div>
-
-          <div className="text-right">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">
-              Pathway total
-            </p>
-            <p className="mt-1 text-2xl font-semibold text-white">{formatFluxValue(pathwayTotal)}</p>
-            <p className="text-xs text-slate-400">
-              {topSignal ? `${topSignal.reaction} is the largest signal` : 'No non-zero reaction signal'}
-            </p>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="grid gap-4 px-5 py-4 2xl:grid-cols-[minmax(0,1fr)_260px]">
-        <div className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-3">
-          {reactionSignals.length > 0 ? (
-            <FluxBarChart fluxes={fluxes} pathway={pathway} />
-          ) : (
-            <div className="flex min-h-[150px] items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-4 text-sm text-slate-400">
-              No non-zero fluxes were detected for this pathway in the current snapshot.
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">
-            Pathway readout
-          </p>
-          <div className="mt-3 space-y-3 text-sm leading-6 text-slate-300">
-            <p>
-              {topSignal
-                ? `${topSignal.reaction} is currently the largest reaction-level signal in this pathway.`
-                : 'No reaction-level signal is active in this pathway snapshot.'}
-            </p>
-            <p>
-              {reactionSignals.length} active signal{reactionSignals.length === 1 ? '' : 's'} across{' '}
-              {reactions.length} modeled reaction{reactions.length === 1 ? '' : 's'}.
-            </p>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {topSignal && (
-              <Badge variant="outline" className="border-white/10 bg-white/[0.04] text-slate-200">
-                {topSignal.reaction} {formatFluxValue(topSignal.flux)}
-              </Badge>
-            )}
-            {isDominant && (
-              <Badge variant="outline" className="border-cyan-400/20 bg-cyan-400/10 text-cyan-100">
-                Highest pathway total
-              </Badge>
-            )}
-            <Badge variant="outline" className="border-white/10 bg-white/[0.04] text-slate-300">
-              {reactions.length} modeled reactions
-            </Badge>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    </section>
   )
 }
 
@@ -319,109 +272,82 @@ export function FluxAnalysis() {
     selectedPathway === 'all'
       ? sortedPathwayEntries
       : sortedPathwayEntries.filter(([pathway]) => pathway === selectedPathway)
-  const pathwayCountLabel = `${visiblePathwayEntries.length} pathway${visiblePathwayEntries.length === 1 ? '' : 's'}`
   const reactionCount = fluxContext.fluxResultAvailable ? Object.keys(fluxContext.outputs.fluxes).length : 0
-  const pathwayExplorerGridClassName = cn(
-    'grid gap-4',
-    selectedPathway === 'all' && visiblePathwayEntries.length > 1 ? '2xl:grid-cols-2' : 'grid-cols-1'
+
+  const inspector = (
+    <dl className="research-review" data-testid="flux-provenance">
+      <div><dt>What these values are</dt><dd>Model rate estimates returned by the flux service for one concentration snapshot. Not measured fluxes, not a simulated trajectory, not a biological validation.</dd></div>
+      <div><dt>Concentration snapshot</dt><dd>{fluxSnapshot.source === 'custom_upload'
+        ? 'Last value of each mapped upload series; other pools use reference defaults'
+        : 'Reference default concentrations'}</dd></div>
+      <div><dt>Concentrations from upload</dt><dd>{appliedCount} / {totalConcentrations}</dd></div>
+      <div><dt>Dataset</dt><dd>{resolvedDatasetSummary.label}</dd></div>
+      <div><dt>Calibration</dt><dd>{calibrationStatusLabel}</dd></div>
+      <div><dt>Source</dt><dd>{fluxProvenanceSummary}</dd></div>
+      <div><dt>Status</dt><dd>{fluxSnapshot.fallbackReason ?? fluxStatusLine}</dd></div>
+      <div><dt>Units</dt><dd>As returned by the API; no conversion is applied for display.</dd></div>
+    </dl>
   )
 
   return (
-    <div className="grid w-full gap-6">
-      <section id="pathway-activity" className="research-section">
-        <div className="research-toolbar">
-          <Button onClick={estimate} disabled={loading} variant="outline" className="gap-2">
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <BarChart3 size={16} />}
-            {loading ? 'Estimating...' : 'Re-estimate'}
-          </Button>
-          <Select value={selectedPathway} onValueChange={setSelectedPathway}>
-            <SelectTrigger className="w-[190px]" aria-label="Pathway filter"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All pathways</SelectItem>
-              {pathwayKeys.map((pathway) => <SelectItem key={pathway} value={pathway}>{pathway}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <span className="research-muted" role="status">{fluxStatusLabel}</span>
-        </div>
-        <dl className="research-metrics">
-          <div><dt>Dominant pathway</dt><dd>{fluxContext.fluxResultAvailable && dominantPathway !== 'unknown' ? dominantPathway : '-'}</dd></div>
-          <div><dt>Total flux</dt><dd>{fluxContext.fluxResultAvailable ? formatFluxValue(fluxContext.outputs.totalFlux) : '-'}</dd></div>
-          <div><dt>Reactions</dt><dd>{fluxContext.fluxResultAvailable ? reactionCount : '-'}</dd></div>
-        </dl>
-      </section>
-      <details id="comparison-view" className="research-disclosure">
-        <summary>Provenance</summary>
-        <dl className="research-review">
-          <div><dt>Dataset</dt><dd>{resolvedDatasetSummary.label}</dd></div>
-          <div><dt>Calibration</dt><dd>{calibrationStatusLabel}</dd></div>
-          <div><dt>Concentrations applied</dt><dd>{appliedCount} / {totalConcentrations}</dd></div>
-          <div><dt>Source</dt><dd>{fluxProvenanceSummary}</dd></div>
-        </dl>
-        <p className="research-muted mt-3">{fluxSnapshot.fallbackReason ?? fluxStatusLine}</p>
-      </details>
+    <WithInspector title="Flux details" anchorId="comparison-view" inspector={inspector}>
+      <div className="grid w-full gap-6" data-testid="research-flux">
+        <section id="pathway-activity" className="grid gap-4" aria-label="Snapshot">
+          <div className="research-toolbar">
+            <Button onClick={estimate} disabled={loading} className="r-primary gap-2">
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <BarChart3 size={16} />}
+              {loading ? 'Estimating...' : 'Re-estimate'}
+            </Button>
+            <Select value={selectedPathway} onValueChange={setSelectedPathway}>
+              <SelectTrigger className="w-[190px] max-w-full" aria-label="Pathway filter"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All pathways</SelectItem>
+                {pathwayKeys.map((pathway) => <SelectItem key={pathway} value={pathway}>{pathway}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <span className="research-muted" role="status">{fluxStatusLabel}</span>
+          </div>
+          {error ? (
+            <p role="alert" className="flex items-start gap-2 text-sm text-destructive" data-testid="flux-error">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              <span className="min-w-0 break-words"><strong>Flux estimation error.</strong> {error} Use Re-estimate to retry.</span>
+            </p>
+          ) : null}
+          {fluxContext.fluxResultAvailable ? (
+            <dl className="r-metrics" data-testid="flux-summary">
+              <div><dt>Dominant pathway</dt><dd>{dominantPathway !== 'unknown' ? dominantPathway : '—'}</dd></div>
+              <div><dt>Total flux</dt><dd className="r-num" title={String(fluxContext.outputs.totalFlux)}>{formatFluxValue(fluxContext.outputs.totalFlux)}</dd></div>
+              <div><dt>Reactions</dt><dd className="r-num">{reactionCount}</dd></div>
+              <div><dt>Pathways shown</dt><dd className="r-num">{visiblePathwayEntries.length}</dd></div>
+            </dl>
+          ) : null}
+        </section>
 
-      {error && (
-        <Card className="border-destructive/40 bg-destructive/5 shadow-sm">
-          <CardContent className="flex items-start gap-3 pt-6">
-            <AlertCircle className="h-5 w-5 shrink-0 text-destructive" />
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-destructive">Flux estimation error</p>
-              <p className="text-sm text-destructive/90">{error}</p>
+        <section id="reaction-tracing" className="grid gap-4" aria-label="Pathway fluxes" aria-busy={loading}>
+          <div className="grid gap-1">
+            <h2>Pathway fluxes</h2>
+            <p className="r-legend">Ranked by pathway total. Bars are centred on zero: left is negative, right is positive. Hover a value for its exact number.</p>
+          </div>
+          {loading && !fluxes ? (
+            <p className="research-empty" role="status"><Loader2 size={16} className="animate-spin" />Estimating fluxes...</p>
+          ) : fluxes ? (
+            <div className="grid gap-4">
+              {visiblePathwayEntries.map(([pathway, pathwayTotal], index) => (
+                <FluxPathwayRows
+                  key={pathway}
+                  pathway={pathway}
+                  rank={index + 1}
+                  fluxes={fluxes}
+                  pathwayTotal={pathwayTotal}
+                  dominantPathway={dominantPathway}
+                />
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <section id="reaction-tracing" className="research-section space-y-4">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="space-y-1">
-            <h2 className="section-heading">Pathway fluxes</h2>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="rounded-full border-white/10 bg-white/[0.04] text-slate-200">
-              {pathwayCountLabel}
-            </Badge>
-            <Badge variant="outline" className="rounded-full border-white/10 bg-white/[0.04] text-slate-200">
-              Ranked by pathway flux total
-            </Badge>
-          </div>
-        </div>
-
-        {loading && !fluxes ? (
-          <Card className="border-white/10 bg-slate-950/60">
-            <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-              <Loader2 className="h-6 w-6 animate-spin text-cyan-300" />
-              <p className="text-sm font-medium text-white">Estimating fluxes...</p>
-              <p className="max-w-md text-sm leading-6 text-slate-400">
-                The pathway explorer will populate once the current flux snapshot completes.
-              </p>
-            </CardContent>
-          </Card>
-        ) : fluxes ? (
-          <div className={pathwayExplorerGridClassName}>
-            {visiblePathwayEntries.map(([pathway, pathwayTotal], index) => (
-              <FluxPathwayCard
-                key={pathway}
-                pathway={pathway}
-                rank={index + 1}
-                fluxes={fluxes}
-                pathwayTotal={pathwayTotal}
-                dominantPathway={dominantPathway}
-              />
-            ))}
-          </div>
-        ) : (
-          <Card className="border-dashed border-white/10 bg-slate-950/50">
-            <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-              <Sparkles className="h-6 w-6 text-cyan-300" />
-              <p className="text-sm font-medium text-white">No completed flux result yet</p>
-              <p className="max-w-md text-sm leading-6 text-slate-400">
-                Re-estimate the current snapshot to populate the pathway explorer with grouped flux results.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </section>
-    </div>
+          ) : !error ? (
+            <p className="research-empty" data-testid="flux-empty">No flux result yet. Use Re-estimate.</p>
+          ) : null}
+        </section>
+      </div>
+    </WithInspector>
   )
 }
