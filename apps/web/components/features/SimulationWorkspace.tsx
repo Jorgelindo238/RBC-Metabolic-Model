@@ -73,7 +73,7 @@ export function SimulationWorkspace() {
   }, [resolvedDataset, resolvedResearchDataMode])
 
   const activeCalibrationParams = useMemo(() => {
-    if (!activeCalibration) {
+    if (!activeCalibration || activeCalibration.datasetProvenance.calibratedParametersActive !== true) {
       return null
     }
 
@@ -185,10 +185,9 @@ export function SimulationWorkspace() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_42%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.08),transparent_38%)]"
       />
-        <Card>
+        <Card id="scenario-setup">
           <CardHeader>
-            <CardTitle>Simulation Controls</CardTitle>
-            <CardDescription>Configure a storage-condition simulation to follow how RBC metabolite concentrations evolve over time. The model integrates ~200 reactions across glycolysis, PPP, nucleotide metabolism, and redox pathways.</CardDescription>
+            <CardTitle role="heading" aria-level={2}>Run settings</CardTitle>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Badge
                 variant={resolvedResearchDataMode === 'custom_user_data_mode' ? 'default' : 'secondary'}
@@ -318,6 +317,8 @@ export function SimulationWorkspace() {
         </CardFooter>
       </Card>
 
+      <section id="trajectory-review" className="research-section">
+        {!result ? <><h2>Trajectories & log</h2><p className="research-empty">No simulation result</p></> : null}
       {error && (
         <Card className="border-destructive/40 bg-destructive/5">
           <CardContent className="flex items-start gap-3 pt-6">
@@ -413,6 +414,7 @@ export function SimulationWorkspace() {
           />
         </div>
       )}
+      </section>
     </div>
   )
 }

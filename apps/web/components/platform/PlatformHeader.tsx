@@ -2,6 +2,8 @@
 
 import type { ProductContextShape } from './platform-shell.types'
 import { useSidebar } from './SidebarContext.tsx'
+import { usePathname } from 'next/navigation'
+import { Menu } from 'lucide-react'
 
 function buildHeaderSummary(productContext: ProductContextShape) {
   if (!productContext?.isAuthenticated) {
@@ -38,10 +40,11 @@ function buildWorkspaceBadge(productContext: ProductContextShape) {
 
 export function PlatformHeader({ productContext }: { productContext: ProductContextShape }) {
   const { openMobile } = useSidebar()
+  const isResearch = usePathname().startsWith('/research')
   const workspaceBadge = buildWorkspaceBadge(productContext)
 
   return (
-    <header className="platform-header">
+    <header className={`platform-header${isResearch ? ' research-app-header' : ''}`}>
       <div className="platform-header-copy">
         <div className="platform-header-topline">
           <button
@@ -50,13 +53,9 @@ export function PlatformHeader({ productContext }: { productContext: ProductCont
             onClick={openMobile}
             type="button"
           >
-            <span className="platform-header-mobile-toggle-bars" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </span>
+            <Menu size={18} aria-hidden="true" />
           </button>
-          <p className="platform-header-kicker">Red blood cell storage research</p>
+          {!isResearch ? <p className="platform-header-kicker">Red blood cell storage research</p> : null}
         </div>
         <h2 className="platform-header-title">RBC Metabolic Model</h2>
         <p className="platform-header-subtitle">

@@ -681,6 +681,8 @@ export function RoBoCopChat({ context, onSendMessage, className }: RoBoCopChatPr
               variant="ghost"
               size="icon-sm"
               onClick={() => setIsOpen(false)}
+              aria-label="Close RoBoCop"
+              title="Close RoBoCop"
               className="text-slate-300 hover:bg-white/10 hover:text-white"
             >
               <X className="size-4" />
@@ -837,6 +839,8 @@ export function RoBoCopChat({ context, onSendMessage, className }: RoBoCopChatPr
       ) : (
         <Button
           onClick={() => setIsOpen(true)}
+          aria-label="Ask RoBoCop"
+          title="Ask RoBoCop"
           className="group flex items-center gap-3 rounded-full border border-white/10 bg-slate-950/95 px-4 py-3 text-slate-50 shadow-[0_18px_50px_rgba(15,23,42,0.35)] backdrop-blur-xl transition-transform hover:-translate-y-0.5 hover:bg-slate-900"
         >
           <span className="relative grid size-10 place-items-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 text-slate-950 shadow-lg">

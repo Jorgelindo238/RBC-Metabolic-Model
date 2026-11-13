@@ -235,7 +235,7 @@ export function buildCalibrationResearchContext(
     resolvedResult?.calibration_status ??
     activeCalibration?.calibrationStatus ??
     (calibrationError ? 'failed' : result || activeCalibration?.calibrationCompleted ? 'completed' : 'setup_only')
-  const calibrationApplied = resolvedCalibrationStatus === 'completed' || Boolean(activeCalibration?.calibrationCompleted)
+  const calibrationApplied = false // Execution completion is not an activation receipt.
   const calibrationSource = result ? 'provided' : activeCalibration ? 'auto_loaded' : 'defaults'
   const resolvedTargetMetabolites = result ? targetMets : activeCalibration?.targetMetabolites ?? targetMets
   const parameterChanges =
@@ -529,9 +529,9 @@ export function buildCalibrationRegistryResearchContext(
     datasetSource: 'bordbar_reference',
     datasetApplied: false,
     defaultFallbackUsed: true,
-    calibrationApplied: completionStatus === 'completed',
+    calibrationApplied: false,
     calibrationSource: 'defaults',
-    calibratedParametersActive: completionStatus === 'completed',
+    calibratedParametersActive: false,
     latestCalibrationLoaded: completionStatus === 'completed',
     calibrationResultAvailable: Boolean(detail),
     calibrationStatus: completionStatus === 'completed' ? 'completed' : completionStatus === 'running' ? 'running' : completionStatus === 'failed' ? 'failed' : 'setup_only',
@@ -1254,10 +1254,7 @@ export function buildPathwayVisualizationResearchContext(
     count: (result?.nodes ?? []).filter((node) => node.pathway === pathway).length,
   }))
   const dominantPathway = pathwayCounts.sort((left, right) => right.count - left.count)[0]?.pathway ?? null
-  const calibrationApplied =
-    Boolean(activeCalibration?.calibrationCompleted) &&
-    (activeCalibration?.datasetId === activeDataset?.datasetId || !activeCalibration?.datasetId) &&
-    (activeCalibration?.researchDataMode ?? activeDataset?.mode) === (activeDataset?.mode ?? 'default_bordbar_mode')
+  const calibrationApplied = false // Persisted or completed records have no verified activation.
   const calibrationSource: 'provided' | 'auto_loaded' | 'defaults' = calibrationApplied
     ? activeCalibration?.researchDataMode === 'custom_user_data_mode'
       ? 'auto_loaded'

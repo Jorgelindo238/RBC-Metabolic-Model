@@ -10,6 +10,7 @@ interface NetworkGraphProps {
   data: PathwayNetworkState
   selectedEntity?: PathwayVisualizationSelection | null
   onSelectionChange?: (selection: PathwayVisualizationSelection | null) => void
+  showReactionLabels?: boolean
 }
 
 interface SelectionModel {
@@ -199,7 +200,7 @@ function buildReactionLabelPosition(reaction: PathwayNetworkReactionNode, index:
   }
 }
 
-export function NetworkGraph({ data, selectedEntity, onSelectionChange }: NetworkGraphProps) {
+export function NetworkGraph({ data, selectedEntity, onSelectionChange, showReactionLabels = true }: NetworkGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [zoomLevel, setZoomLevel] = useState(1)
 
@@ -212,10 +213,16 @@ export function NetworkGraph({ data, selectedEntity, onSelectionChange }: Networ
   const bounds = useMemo(() => {
     const xs = [...data.nodes.map((node) => node.x), ...reactionNodes.map((node) => node.x)]
     const ys = [...data.nodes.map((node) => node.y), ...reactionNodes.map((node) => node.y)]
-    const xMin = Math.min(...xs) - 1
-    const xMax = Math.max(...xs) + 1
-    const yMin = Math.min(...ys) - 1
-    const yMax = Math.max(...ys) + 1
+    const rawXMin = xs.length ? Math.min(...xs) : 0
+    const rawXMax = xs.length ? Math.max(...xs) : 1
+    const rawYMin = ys.length ? Math.min(...ys) : 0
+    const rawYMax = ys.length ? Math.max(...ys) : 1
+    const xPadding = Math.max((rawXMax - rawXMin) * 0.15, 0.03)
+    const yPadding = Math.max((rawYMax - rawYMin) * 0.15, 0.03)
+    const xMin = rawXMin - xPadding
+    const xMax = rawXMax + xPadding
+    const yMin = rawYMin - yPadding
+    const yMax = rawYMax + yPadding
     const xCenter = (xMin + xMax) / 2
     const yCenter = (yMin + yMax) / 2
 
@@ -322,7 +329,7 @@ export function NetworkGraph({ data, selectedEntity, onSelectionChange }: Networ
         node.pathway ?? null,
         `${node.label} • ${node.source} → ${node.target}`,
       ] satisfies PlotlySelectionPayload),
-      text: reactionNodes.map((node) => node.label),
+      text: reactionNodes.map((node) => showReactionLabels ? node.label : ''),
       textposition: 'middle center',
       hoverinfo: 'skip',
       textfont: {
@@ -431,11 +438,11 @@ export function NetworkGraph({ data, selectedEntity, onSelectionChange }: Networ
       metaboliteMarkerTrace,
       metaboliteLabelTrace,
     ]
-  }, [bounds, data, nodeLookup, reactionNodes, selectedEntity, selectionModel])
+  }, [bounds, data, nodeLookup, reactionNodes, selectedEntity, selectionModel, showReactionLabels])
 
   const layout = useMemo(() => {
-    const xSpan = Math.max(bounds.xMax - bounds.xMin, 1)
-    const ySpan = Math.max(bounds.yMax - bounds.yMin, 1)
+    const xSpan = Math.max(bounds.xMax - bounds.xMin, 1e-6)
+    const ySpan = Math.max(bounds.yMax - bounds.yMin, 1e-6)
     const zoom = Math.max(zoomLevel, 0.5)
     const xHalf = xSpan / (2 * zoom)
     const yHalf = ySpan / (2 * zoom)
@@ -537,36 +544,36 @@ export function NetworkGraph({ data, selectedEntity, onSelectionChange }: Networ
       <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full border border-white/10 bg-slate-950/80 p-1 shadow-lg shadow-black/30 backdrop-blur">
         <Button
           type="button"
-          size="sm"
+          size="icon"
           variant="ghost"
           onClick={() => setZoomLevel((current) => Math.max(0.6, Number((current / 1.25).toFixed(3))))}
           className="h-8 rounded-full px-3 text-[10px] uppercase tracking-[0.22em] text-slate-200 hover:bg-white/[0.08] hover:text-white"
           aria-label="Zoom out"
+          title="Zoom out"
         >
-          <Minus className="mr-1.5 size-3.5" />
-          Zoom out
+          <Minus className="size-3.5" />
         </Button>
         <Button
           type="button"
-          size="sm"
+          size="icon"
           variant="ghost"
           onClick={() => setZoomLevel(1)}
           className="h-8 rounded-full px-3 text-[10px] uppercase tracking-[0.22em] text-slate-200 hover:bg-white/[0.08] hover:text-white"
           aria-label="Reset zoom"
+          title="Reset zoom"
         >
-          <RotateCcw className="mr-1.5 size-3.5" />
-          Reset
+          <RotateCcw className="size-3.5" />
         </Button>
         <Button
           type="button"
-          size="sm"
+          size="icon"
           variant="ghost"
           onClick={() => setZoomLevel((current) => Math.min(4, Number((current * 1.25).toFixed(3))))}
           className="h-8 rounded-full px-3 text-[10px] uppercase tracking-[0.22em] text-slate-200 hover:bg-white/[0.08] hover:text-white"
           aria-label="Zoom in"
+          title="Zoom in"
         >
-          <Plus className="mr-1.5 size-3.5" />
-          Zoom in
+          <Plus className="size-3.5" />
         </Button>
       </div>
       <div ref={containerRef} className="min-h-[620px] w-full" />

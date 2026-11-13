@@ -17,6 +17,17 @@ from fastapi import HTTPException
 
 import MM_calibration as mm
 from services.pure_ode_runtime import run_pure_ode_rerun
+from services.vmax_only_contract import (
+    FIXED_KM_STRATEGY,
+    FixedKmViolation,
+    StrategyConflict,
+    assert_stage_plan_vmax_only,
+    audit_fixed_parameters,
+    filter_derived_parameters,
+    fixed_km_request,
+    require_vmax_only_selection,
+    resolve_parameter_contract,
+)
 
 def _load_robocop_modules():
     """Load the top-level ``services/robocop`` planner + triage modules.
@@ -695,7 +706,30 @@ def _build_combined_triage_safely(
         return None
 
 
+def _resolve_parameter_contract_or_400(request) -> dict:
+    """Resolve the parameter contract; a strategy conflict is an explicit 400."""
+    try:
+        return resolve_parameter_contract(request)
+    except StrategyConflict as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 def _run_single_web_calibration(request) -> dict:
+    # Fixed-Km contract first: conflicts are refused before any parameter
+    # scope is derived. The legacy path is unchanged when fixed_km is False.
+    parameter_contract = _resolve_parameter_contract_or_400(request)
+    fixed_km = bool(parameter_contract["fixed_km"])
+    fixed_km_dropped: Dict[str, List[str]] = {"auto_param_scope": [], "profile_additions": []}
+    if fixed_km:
+        try:
+            require_vmax_only_selection(
+                list(request.params_to_optimize.keys()),
+                mm.get_parameter_classes,
+                origin="params_to_optimize",
+            )
+        except FixedKmViolation as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
     # Phase 0 (auto-param-scope): derive target_metabolites FIRST so the
     # auto-scope resolver can pass them to
     # mm.auto_scope_with_bounds(...) before we enforce the strict
@@ -712,6 +746,20 @@ def _run_single_web_calibration(request) -> dict:
         user_selected_params=user_selected_params,
         target_metabolites=target_metabolites,
     )
+    if auto_param_scope_applied and fixed_km:
+        # Auto-scope derives Km and regulation names by default; under fixed
+        # Km only its Vmax names are kept and the dropped names are reported.
+        kept, dropped = filter_derived_parameters(
+            list(request.params_to_optimize.keys()), mm.get_parameter_classes
+        )
+        fixed_km_dropped["auto_param_scope"] = sorted(dropped)
+        request.params_to_optimize = {name: request.params_to_optimize[name] for name in kept}
+        auto_param_scope_params = sorted(kept)
+        if not kept:
+            raise HTTPException(
+                status_code=400,
+                detail="Fixed-Km calibration: auto-scope derived no Vmax parameter for these metabolites.",
+            )
     if auto_param_scope_applied:
         user_selected_params = list(request.params_to_optimize.keys())
 
@@ -740,6 +788,9 @@ def _run_single_web_calibration(request) -> dict:
     initial_params = _build_initial_params(request)
     calibration_profile = mm.infer_custom_data_calibration_profile(target_metabolites)
     explicit_strategy = getattr(request, "optimization_strategy", None) or getattr(request, "method", None)
+    if fixed_km:
+        # Never left to an alias, the planner or the inferred profile.
+        explicit_strategy = FIXED_KM_STRATEGY
     profile_addition_candidates = [
         name
         for name in calibration_profile.get("parameter_additions", [])
@@ -764,11 +815,19 @@ def _run_single_web_calibration(request) -> dict:
     else:
         profile_additions = profile_addition_candidates
 
+    if fixed_km and profile_additions:
+        profile_additions, dropped_additions = filter_derived_parameters(
+            profile_additions, mm.get_parameter_classes
+        )
+        fixed_km_dropped["profile_additions"] = sorted(dropped_additions)
+
     if profile_additions:
         selected_params = list(dict.fromkeys(selected_params + profile_additions))
 
     optimization_strategy = _resolve_requested_strategy(request)
-    if explicit_strategy is None:
+    if fixed_km:
+        optimization_strategy = FIXED_KM_STRATEGY
+    elif explicit_strategy is None:
         if custom_data_plan_obj is not None:
             optimization_strategy = custom_data_plan_obj.recommended_strategy
         else:
@@ -806,6 +865,18 @@ def _run_single_web_calibration(request) -> dict:
     active_dataset_id = getattr(request, "active_dataset_id", None)
     active_dataset_label = getattr(request, "active_dataset_label", None)
 
+    stage_plan = _build_strategy_stage_plan(
+        selected_params,
+        optimization_strategy,
+        request.max_iterations,
+        protect_eglc_depletion=auto_param_scope_eglc_gate_applied,
+    )
+    if fixed_km:
+        try:
+            assert_stage_plan_vmax_only(stage_plan, mm.get_parameter_classes)
+        except FixedKmViolation as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
     with tempfile.TemporaryDirectory(prefix="mm_web_calibration_") as tmp_dir:
         out_dir = Path(tmp_dir)
         load_params_path = None
@@ -837,12 +908,7 @@ def _run_single_web_calibration(request) -> dict:
                 curve_fit_strength=curve_fit_strength,
                 out_dir=out_dir,
                 optimization_strategy=optimization_strategy,
-                stage_plan=_build_strategy_stage_plan(
-                    selected_params,
-                    optimization_strategy,
-                    request.max_iterations,
-                    protect_eglc_depletion=auto_param_scope_eglc_gate_applied,
-                ),
+                stage_plan=stage_plan,
                 target_metabolites=target_metabolites,
                 experimental_data=experimental_payload,
                 research_data_mode=research_data_mode,
@@ -855,6 +921,23 @@ def _run_single_web_calibration(request) -> dict:
 
         report_path = out_dir / "calibration_report.json"
         report = json.loads(report_path.read_text(encoding="utf-8"))
+
+        fixed_km_audit = None
+        fixed_km_breach = False
+        if fixed_km:
+            optimized_names = sorted({str(name) for stage in stage_plan for name in stage["include_params"]})
+            fixed_km_audit = audit_fixed_parameters(
+                {**mm.DEFAULT_PARAM_VALUES, **initial_params},
+                current_params,
+                optimized_names,
+                mm.get_parameter_classes,
+            )
+            # A changed Km/regulation value, or a non-Vmax name in the optimised
+            # set, breaks the contract: the run is reported as failed, never as
+            # a completed fixed-Km calibration.
+            fixed_km_breach = bool(
+                fixed_km_audit["changed_non_vmax"] or fixed_km_audit["non_vmax_in_optimized_set"]
+            )
 
         # Phase 2: programmatic curve triage. Guarded so any triage bug never
         # breaks the happy path of returning the calibration result.
@@ -913,10 +996,19 @@ def _run_single_web_calibration(request) -> dict:
             f"improvement {improvement_pct:.1f}%."
         )
 
+        if fixed_km_breach:
+            message = "Fixed-Km contract violated: a non-Vmax parameter changed. " + message
+            result_summary = "Fixed-Km contract violated; result not usable as a Vmax-only calibration."
+
         return _to_native(
             {
-                "success": True,
+                "success": not fixed_km_breach,
                 "message": message,
+                "parameter_contract": parameter_contract["contract"],
+                "parameter_contract_requested_by": parameter_contract["requested_by"],
+                "fixed_km": fixed_km,
+                "fixed_km_dropped_params": fixed_km_dropped if fixed_km else None,
+                "fixed_km_audit": fixed_km_audit,
                 "optimization_strategy": optimization_strategy,
                 "optimized_params": filtered_optimized,
                 "all_optimized_params": {str(name): float(value) for name, value in current_params.items()},
@@ -942,9 +1034,9 @@ def _run_single_web_calibration(request) -> dict:
                     if auto_param_scope_eglc_gate_applied
                     else None
                 ),
-                "calibration_status": "completed",
-                "calibration_completed": True,
-                "calibration_failed": False,
+                "calibration_status": "failed" if fixed_km_breach else "completed",
+                "calibration_completed": not fixed_km_breach,
+                "calibration_failed": fixed_km_breach,
                 "result_summary": result_summary,
                 "research_data_mode": research_data_mode,
                 "active_dataset_id": active_dataset_id,
@@ -959,6 +1051,11 @@ def _run_single_web_calibration(request) -> dict:
 
 
 def run_web_calibration(request, *, allow_orchestration: bool = True) -> dict:
+    # Refuse strategy conflicts at the entry point, for single runs and races
+    # alike. Under fixed Km the race receives a copy with both strategy fields
+    # set to vmax_only and strategy memory off; the caller's request is kept.
+    if _resolve_parameter_contract_or_400(request)["fixed_km"]:
+        request = fixed_km_request(request)
     orchestration_mode = str(getattr(request, "orchestration_mode", "single_run") or "single_run").strip().lower()
     if allow_orchestration and orchestration_mode == "strategy_race":
         from services.custom_calibration_orchestrator import run_strategy_race_calibration

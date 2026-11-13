@@ -11,8 +11,6 @@ import { ParameterCalibration } from '../features/ParameterCalibration'
 import { DataUpload } from '../features/DataUpload'
 import { SensitivityAnalysis } from '../features/SensitivityAnalysis'
 import { MonitoringWorkspaceLanding } from './MonitoringWorkspaceLanding'
-import { ResearchDatasetBanner } from './ResearchDatasetBanner'
-import { ResearchDatasetModeChip } from './ResearchDatasetModeChip'
 import { ResearchWorkspaceLanding } from './ResearchWorkspaceLanding'
 import { cn } from '@/lib/utils'
 import { useResearchContext } from '@/contexts/ResearchContextProvider'
@@ -23,8 +21,7 @@ import type {
 } from '@/lib/monitoring-alerts'
 import Link from 'next/link'
 import type { PlatformNavItem } from './platform-shell.types'
-import { Button } from '../ui/button'
-import { ArrowRight, History } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 
 interface WorkspaceFeatureContentProps {
   access: { mode?: string | null } | null
@@ -36,6 +33,7 @@ interface WorkspaceFeatureContentProps {
     workflowStates: MonitoringAlertWorkflowStateRecord[]
   }
   runs: any[]
+  runsError?: string | null
 }
 
 function normalizeRegistryStatus(value: unknown) {
@@ -163,34 +161,6 @@ function matchesRegistryFilter(run: any, filter: RegistryFilterKey) {
   return status === filter
 }
 
-function RegistryMetricTile({
-  label,
-  value,
-  note,
-  tone = 'neutral',
-}: {
-  label: string
-  value: string
-  note: string
-  tone?: 'neutral' | 'accent' | 'cyan' | 'emerald'
-}) {
-  const toneClass =
-    tone === 'accent'
-      ? 'border-red-400/25 bg-red-400/[0.08] shadow-[0_22px_60px_-42px_rgba(239,68,68,0.9)]'
-      : tone === 'cyan'
-        ? 'border-cyan-300/20 bg-cyan-300/[0.08]'
-        : tone === 'emerald'
-          ? 'border-emerald-300/20 bg-emerald-300/[0.08]'
-          : 'border-white/10 bg-white/[0.035]'
-
-  return (
-    <div className={cn('rounded-3xl border p-4 backdrop-blur-sm', toneClass)}>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">{label}</p>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-white">{value}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-400">{note}</p>
-    </div>
-  )
-}
 
 function RegistryLedgerRow({ run, isLead = false }: { run: any; isLead?: boolean }) {
   const benchmarkStatus = run?.benchmarkStatus ?? run?.status ?? 'unknown'
@@ -252,118 +222,52 @@ function RegistrySurface({ access, detail, runs }: Omit<WorkspaceFeatureContentP
   const { setContext } = useResearchContext()
   const registryContext = useMemo(() => buildCalibrationRegistryResearchContext(detail, runs), [detail, runs])
   const [filter, setFilter] = useState<RegistryFilterKey>('all')
-
-  const latestBenchmarkStatus = detail?.summary?.benchmarkStatus ?? detail?.summary?.status ?? 'unknown'
   const leadRunId = detail?.summary?.runId ?? null
   const totalCompleted = runs.filter(run => normalizeRegistryStatus(run?.completionStatus) === 'completed').length
-  const latestAggregateScore = formatNumber(detail?.summary?.aggregateScore)
-  const latestFinalLoss = formatNumber(detail?.summary?.meanFinalLoss)
-
-  const filteredRuns = useMemo(
-    () => runs.filter(run => matchesRegistryFilter(run, filter)).sort(sortRegistryRuns),
-    [runs, filter]
-  )
+  const filteredRuns = useMemo(() => runs.filter(run => matchesRegistryFilter(run, filter)).sort(sortRegistryRuns), [runs, filter])
 
   useEffect(() => {
     setContext(registryContext)
     return () => setContext(null)
   }, [registryContext, setContext])
 
-  return (
-    <>
-      <section className="panel border-white/10 bg-[linear-gradient(180deg,rgba(20,23,30,0.96),rgba(13,16,22,0.98))]">
-        <div className="grid gap-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={cn('inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em]', getRegistryStatusTone(latestBenchmarkStatus))}>
-              {getRegistryStatusLabel(latestBenchmarkStatus)}
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-300">
-              <History className="size-3" />
-              Historical
-            </span>
-            <ResearchDatasetModeChip />
-          </div>
-
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="grid gap-2">
-              <h1 className="page-title">Calibration Registry</h1>
-              <p className="page-copy max-w-2xl">
-                Evidence ledger for calibration runs. Lower aggregate scores are stronger evidence against the active manifest.
-              </p>
-            </div>
-            <Button asChild className="h-10 rounded-full bg-red-600 px-5 text-xs font-semibold text-white hover:bg-red-500" size="sm">
-              <Link href="/research/parameter-calibration">Run calibration</Link>
-            </Button>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <RegistryMetricTile label="Aggregate score" note="Latest visible record" tone="accent" value={latestAggregateScore} />
-            <RegistryMetricTile label="Final loss" note="Mean benchmark loss" value={latestFinalLoss} />
-            <RegistryMetricTile label="Records" note={`${totalCompleted} of ${runs.length} completed`} tone="emerald" value={String(runs.length)} />
-          </div>
-
-          <ResearchDatasetBanner className="max-w-3xl" />
+  return <div className="grid gap-6">
+    <section id="latest-record" className="research-section">
+      <div className="research-section-heading"><h2>Summary</h2>
+        <Link className="research-text-link inline-flex items-center gap-2" href="/research/parameter-calibration">Calibration <ArrowRight size={14} /></Link>
+      </div>
+      <dl className="research-metrics">
+        <div><dt>Recorded runs</dt><dd>{runs.length}</dd></div>
+        <div><dt>Completed (unverified)</dt><dd>{totalCompleted}</dd></div>
+        <div><dt>Latest score</dt><dd>{formatNumber(detail?.summary?.aggregateScore)}</dd></div>
+      </dl>
+    </section>
+    <section id="benchmark-ledger" className="research-section">
+      <div className="research-section-heading"><h2>Runs</h2>
+        <div className="research-filter-group" role="group" aria-label="Run outcome filter">
+          {REGISTRY_FILTERS.map(({ key, label }) => <button key={key} onClick={() => setFilter(key)} type="button" aria-pressed={filter === key}>{label}</button>)}
         </div>
-      </section>
-
-      <section className="panel overflow-hidden border-white/10 bg-[linear-gradient(180deg,rgba(19,22,28,0.98),rgba(15,17,23,0.96))]">
-        <div className="panel-heading flex flex-wrap items-center justify-between gap-4">
-          <div className="grid gap-1">
-            <h2>Benchmark ledger</h2>
-            <p>{filteredRuns.length} {filteredRuns.length === 1 ? 'record' : 'records'}{filter !== 'all' ? ` in "${REGISTRY_FILTERS.find(f => f.key === filter)?.label.toLowerCase()}"` : ''}, sorted by score.</p>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {REGISTRY_FILTERS.map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setFilter(key)}
-                type="button"
-                className={cn(
-                  'inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] transition-colors',
-                  filter === key
-                    ? 'border-red-300/40 bg-red-400/15 text-red-100'
-                    : 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-white/20 hover:text-slate-200'
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+      </div>
+      {filteredRuns.length ? <div className="overflow-x-auto">
+        <div className="hidden border-b border-white/10 px-3 py-3 text-xs text-muted-foreground md:grid md:grid-cols-[minmax(0,1.6fr)_0.7fr_0.7fr_0.6fr_auto]">
+          <span>Run</span><span>Score</span><span>Final loss</span><span>Cases</span><span>Detail</span>
         </div>
-
-        {filteredRuns.length ? (
-          <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/50">
-            <div className="hidden border-b border-white/10 px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-600 md:grid md:grid-cols-[minmax(0,1.6fr)_0.7fr_0.7fr_0.6fr_auto]">
-              <span>Run</span>
-              <span>Score</span>
-              <span>Final loss</span>
-              <span>Cases</span>
-              <span className="text-right">Detail</span>
-            </div>
-            <div>
-              {filteredRuns.map((run: any) => (
-                <RegistryLedgerRow
-                  key={run.runId}
-                  run={run}
-                  isLead={leadRunId !== null && run.runId === leadRunId}
-                />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="empty-note">
-            {runs.length === 0
-              ? access?.mode === 'workspace_selection_required'
-                ? 'Select an active workspace to enable workspace-scoped browsing. Until then, this ledger only reflects personal and public visibility.'
-                : access?.mode === 'authenticated_personal'
-                  ? 'No calibration records are currently visible for your personal researcher scope.'
-                  : 'No calibration records are currently visible for this researcher context.'
-              : 'No records match the current filter.'}
-          </div>
-        )}
-      </section>
-    </>
-  )
+        {filteredRuns.map((run: any) => <RegistryLedgerRow key={run.runId} run={run} isLead={leadRunId !== null && run.runId === leadRunId} />)}
+      </div> : <p className="research-empty">{runs.length ? 'No records match this filter' :
+        access?.mode === 'workspace_selection_required' ? 'No visible records / workspace selection pending' : 'No calibration runs recorded yet'}</p>}
+    </section>
+    <section id="artifact-trace" className="research-section">
+      <div className="research-section-heading"><h2>Evidence</h2>
+        {leadRunId ? <Link className="research-text-link" href={`/runs/${leadRunId}`}>Inspect latest run</Link> : null}
+      </div>
+      {detail ? <dl className="research-review">
+        <div><dt>Run</dt><dd>{detail.summary?.label ?? leadRunId}</dd></div>
+        <div><dt>Manifest</dt><dd>{detail.artifacts?.manifestPath ?? 'Not recorded'}</dd></div>
+        <div><dt>Completion</dt><dd>{detail.summary?.completionStatus ?? 'Unknown'}</dd></div>
+        <div><dt>Biological validation</dt><dd>Not established by registry completion</dd></div>
+      </dl> : <p className="research-empty">No run evidence available</p>}
+    </section>
+  </div>
 }
 
 function getPlaceholderTheme(feature: PlatformNavItem) {
@@ -499,13 +403,14 @@ export function WorkspaceFeatureContent({
   alertsData,
   feature,
   runs,
+  runsError,
 }: WorkspaceFeatureContentProps) {
   if (feature.id === 'research-overview') {
     return <ResearchWorkspaceLanding />
   }
 
   if (feature.id === 'monitoring-overview') {
-    return <MonitoringWorkspaceLanding />
+    return <MonitoringWorkspaceLanding runs={Array.isArray(runs) ? runs : []} error={runsError} />
   }
 
   if (feature.id === 'bag-repo') {

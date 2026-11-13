@@ -100,7 +100,7 @@ export async function PlatformFeaturePage({
     )
   }
 
-  const registryData = feature.id === 'calibration-registry'
+  const registryData = feature.id === 'calibration-registry' || feature.id === 'monitoring-overview'
     ? await loadRegistryData()
     : {
         access: null,
@@ -117,11 +117,11 @@ export async function PlatformFeaturePage({
         workflowHistory: [],
       }
 
-  if (registryData.missingCredentials) {
+  if (registryData.missingCredentials && feature.id !== 'monitoring-overview') {
     return <DatabaseUnreachableState />
   }
 
-  if (registryData.error) {
+  if (registryData.error && feature.id !== 'monitoring-overview') {
     return <ErrorState error={registryData.error} />
   }
 
@@ -135,6 +135,7 @@ export async function PlatformFeaturePage({
         alertsData={alertsData}
         productContext={registryData.productContext}
         runs={registryData.runs}
+        runsError={registryData.missingCredentials ? 'Run registry is not configured.' : registryData.error}
         subsection={subsection}
         workspaceLabel={getPlatformWorkspaceLabel(feature.id)}
       />

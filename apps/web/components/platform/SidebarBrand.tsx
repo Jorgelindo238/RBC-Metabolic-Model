@@ -20,9 +20,9 @@ export function SidebarBrand({ compact, onCloseMobile, onToggleCompact, showMobi
           <SidebarLogo className={compact ? 'h-7 w-7' : 'h-8 w-8'} />
         </div>
         {!compact && (
-          <h1 className="m-0 text-[0.92rem] font-bold tracking-[-0.02em] text-[#e2e5ea] whitespace-nowrap">
+          <span className="m-0 text-[0.92rem] font-bold tracking-normal text-[#e2e5ea] whitespace-nowrap">
             RoBoCop
-          </h1>
+          </span>
         )}
       </div>
       <div className={cn('flex items-center gap-1 shrink-0', compact && 'hidden')}>

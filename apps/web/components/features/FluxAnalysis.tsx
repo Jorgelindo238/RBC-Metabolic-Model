@@ -5,7 +5,7 @@ import type { ActiveResearchDataset } from '@/types/research-dataset'
 import { apiClient } from '@/lib/api-client'
 import { FluxBarChart, PATHWAY_GROUPS } from './flux/FluxBarChart'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, BarChart3, AlertCircle, Sparkles } from 'lucide-react'
@@ -15,7 +15,6 @@ import { summarizeResearchDataset } from '@/lib/research-dataset'
 import { buildFluxAnalysisResearchContext } from '@/lib/robocop/research-context-builders'
 import {
   getCalibrationStatusLabel,
-  getDatasetModeLabel,
   getFluxAnalysisProvenanceSummary,
   getFluxAnalysisStatusLabel,
   getFluxAnalysisStatusLine,
@@ -54,23 +53,6 @@ const DEFAULT_FLUX_CONCENTRATIONS: Record<string, number> = {
   GO6P: 0.01,
 }
 
-function FluxMetricCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string
-  value: string
-  hint: string
-}) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-black/10">
-      <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-400">{label}</p>
-      <p className="mt-2 text-lg font-semibold text-white">{value}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-400">{hint}</p>
-    </div>
-  )
-}
 
 function buildFluxConcentrationSnapshot(dataset: ActiveResearchDataset | null) {
   const concentrations = { ...DEFAULT_FLUX_CONCENTRATIONS }
@@ -241,7 +223,7 @@ export function FluxAnalysis() {
   const resolvedDatasetSummary = useMemo(() => summarizeResearchDataset(activeDataset), [activeDataset])
   const fluxSnapshot = useMemo(() => buildFluxConcentrationSnapshot(activeDataset), [activeDataset])
   const activeCalibrationParams = useMemo(() => {
-    if (!activeCalibration?.calibrationCompleted) {
+    if (!activeCalibration?.calibrationCompleted || activeCalibration.datasetProvenance.calibratedParametersActive !== true) {
       return null
     }
 
@@ -321,17 +303,13 @@ export function FluxAnalysis() {
   }, [fluxContext, setContext])
 
   const pathwayKeys = Object.keys(PATHWAY_GROUPS)
-  const selectedPathwayLabel = selectedPathway === 'all' ? 'All pathways' : selectedPathway
   const dominantPathway = fluxContext.summary.dominantPathway
-  const topReaction = fluxContext.outputs.topFluxes[0]
   const appliedCount = fluxContext.datasetAppliedMetabolites?.length ?? 0
   const totalConcentrations = fluxContext.inputs.totalConcentrations
-  const fluxModeLabel = getDatasetModeLabel(fluxContext)
   const fluxStatusLabel = getFluxAnalysisStatusLabel(fluxContext)
   const fluxStatusLine = getFluxAnalysisStatusLine(fluxContext)
   const fluxProvenanceSummary = getFluxAnalysisProvenanceSummary(fluxContext)
   const calibrationStatusLabel = getCalibrationStatusLabel(fluxContext)
-  const keySignals = fluxContext.summary.keySignals.slice(0, 4)
   const sortedPathwayEntries = useMemo(
     () =>
       Object.entries(fluxContext.outputs.pathwayFluxTotals).sort(([, left], [, right]) => right - left),
@@ -350,263 +328,37 @@ export function FluxAnalysis() {
 
   return (
     <div className="grid w-full gap-6">
-      <section className="grid gap-6">
-        <Card className="relative overflow-hidden border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(15,23,42,0.86))] shadow-[0_30px_90px_rgba(15,23,42,0.35)]">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.14),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.08),transparent_28%)]"
-          />
-          <CardHeader className="relative border-b border-white/10 px-5 py-5 sm:px-6">
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.55fr)] lg:items-stretch">
-              <div className="space-y-5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge className="rounded-full border-cyan-400/20 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/10">
-                    Pathway fluxes
-                  </Badge>
-                  <Badge
-                    variant={resolvedDatasetSummary.mode === 'custom_user_data_mode' ? 'default' : 'secondary'}
-                    className="rounded-full"
-                  >
-                    {resolvedDatasetSummary.label}
-                  </Badge>
-                  <Badge
-                    variant="outline"
-                    className="rounded-full border-white/10 bg-white/[0.04] text-slate-200"
-                  >
-                    {fluxModeLabel}
-                  </Badge>
-                  <Badge
-                    variant="outline"
-                    className="rounded-full border-white/10 bg-white/[0.04] text-slate-200"
-                  >
-                    {calibrationStatusLabel}
-                  </Badge>
-                  <Badge
-                    variant="outline"
-                    className="rounded-full border-white/10 bg-white/[0.04] text-slate-200"
-                  >
-                    {fluxStatusLabel}
-                  </Badge>
-                </div>
-
-                <div className="space-y-3">
-                  <CardTitle className="text-3xl text-white sm:text-4xl">Flux Analysis</CardTitle>
-                  <CardDescription className="max-w-4xl text-base leading-7 text-slate-400">
-                    View Michaelis-Menten flux estimates grouped by metabolic subsystem. Custom uploaded data, when
-                    active, overrides the Bordbar concentration snapshot for mapped metabolites while the remaining
-                    model concentrations retain their default values.
-                  </CardDescription>
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-white/10 bg-slate-950/50 p-5 shadow-inner shadow-black/20">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-red-300">
-                  Research stack
-                </p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Input</p>
-                    <p className="mt-2 text-sm font-semibold text-white">{resolvedDatasetSummary.label}</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Route</p>
-                    <p className="mt-2 text-sm font-semibold text-white">{selectedPathwayLabel}</p>
-                  </div>
-                  <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-100/80">Output</p>
-                    <p className="mt-2 text-sm font-semibold text-cyan-50">{fluxStatusLabel}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="relative space-y-5 px-5 py-5 sm:px-6">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <FluxMetricCard
-                label="Dominant pathway"
-                value={fluxContext.fluxResultAvailable && dominantPathway !== 'unknown' ? dominantPathway : '—'}
-                hint={fluxContext.fluxResultAvailable ? 'Largest pathway flux total' : 'Waiting for the next flux estimate'}
-              />
-              <FluxMetricCard
-                label="Total flux"
-                value={fluxContext.fluxResultAvailable ? formatFluxValue(fluxContext.outputs.totalFlux) : '—'}
-                hint={fluxContext.fluxResultAvailable ? 'Absolute flux magnitude across all reactions' : 'No completed flux result yet'}
-              />
-              <FluxMetricCard
-                label="Top reaction"
-                value={fluxContext.fluxResultAvailable && topReaction ? `${topReaction.reaction} ${formatFluxValue(topReaction.flux)}` : '—'}
-                hint={fluxContext.fluxResultAvailable ? topReaction?.pathway ?? 'Largest-magnitude reaction' : 'Top signal appears after estimation'}
-              />
-              <FluxMetricCard
-                label="Applied concentrations"
-                value={`${appliedCount}/${totalConcentrations}`}
-                hint={
-                  fluxSnapshot.fallbackReason
-                    ? fluxSnapshot.fallbackReason
-                    : resolvedDatasetSummary.mode === 'custom_user_data_mode'
-                      ? 'Custom dataset values override the Bordbar defaults'
-                      : 'Bordbar defaults supply the flux snapshot'
-                }
-              />
-            </div>
-
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(290px,0.88fr)]">
-              <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 shadow-inner shadow-black/10">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-cyan-200/75">
-                      Flux result summary
-                    </p>
-                    <h2 className="text-xl font-semibold text-white">
-                      {fluxContext.fluxResultAvailable ? 'Result-ready flux snapshot' : 'Flux setup in progress'}
-                    </h2>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      'rounded-full border-white/10 bg-white/[0.04] text-slate-200',
-                      fluxContext.fluxResultAvailable && 'border-emerald-400/20 bg-emerald-400/10 text-emerald-100'
-                    )}
-                  >
-                    {fluxContext.fluxResultAvailable ? 'Ready' : fluxStatusLabel}
-                  </Badge>
-                </div>
-
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-                  {fluxProvenanceSummary}
-                </p>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">
-                      Dominant pathway
-                    </p>
-                    <p className="mt-2 text-lg font-semibold text-white">
-                      {fluxContext.fluxResultAvailable && dominantPathway !== 'unknown' ? dominantPathway : '—'}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-400">Largest pathway flux total</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">
-                      Selected pathway
-                    </p>
-                    <p className="mt-2 text-lg font-semibold text-white">{selectedPathwayLabel}</p>
-                    <p className="mt-1 text-sm text-slate-400">Pathway filter applied to the charts</p>
-                  </div>
-                </div>
-
-                {fluxContext.fluxResultAvailable ? (
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">
-                      Result interpretation
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-300">{fluxContext.resultSummary}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {keySignals.map((signal) => (
-                        <Badge
-                          key={signal}
-                          variant="outline"
-                          className="border-white/10 bg-white/[0.04] text-[10px] uppercase tracking-[0.18em] text-slate-300"
-                        >
-                          {signal}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-4">
-                    <p className="text-sm text-slate-300">{fluxStatusLine}</p>
-                    <p className="mt-2 text-xs leading-5 text-slate-500">
-                      The pathway explorer below will populate once the result is available.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 shadow-[0_20px_60px_-34px_rgba(0,0,0,0.78)] backdrop-blur-sm">
-                <p className="eyebrow">Provenance snapshot</p>
-                <div className="mt-4 grid gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">
-                      Dataset
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-white">{resolvedDatasetSummary.label}</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-300">{getDatasetModeLabel(fluxContext)}</p>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">
-                      Calibration
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-white">{calibrationStatusLabel}</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-300">{getCalibrationStatusLabel(fluxContext)}</p>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">
-                      Flux state
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-white">{fluxStatusLabel}</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-300">{fluxStatusLine}</p>
-                  </div>
-
-                  <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-100/80">
-                      Assistant-ready notes
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-cyan-50/80">
-                      RoBoCop can explain the same provenance snapshot and pathway signal summary without leaving
-                      this page.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {keySignals.slice(0, 4).map((signal) => (
-                    <Badge
-                      key={signal}
-                      variant="outline"
-                      className="border-white/10 bg-white/[0.04] text-[10px] uppercase tracking-[0.18em] text-slate-300"
-                    >
-                      {signal}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-
-          <CardFooter className="flex flex-wrap items-center gap-3 border-t border-white/10 px-5 py-4 sm:px-6">
-            <Button onClick={estimate} disabled={loading} variant="outline" className="gap-2 border-white/10 bg-white/[0.04] text-slate-100 hover:bg-white/[0.08]">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
-              {loading ? 'Estimating...' : 'Re-estimate'}
-            </Button>
-            <Select value={selectedPathway} onValueChange={setSelectedPathway}>
-              <SelectTrigger className="w-[190px] border-white/10 bg-slate-950/60">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All pathways</SelectItem>
-                {pathwayKeys.map((pathway) => (
-                  <SelectItem key={pathway} value={pathway}>
-                    {pathway}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Badge variant="secondary" className="rounded-full">
-              {selectedPathwayLabel}
-            </Badge>
-            <Badge variant="outline" className="rounded-full border-white/10 bg-white/[0.04] text-slate-200">
-              {fluxContext.fluxResultAvailable ? `${reactionCount} reactions` : `${reactionCount}/29 concentrations`}
-            </Badge>
-            <span className="text-xs text-slate-400">
-              RoBoCop stays available for result interpretation.
-            </span>
-          </CardFooter>
-        </Card>
+      <section id="pathway-activity" className="research-section">
+        <div className="research-toolbar">
+          <Button onClick={estimate} disabled={loading} variant="outline" className="gap-2">
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <BarChart3 size={16} />}
+            {loading ? 'Estimating...' : 'Re-estimate'}
+          </Button>
+          <Select value={selectedPathway} onValueChange={setSelectedPathway}>
+            <SelectTrigger className="w-[190px]" aria-label="Pathway filter"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All pathways</SelectItem>
+              {pathwayKeys.map((pathway) => <SelectItem key={pathway} value={pathway}>{pathway}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <span className="research-muted" role="status">{fluxStatusLabel}</span>
+        </div>
+        <dl className="research-metrics">
+          <div><dt>Dominant pathway</dt><dd>{fluxContext.fluxResultAvailable && dominantPathway !== 'unknown' ? dominantPathway : '-'}</dd></div>
+          <div><dt>Total flux</dt><dd>{fluxContext.fluxResultAvailable ? formatFluxValue(fluxContext.outputs.totalFlux) : '-'}</dd></div>
+          <div><dt>Reactions</dt><dd>{fluxContext.fluxResultAvailable ? reactionCount : '-'}</dd></div>
+        </dl>
       </section>
+      <details id="comparison-view" className="research-disclosure">
+        <summary>Provenance</summary>
+        <dl className="research-review">
+          <div><dt>Dataset</dt><dd>{resolvedDatasetSummary.label}</dd></div>
+          <div><dt>Calibration</dt><dd>{calibrationStatusLabel}</dd></div>
+          <div><dt>Concentrations applied</dt><dd>{appliedCount} / {totalConcentrations}</dd></div>
+          <div><dt>Source</dt><dd>{fluxProvenanceSummary}</dd></div>
+        </dl>
+        <p className="research-muted mt-3">{fluxSnapshot.fallbackReason ?? fluxStatusLine}</p>
+      </details>
 
       {error && (
         <Card className="border-destructive/40 bg-destructive/5 shadow-sm">
@@ -620,15 +372,10 @@ export function FluxAnalysis() {
         </Card>
       )}
 
-      <section className="space-y-4">
+      <section id="reaction-tracing" className="research-section space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-1">
-            <p className="eyebrow">Pathway explorer</p>
-            <h2 className="section-heading">Flux layers</h2>
-            <p className="section-copy max-w-2xl">
-              Ranked pathway cards make it easier to compare major subsystems, trace reaction-level signals, and spot
-              the largest shifts at a glance.
-            </p>
+            <h2 className="section-heading">Pathway fluxes</h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="rounded-full border-white/10 bg-white/[0.04] text-slate-200">

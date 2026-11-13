@@ -1,0 +1,144 @@
+{
+  "schema": "airbc.fla_extracellular_release/2",
+  "registered": "2026-11-12",
+  "status": "preregistered_not_executed",
+  "supersedes": "extracellular_first/1 (never executed; no output campaign existed when this version was written)",
+  "release_objective_version": "extracellular_first/2",
+  "numerical_source": "output/vmax_requalification_2026_11_09",
+  "compatible_campaigns": [
+    {"id": "corrected_vmax", "archive": "output/corrected_vmax_2026_11_12",
+     "receipt": "output/corrected_vmax_verification_2026_11_12/verification.json"},
+    {"id": "multistart_vmax", "archive": "output/multistart_vmax_2026_11_12",
+     "receipt": "output/multistart_vmax_verification_2026_11_12/verification.json"}
+  ],
+  "qualified_references": [
+    {"id": "working_centre", "kind": "control_gate", "archive": "output/vmax_requalification_2026_11_09",
+     "profiles": {"strict": "full/strict", "ultrastrict": "full/ultrastrict"},
+     "vector": "profile_center"},
+    {"id": "candidate35", "kind": "campaign_validation", "archive": "output/corrected_vmax_2026_11_12",
+     "attempt": 35}
+  ],
+  "incompatible_sources_listed_not_ranked": [
+    {"source": "Simulations/brodbar/hermes/transport_gate_eglc_elac_46d_n32_endpoint16",
+     "reason": "changes VEGLC transport gate (non-Vmax/transport), 46-day horizon, pre-gem_corrected context"},
+    {"source": "Simulations/brodbar/hermes/vhk_atp_lactate_bridge_velac_vldh_46d_n24",
+     "reason": "changes km_ATP_HK and VELAC transport, 46-day horizon, different initial-state context"},
+    {"source": "output/transport_buffer_* and glut_only free-network campaigns (2026-10-23/27)",
+     "reason": "synthetic-teacher or reduced transport-only RHS; not the target network/initial state"}
+  ],
+  "context": {
+    "evaluator": "scripts/run_corrected_vmax.py::evaluate",
+    "search_profile": "strict",
+    "search_backend": "joint",
+    "fingerprint": "sha256 of design, observations, transitive local import closure of the evaluator (ast, scripts/ and src/), profile, backend, SciPy version",
+    "cache_rule": "archived rows are reused only if the campaign itself recorded hashes for the WHOLE current closure and they are equal; otherwise they are unqualified screening hints and matched replays are run inside the restoration budget"
+  },
+  "matched_replays": {
+    "always": ["corrected_vmax:35", "corrected_vmax:1"],
+    "limit": 8,
+    "drift_rule": "fallback vectors replayed under current sources must match their archived strict-joint rows within comparison_atol_mM + comparison_rtol*max(|a|,|b|); otherwise blocked_source_drift"
+  },
+  "scipy_version": "1.17.1",
+  "workers": 3,
+  "invariants": {
+    "groups": 14,
+    "capacities": 17,
+    "feasibility_guards": 84,
+    "fit_days": [4, 8, 11, 15],
+    "paired_groups_unchanged": {
+      "AK": ["vmax_VAK", "vmax_VAK_rev"],
+      "NDPK": ["vmax_VNDPK", "vmax_VNDPK_rev"]
+    },
+    "guards_rebased": false,
+    "guards_excluded": [],
+    "bounds_changed": false,
+    "Km_changed": false,
+    "initial_changed": false,
+    "transport_changed": false,
+    "threshold_changed": false,
+    "geometry_changed": false,
+    "network_changed": false
+  },
+  "release_objective": {
+    "channel_rule": "panel observation names intersected with rbc_gem_audit.EXTERNAL_POOLS keys",
+    "expected_channel_count": 19,
+    "focus_channels": ["EGLC", "ELAC"],
+    "intracellular_diagnostics": ["GLC", "LAC", "ATP", "ADP", "AMP"],
+    "scale": "inherited working band 0.05*median(J1,J4,J8,J11,J15)+0.2*target (not an assay SD)",
+    "units": "observations.json has no unit field: unit_status = assumed_mM_historical_model_convention unless the archive records units; never presented as source-verified; no unit conversion, no relative-to-mM inference",
+    "zero_band_points": "excluded from normalized scores; reported as absolute error in the archived unit; existing zero: guards still apply",
+    "undefined_scale_channels": "channels with no positive band are excluded from the utility and listed; governed by their absolute-error guards",
+    "primary": "U = mean over channels with a defined band of 0.5*[log1p(MSE_c) - log1p(MSE_anchor_c)]; MSE_c is the band-normalized MSE over positive-band dates; equal channel weight",
+    "primary_scale_note": "the added 1 is an explicit dimensionless utility scale, not an assay variance, uncertainty or fitted parameter; exact agreement (MSE_c = 0) is finite and accepted",
+    "gradient": "dU/dx = mean_c 0.5 * dMSE_c/dx / (1 + MSE_c)",
+    "release_anchor": "working_centre qualified 2026-11-09 full/strict profile (fixed centring constant; it does not change rankings)",
+    "mean": "mean over scored channels of per-channel normalized RMSE (reported, absolute)",
+    "worst": "max over scored channels of per-channel normalized RMSE (reported)",
+    "dated": "root mean square of band-normalized extracellular residuals per date J4/J8/J11/J15",
+    "global_worst_cap": "every scored channel normalized RMSE <= the best qualified fallback's WORST channel (EINO-dominated; a global cap, NOT per-species non-regression)",
+    "focus_protection": "for EGLC and ELAC: normalized RMSE, |J15 residual| and |J4-J15 secant-slope error| <= fallback value + allowance",
+    "focus_allowance_formula": "delta_d = comparison_atol_mM + comparison_rtol*|x_fallback,d| (inherited 1e-5, 0.01); RMSE: sqrt(mean_d (delta_d/band_d)^2); J15: delta_J15; slope: (delta_J4 + delta_J15)/11; computed once from the selected fallback, reported, never tuned",
+    "improvement_rule": "U_new < U_fallback - log1p(0.001) (absolute change in utility units, not a % of RMSE), worst channel not worse than fallback, focus protections, 84 reserved guards, strict+ultrastrict qualification with paired convergence",
+    "minimum_relative_utility": 0.001,
+    "minimum_utility_gain": "log1p(0.001)",
+    "worst_cap_relative_tolerance": 1e-6,
+    "worst_cap_tolerance_rationale": "strict joint search rows versus full-backend qualified profiles differ at about 1e-9 in states; final selection still compares worst channels without tolerance"
+  },
+  "guards": {
+    "optimizer_reserve_multiplier": 1.0,
+    "acceptance": "scored().reserved_guards_pass (guards <= -0.5 * reserve), unchanged",
+    "constraint_scale_floor": 0.001
+  },
+  "budget": {
+    "new_ode_global": 240,
+    "restoration_and_replays": 80,
+    "search": 160,
+    "qualification_integrations": 12
+  },
+  "restoration": {
+    "target_seeds": 3,
+    "radius_log": 0.08,
+    "backtracking_fractions": [1.0, 0.5, 0.25],
+    "phase_one_iterations": 4,
+    "max_evaluations_per_direction": 10,
+    "minimum_normalized_separation": 0.01,
+    "random_seed": 20261113,
+    "directions": ["release_descent_candidate35", "release_descent_working_centre", "focus_descent_candidate35",
+                   "guard_relief_candidate35", "random_candidate35"],
+    "sensitivity_sources": {
+      "candidate35": "output/corrected_vmax_2026_11_12/sensitivity_round3.json",
+      "working_centre": "output/corrected_vmax_2026_11_12/sensitivity_round1.json"
+    },
+    "projection_tolerance": 1e-9
+  },
+  "search": {
+    "optimizer": "scipy.optimize.minimize(method='SLSQP') on the release objective with scaled hard guards",
+    "start_limits": {"release_anchor": 70, "seed_1": 30, "seed_2": 30, "seed_3": 30},
+    "difference_step_log": 0.006,
+    "check_step_log": 0.003,
+    "check_leading_groups": 4,
+    "check_rtol": 0.25,
+    "check_atol": 1e-6,
+    "slsqp": {"ftol": 1e-9, "maxiter": 15},
+    "max_segments_per_start": 3,
+    "failure_radius_fraction": 0.5,
+    "minimum_box_radius_log": 1e-4,
+    "stagnation_iterations": 2
+  },
+  "qualification": {
+    "max_candidates": 6,
+    "profiles": ["strict", "ultrastrict"],
+    "backend": "full",
+    "flux_audit": true
+  },
+  "release": {
+    "status_name": "provisional_extracellular_reference",
+    "blocked_status_name": "blocked_no_qualified_candidate",
+    "default_replacement": false,
+    "activation_allowed": false,
+    "activation_policy": "forbidden: activation_allowed false is a prohibition that no explicit user click overrides; the profile may be previewed or selected read-only; activation needs a separately eligible release with dataset, engine and contract identity checks",
+    "biologically_validated": false,
+    "horizon_days": [1, 15],
+    "J46": "not used; historical J46 already exposed, a free replay could check coverage only"
+  }
+}

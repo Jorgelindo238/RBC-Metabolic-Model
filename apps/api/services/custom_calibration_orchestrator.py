@@ -156,7 +156,21 @@ def _memory_hits_for_fingerprint(dataset_fingerprint: str) -> List[dict[str, Any
     ]
 
 
+def _requires_fixed_km(request: Any) -> bool:
+    contract = str(getattr(request, "parameter_contract", "") or "").strip().lower()
+    if contract in {"vmax_only_fixed_km", "vmax_only"}:
+        return True
+    return any(
+        str(getattr(request, field, "") or "").strip().lower() == "vmax_only"
+        for field in ("optimization_strategy", "method")
+    )
+
+
 def _build_strategy_candidates(request: Any, dataset_fingerprint: dict[str, Any]) -> tuple[List[str], List[str]]:
+    # An explicit fixed-Km request is a constraint, not a race preference.
+    if _requires_fixed_km(request):
+        return ["vmax_only"], []
+
     requested_strategy = str(getattr(request, "optimization_strategy", "") or "").strip()
     memory_hits = []
     if bool(getattr(request, "enable_strategy_memory", True)):
@@ -192,7 +206,10 @@ def _extract_verdict(result: dict[str, Any]) -> str:
 def _candidate_sort_key(result: dict[str, Any]) -> tuple[int, float, float]:
     verdict = _extract_verdict(result).lower()
     verdict_rank = _VERDICT_RANK.get(verdict, 0)
-    final_loss = float(result.get("final_loss") or result.get("objective_value") or 1e9)
+    final_loss = result.get("final_loss")
+    if final_loss is None:
+        final_loss = result.get("objective_value")
+    final_loss = float(final_loss) if final_loss is not None else 1e9
     improvement = float(result.get("improvement_pct") or 0.0)
     return (verdict_rank, -final_loss, improvement)
 
@@ -241,7 +258,10 @@ def run_strategy_race_calibration(
     winning_strategy, winning_result = max(results, key=lambda item: _candidate_sort_key(item[1]))
 
     teacher_flux_rescue = None
-    if bool(getattr(request, "enable_teacher_flux_rescue", False)):
+    fixed_km = _requires_fixed_km(request)
+    rescue_requested = bool(getattr(request, "enable_teacher_flux_rescue", False))
+    # The generic rescue has no fixed-Km contract, so do not dispatch it here.
+    if rescue_requested and not fixed_km:
         winning_verdict = _extract_verdict(winning_result).lower()
         if winning_verdict in {"discard", "needs_review", "compromised"}:
             teacher_flux_rescue = run_teacher_flux_rescue(
@@ -258,7 +278,8 @@ def run_strategy_race_calibration(
             )
 
     accepted_verdict = _extract_verdict(winning_result).lower()
-    if accepted_verdict in {"keep", "keep_with_caveats"}:
+    # A fixed-Km run neither reads nor writes strategy memory.
+    if accepted_verdict in {"keep", "keep_with_caveats"} and not fixed_km:
         _append_strategy_memory(
             {
                 "timestamp": _utc_now_iso(),
@@ -284,6 +305,10 @@ def run_strategy_race_calibration(
         "runs": runs,
         "teacher_flux_rescue": teacher_flux_rescue,
     }
+    if rescue_requested and fixed_km:
+        orchestration["teacher_flux_rescue_skipped_reason"] = "fixed_km_constraint"
+    orchestration["fixed_km"] = fixed_km
+    orchestration["strategy_memory_used"] = bool(not fixed_km and getattr(request, "enable_strategy_memory", True))
     merged = dict(winning_result)
     merged["optimization_strategy"] = winning_strategy
     merged["orchestration"] = orchestration

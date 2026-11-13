@@ -15,6 +15,9 @@ import { Loader2, Target, AlertCircle, CheckCircle2, ChevronDown, ChevronUp } fr
 import { useResearchDataset } from '@/contexts/ResearchDatasetProvider'
 import { buildCalibrationExperimentPayload, summarizeResearchDataset } from '@/lib/research-dataset'
 import { buildActiveResearchCalibration } from '@/lib/research-calibration'
+import { activationDecision, classifyCalibrationRecord, lifecycleLabel } from '@/lib/calibration-lifecycle.mjs'
+import { launchGate } from '@/lib/calibration-journey.mjs'
+import { CalibrationJourney } from './CalibrationJourney'
 import {
   buildCalibrationSelectionProvenance,
   getCalibrationRunStatusLabel,
@@ -297,6 +300,11 @@ export function ParameterCalibration() {
   const resolvedDataset = activeDataset
   const resolvedDatasetSummary = useMemo(() => summarizeResearchDataset(resolvedDataset), [resolvedDataset])
   const resolvedResearchDataMode = researchDataMode
+  const journeyIsUserDataset = resolvedResearchDataMode === 'custom_user_data_mode' && Boolean(resolvedDataset)
+  const journeyExperiment = useMemo(
+    () => (journeyIsUserDataset && resolvedDataset ? buildCalibrationExperimentPayload(resolvedDataset) : null),
+    [journeyIsUserDataset, resolvedDataset]
+  )
   const [availableParams, setAvailableParams] = useState<CalibrationTaxonomyResponse | null>(null)
   const [selected, setSelected] = useState<string[]>([])
   const [optimizationStrategy, setOptimizationStrategy] = useState('joint_vmax_km')
@@ -305,6 +313,7 @@ export function ParameterCalibration() {
   const [loadingParams, setLoadingParams] = useState(true)
   const [result, setResult] = useState<CalibrationResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [activationNotice, setActivationNotice] = useState<string | null>(null)
   const [showCanonical, setShowCanonical] = useState(false)
   const [targetMetabolites, setTargetMetabolites] = useState<string[]>([])
   const [executionMode, setExecutionMode] = useState<'single_run' | 'strategy_race'>('strategy_race')
@@ -470,6 +479,7 @@ export function ParameterCalibration() {
     }
     setLoading(true)
     setError(null)
+    setActivationNotice(null)
     setResult(null)
     setJobId(null)
     setJobStatus(null)
@@ -555,17 +565,30 @@ export function ParameterCalibration() {
       }
 
       setResult(resolvedResult)
-      activateCalibration(
-        buildActiveResearchCalibration(
-          resolvedResult,
-          selected,
-          optimizationStrategy,
-          maxIter,
-          targetMets,
-          resolvedDatasetSummary,
-          availableParams
+      // No automatic activation: a run becomes the active calibration only
+      // through an allowed decision (admissible, non-legacy, explicit, same
+      // dataset/donor/contract). Results without a data contract never qualify.
+      const lifecycle = classifyCalibrationRecord({ result: resolvedResult as unknown as Record<string, any> })
+      const decision = activationDecision(lifecycle, { explicit: false })
+      if (decision.allowed) {
+        activateCalibration(
+          buildActiveResearchCalibration(
+            resolvedResult,
+            selected,
+            optimizationStrategy,
+            maxIter,
+            targetMets,
+            resolvedDatasetSummary,
+            availableParams
+          )
         )
-      )
+        setActivationNotice(null)
+      } else {
+        setActivationNotice(
+          `${lifecycleLabel(lifecycle.state)} (${lifecycle.reason}). Not activated: ${decision.reasons.join(', ')}. ` +
+            'Finished is not biologically validated.'
+        )
+      }
     } catch (err: any) {
       setError(err?.response?.data?.detail || err.message || 'Calibration failed')
     } finally {
@@ -610,6 +633,15 @@ export function ParameterCalibration() {
 
   return (
     <div className="grid gap-5">
+      <CalibrationJourney
+        datasetId={resolvedDatasetSummary.datasetId ?? null}
+        datasetLabel={resolvedDatasetSummary.label}
+        isUserDataset={journeyIsUserDataset}
+        experiment={journeyExperiment}
+      />
+      <details id="legacy-calibration" className="research-disclosure">
+        <summary>Advanced / legacy calibration</summary>
+        <div className="research-legacy-content">
       <Card>
         <CardHeader>
           <CardTitle>Parameter Selection</CardTitle>
@@ -894,6 +926,9 @@ export function ParameterCalibration() {
                   ? `Launch worker race (${selected.length})`
                   : `Calibrate (${selected.length})`}
             </Button>
+            <p className="max-w-[320px] text-[11px] text-muted-foreground" data-testid="legacy-path-label">
+              {launchGate(null).legacyLabel}
+            </p>
             {jobId ? (
               <p className="max-w-[320px] break-all font-mono text-[11px] text-muted-foreground">
                 Job {jobId} · {jobStatus ?? 'queued'}
@@ -908,6 +943,15 @@ export function ParameterCalibration() {
           <CardContent className="flex items-start gap-3 pt-6">
             <AlertCircle className="h-5 w-5 shrink-0 text-destructive" />
             <p className="text-sm text-destructive">{error}</p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {activationNotice ? (
+        <Card>
+          <CardContent className="flex items-start gap-3 pt-6">
+            <AlertCircle className="h-5 w-5 shrink-0 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">{activationNotice}</p>
           </CardContent>
         </Card>
       ) : null}
@@ -1117,6 +1161,8 @@ export function ParameterCalibration() {
           </CardContent>
         </Card>
       ) : null}
+        </div>
+      </details>
     </div>
   )
 }

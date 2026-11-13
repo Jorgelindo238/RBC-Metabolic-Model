@@ -1,0 +1,86 @@
+{
+  "schema": "airbc.fla_multistart_vmax/1",
+  "registered": "2026-11-12",
+  "status": "preregistered_not_executed",
+  "numerical_source": "output/vmax_requalification_2026_11_09",
+  "previous_campaign": "output/corrected_vmax_2026_11_12",
+  "previous_verification": "output/corrected_vmax_verification_2026_11_12/verification.json",
+  "previous_selected_attempt": 35,
+  "previous_working_centre_attempt": 1,
+  "previous_sensitivity": "sensitivity_round3.json",
+  "default_output": "output/multistart_vmax_2026_11_12",
+  "scipy_version": "1.17.1",
+  "workers": 3,
+  "invariants": {
+    "groups": 14,
+    "capacities": 17,
+    "feasibility_guards": 84,
+    "objective_sides": ["ATP:lower", "ATP:upper", "ADP:lower", "ADP:upper"],
+    "fit_days": [4, 8, 11, 15],
+    "paired_groups_unchanged": {
+      "AK": ["vmax_VAK", "vmax_VAK_rev"],
+      "NDPK": ["vmax_VNDPK", "vmax_VNDPK_rev"]
+    },
+    "objective": "inherited absolute ATP/ADP J15 log minimax (epigraph)",
+    "guard_reference": "historical fixed-reference metrics, immutable",
+    "guards_rebased": false,
+    "bounds_changed": false,
+    "Km_changed": false,
+    "initial_changed": false,
+    "transport_changed": false,
+    "threshold_changed": false,
+    "latent_reinitialized": false,
+    "reaction_changed": false
+  },
+  "replay_reproduction": {
+    "atol_mM": 1e-12,
+    "rtol": 1e-9
+  },
+  "search": {
+    "optimizer": "scipy.optimize.minimize(method='SLSQP') on the epigraph (x, t)",
+    "distinct_ode_evaluation_limit": 240,
+    "start_order": ["candidate35", "working_centre", "seed_objective_descent", "seed_guard_relief", "seed_random"],
+    "start_evaluation_limits": {
+      "candidate35": 80,
+      "working_centre": 52,
+      "seed_objective_descent": 36,
+      "seed_guard_relief": 36,
+      "seed_random": 36
+    },
+    "difference_step_log": 0.006,
+    "check_step_log": 0.003,
+    "check_leading_groups": 4,
+    "check_binding_guards": 5,
+    "check_rtol": 0.25,
+    "check_atol_per_log": 1e-6,
+    "optimizer_reserve_multiplier": 1.0,
+    "acceptance": "scored().reserved_guards_pass (guards <= -0.5 * reserve), unchanged",
+    "minimum_step_objective_gain": 1e-6,
+    "slsqp": {
+      "ftol": 1e-8,
+      "maxiter": 15
+    },
+    "max_segments_per_start": 4,
+    "failure_radius_fraction": 0.5,
+    "minimum_box_radius_log": 1e-4,
+    "stagnation_iterations": 2
+  },
+  "seeds": {
+    "anchor": "candidate35",
+    "maximum_additional": 3,
+    "radius_log": 0.05,
+    "guard_relief_count": 3,
+    "random_seed": 20261112,
+    "at_bound_tolerance_log": 1e-12
+  },
+  "validation": {
+    "max_finalists": 5,
+    "max_integrations": 12,
+    "profiles": ["strict", "ultrastrict"],
+    "backend": "full",
+    "flux_audit": true
+  },
+  "production_promotion_allowed": false,
+  "global_optimality_claimed": false,
+  "biological_validation_claimed": false
+}

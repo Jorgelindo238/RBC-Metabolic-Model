@@ -8,9 +8,6 @@ import { useLatestResearchSimulationSnapshot } from '@/lib/research-simulation'
 import { buildPathwayVisualizationResearchContext } from '@/lib/robocop/research-context-builders'
 import {
   getCalibrationStatusLabel,
-  getDatasetModeLabel,
-  getPathwayVisualizationObservations,
-  getPathwayVisualizationProvenanceSummary,
   getPathwayVisualizationStatusLabel,
   getPathwayVisualizationStatusLine,
 } from '@/lib/robocop/research-provenance'
@@ -82,26 +79,6 @@ function buildFluxPayload(snapshot: ResearchSimulationSnapshot, frameIndex: numb
   return Object.keys(payload).length > 0 ? payload : null
 }
 
-function SignalPill({ children, tone = 'slate' }: { children: string; tone?: 'slate' | 'cyan' | 'emerald' | 'violet' }) {
-  const tones = {
-    slate: 'border-white/10 bg-white/[0.04] text-slate-300',
-    cyan: 'border-cyan-400/20 bg-cyan-400/10 text-cyan-100',
-    emerald: 'border-emerald-400/20 bg-emerald-400/10 text-emerald-100',
-    violet: 'border-violet-400/20 bg-violet-400/10 text-violet-100',
-  } as const
-
-  return <Badge variant="outline" className={`rounded-full text-[10px] uppercase tracking-[0.18em] ${tones[tone]}`}>{children}</Badge>
-}
-
-function MetricCard({ label, value, hint }: { label: string; value: string; hint: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-inner shadow-black/10">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">{label}</p>
-      <p className="mt-2 text-xl font-semibold text-white">{value}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-400">{hint}</p>
-    </div>
-  )
-}
 
 function SelectionChip({
   label,
@@ -226,7 +203,7 @@ function buildCompactBridgeGraph(
   }
 
   const nodeLookup = new Map(network.nodes.map((node) => [node.id, node]))
-  const compactNodes = compactOverview.map((item) => {
+  const compactNodes = compactOverview.map((item, index) => {
     const connectorId = item.connectorMetabolite ?? item.pathway
     const connectorNode =
       nodeLookup.get(connectorId) ??
@@ -251,8 +228,8 @@ function buildCompactBridgeGraph(
       id: connectorId,
       label: connectorId,
       pathway: item.pathway,
-      x: baseNode?.x ?? 0,
-      y: baseNode?.y ?? 0,
+      x: 5 * Math.cos((2 * Math.PI * index) / compactOverview.length - Math.PI / 2),
+      y: 5 * Math.sin((2 * Math.PI * index) / compactOverview.length - Math.PI / 2),
       compartment: baseNode?.compartment ?? 'cytosol',
       concentration: baseNode?.concentration ?? connectorNode?.concentration ?? undefined,
       size: Math.max(18, Math.min(24, 15 + item.nodeCount / 3)),
@@ -325,7 +302,12 @@ export function PathwayVisualization() {
   const [playbackIndex, setPlaybackIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [selectedEntity, setSelectedEntity] = useState<PathwayVisualizationSelection | null>(null)
-  const [pathwayViewMode, setPathwayViewMode] = useState<'compact' | 'full'>('full')
+  const [pathwayViewMode, setPathwayViewMode] = useState<'compact' | 'full'>('compact')
+  const handleGraphSelection = useCallback((selection: PathwayVisualizationSelection | null) => {
+    setSelectedEntity(selection)
+    const inspector = document.getElementById('time-navigation')
+    if (selection && inspector instanceof HTMLDetailsElement) inspector.open = true
+  }, [])
   const requestIdRef = useRef(0)
 
   const activeSnapshot = latestSimulationSnapshot?.result.success ? latestSimulationSnapshot : null
@@ -452,17 +434,12 @@ export function PathwayVisualization() {
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([pathway, count]) => ({ pathway, count }))
   }, [graphNetwork])
 
-  const dominantPathway = ranks[0]?.pathway ?? 'unknown'
-  const pathwayCount = pathwayContext.outputs.networkStats.pathways.length
   const nodeCount = pathwayContext.outputs.networkStats.nodes
-  const reactionCount = network?.reactionNodes?.length ?? network?.edges.length ?? 0
+  const reactionCount = graphNetwork?.reactionNodes?.length ?? graphNetwork?.edges.length ?? 0
   const datasetLabel = activeDatasetSummary.label
-  const datasetModeLabel = getDatasetModeLabel(pathwayContext)
   const calibrationStatusLabel = getCalibrationStatusLabel(pathwayContext)
   const pathwayStatusLabel = getPathwayVisualizationStatusLabel(pathwayContext)
   const pathwayStatusLine = getPathwayVisualizationStatusLine(pathwayContext)
-  const resultSummary = pathwayContext.resultSummary ?? getPathwayVisualizationProvenanceSummary(pathwayContext)
-  const observations = getPathwayVisualizationObservations(pathwayContext).slice(0, pathwayContext.playbackReady ? 6 : 4)
   const featuredMetabolites = useMemo(() => graphNetwork?.nodes.slice(0, 5) ?? [], [graphNetwork])
   const featuredReactions = useMemo<PathwayReactionPreview[]>(
     () =>
@@ -541,143 +518,27 @@ export function PathwayVisualization() {
   }, [network, pathwayContext.selectedEntitySummary, selectedEntity])
 
   const legendItems = network?.legend ?? LEGEND
-  const networkCardTitle = pathwayViewMode === 'compact' ? 'RBC compact pathway graph' : 'RBC metabolic network'
-  const networkCardDescription =
-    pathwayViewMode === 'compact'
-      ? 'Nine pathway groups reduced to their principal connector metabolites. Use the graph controls to zoom and inspect the bridge map.'
-      : 'Plotly-backed pathway map with metabolite circles and reaction diamonds colored by pathway family and scaled by live concentration and flux state.'
   const explorerHeading = pathwayViewMode === 'compact' ? 'RBC compact graph' : 'RBC metabolic map'
-  const explorerCopy =
-    pathwayViewMode === 'compact'
-      ? 'The compact graph keeps one key connector metabolite per pathway group and shows the bridge relations between groups. Zoom in to inspect the reduced map.'
-      : 'The graph stays the scientific focus. Playback controls are tucked into the graph panel so the page stays readable.'
-  const graphModeBadge = pathwayViewMode === 'compact' ? 'Compact graph' : 'Network graph'
 
   return (
     <div className="grid w-full gap-6">
-      <section className="grid gap-6">
-        <Card className="overflow-hidden border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(15,23,42,0.86))] shadow-[0_30px_90px_rgba(15,23,42,0.35)]">
-          <CardHeader className="space-y-4 border-b border-white/10 px-5 py-5 sm:px-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <SignalPill tone="cyan">Pathway network</SignalPill>
-              <SignalPill tone={datasetModeLabel.includes('Custom') ? 'emerald' : 'slate'}>{datasetLabel}</SignalPill>
-              <SignalPill tone={datasetModeLabel.includes('Custom') ? 'emerald' : 'slate'}>{datasetModeLabel}</SignalPill>
-              <SignalPill tone={pathwayContext.calibrationApplied ? 'violet' : 'slate'}>{calibrationStatusLabel}</SignalPill>
-              <SignalPill tone={pathwayContext.pathwayResultAvailable ? 'emerald' : 'slate'}>{pathwayStatusLabel}</SignalPill>
-              <SignalPill tone={pathwayViewMode === 'compact' ? 'violet' : 'slate'}>
-                {pathwayViewMode === 'compact' ? 'Compact graph' : 'Full model map'}
-              </SignalPill>
-            </div>
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-3">
-                <CardTitle className="text-3xl text-white sm:text-4xl">Pathway Visualization</CardTitle>
-                <CardDescription className="max-w-4xl text-base leading-7 text-slate-400">
-                  Inspect the RBC metabolic map, replay the latest simulation frame, and select nodes or reactions for
-                  a focused readout.
-                </CardDescription>
-              </div>
-              <Button type="button" variant="outline" onClick={() => void loadNetwork()} className="gap-2 border-white/10 bg-white/[0.04] text-slate-100 hover:bg-white/[0.08]">
-                {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-                {loading ? 'Refreshing...' : 'Refresh network'}
-              </Button>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-5 px-5 py-5 sm:px-6">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <MetricCard label="Metabolites" value={formatCount(nodeCount)} hint="Metabolite nodes in the current map" />
-              <MetricCard label="Reactions" value={formatCount(reactionCount)} hint="Enzyme-labeled connections in the current map" />
-              <MetricCard label="Pathway groups" value={formatCount(pathwayCount)} hint="Unique pathway labels represented" />
-              <MetricCard label="Most represented" value={network ? dominantPathway : '—'} hint={network ? 'Largest pathway group by node count' : 'Waiting for the graph snapshot'} />
-            </div>
-
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-              <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 shadow-inner shadow-black/10">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-cyan-200/75">Pathway result summary</p>
-                    <h2 className="text-xl font-semibold text-white">
-                      {network
-                        ? pathwayViewMode === 'compact'
-                          ? 'Compact graph ready'
-                          : 'Network snapshot ready'
-                        : 'Pathway network in progress'}
-                    </h2>
-                  </div>
-                  <SignalPill tone={network ? 'emerald' : 'slate'}>{pathwayStatusLabel}</SignalPill>
-                </div>
-
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">{resultSummary}</p>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Network state</p>
-                    <p className="mt-2 text-lg font-semibold text-white">
-                      {network
-                        ? pathwayViewMode === 'compact'
-                          ? 'Compact graph ready'
-                          : 'Reaction-labeled map ready'
-                        : 'Loading network'}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-400">{pathwayStatusLine}</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Playback</p>
-                    <p className="mt-2 text-lg font-semibold text-white">{activeSnapshot ? `Frame ${frameIndex + 1}/${timepoints.length}` : 'No simulation snapshot'}</p>
-                    <p className="mt-1 text-sm text-slate-400">
-                      {activeSnapshot && currentTime !== null ? `t = ${formatPlaybackTime(currentTime)} days` : 'Run Simulation to unlock time playback'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Interpretation cues</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {pathwayContext.summary.keySignals.map((signal) => (
-                      <Badge key={signal} variant="outline" className="border-white/10 bg-white/[0.04] text-[10px] uppercase tracking-[0.18em] text-slate-300">
-                        {signal}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 shadow-[0_20px_60px_-34px_rgba(0,0,0,0.78)] backdrop-blur-sm">
-                <p className="eyebrow">Context</p>
-                <div className="mt-4 grid gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Dataset</p>
-                    <p className="mt-2 text-sm font-semibold text-white">{datasetLabel}</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-300">{datasetModeLabel}</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Calibration</p>
-                    <p className="mt-2 text-sm font-semibold text-white">{calibrationStatusLabel}</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-300">
-                      {pathwayContext.calibrationApplied || pathwayContext.calibratedParametersActive
-                        ? getCalibrationStatusLabel(pathwayContext)
-                        : 'Default Bordbar parameters are still in effect'}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Network</p>
-                    <p className="mt-2 text-sm font-semibold text-white">{pathwayStatusLabel}</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-300">{pathwayStatusLine}</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Readout cues</p>
-                    <div className="mt-2 space-y-1.5">
-                      {observations.map((observation, index) => (
-                        <p key={`${index}-${observation}`} className="text-sm leading-6 text-slate-300">{observation}</p>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+      <div className="research-toolbar">
+        <Button type="button" variant="outline" onClick={() => void loadNetwork()} className="gap-2">
+          {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+          {loading ? 'Refreshing...' : 'Refresh network'}
+        </Button>
+        <span className="research-muted" role="status">{pathwayStatusLabel}</span>
+        <span className="research-muted">{formatCount(nodeCount)} {pathwayViewMode === 'compact' ? 'connectors' : 'metabolites'} / {formatCount(reactionCount)} {pathwayViewMode === 'compact' ? 'bridges' : 'reactions'}</span>
+      </div>
+      <details id="pathway-story" className="research-disclosure">
+        <summary>Provenance</summary>
+        <dl className="research-review">
+          <div><dt>Dataset</dt><dd>{datasetLabel}</dd></div>
+          <div><dt>Calibration</dt><dd>{calibrationStatusLabel}</dd></div>
+          <div><dt>Playback source</dt><dd>{playbackSourceLabel}</dd></div>
+          <div><dt>Network</dt><dd>{pathwayStatusLine}</dd></div>
+        </dl>
+      </details>
 
       {error && (
         <Card className="border-destructive/40 bg-destructive/5 shadow-sm">
@@ -691,16 +552,10 @@ export function PathwayVisualization() {
         </Card>
       )}
 
-      <section className="space-y-4">
+      <section id="network-state" className="research-section space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-1">
-            <p className="eyebrow">Network explorer</p>
             <h2 className="section-heading">{explorerHeading}</h2>
-            <p className="section-copy max-w-2xl">{explorerCopy}</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="rounded-full border-white/10 bg-white/[0.04] text-slate-200">{network ? `${nodeCount} nodes` : 'Loading'}</Badge>
-            <Badge variant="outline" className="rounded-full border-white/10 bg-white/[0.04] text-slate-200">{network ? `${reactionCount} reactions` : 'Waiting for graph snapshot'}</Badge>
           </div>
         </div>
 
@@ -713,137 +568,41 @@ export function PathwayVisualization() {
             </CardContent>
           </Card>
         ) : network ? (
-          <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.45fr)]">
-            <Card className="overflow-hidden border-white/10 bg-slate-950/70 shadow-[0_20px_60px_-34px_rgba(8,15,40,0.8)]">
-              <CardHeader className="border-b border-white/10 bg-white/[0.03] px-5 py-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="grid size-8 place-items-center rounded-2xl border border-white/10 bg-white/5 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-200">01</span>
-                      <Badge variant="outline" className="border-white/10 bg-white/[0.04] text-slate-200">{graphModeBadge}</Badge>
-                    </div>
-                    <CardTitle className="text-xl text-white">{networkCardTitle}</CardTitle>
-                    <CardDescription className="text-slate-400">{networkCardDescription}</CardDescription>
-                  </div>
-                  <div className="grid size-12 place-items-center rounded-2xl bg-cyan-400/10 text-cyan-200 ring-1 ring-cyan-400/20">
-                    <Network className="size-5" />
-                  </div>
+          <div className="grid gap-4">
+            <div className="research-network-panel">
+              <div className="research-toolbar">
+                <div className="research-filter-group" role="group" aria-label="Network view">
+                  <button type="button" aria-pressed={pathwayViewMode === 'compact'} onClick={() => setPathwayViewMode('compact')}>Compact graph</button>
+                  <button type="button" aria-pressed={pathwayViewMode === 'full'} onClick={() => setPathwayViewMode('full')}>Full model map</button>
                 </div>
-              </CardHeader>
+                <span className="research-muted">{playbackAvailable && currentTime !== null ? `Day ${formatPlaybackTime(currentTime)} / frame ${frameIndex + 1}` : 'Static network'}</span>
+                <Button type="button" size="icon" variant="outline" title={isPlaying ? 'Pause playback' : 'Play playback'}
+                  aria-label={isPlaying ? 'Pause playback' : 'Play playback'} disabled={!playbackAvailable}
+                  onClick={() => {
+                    if (!playbackAvailable) return
+                    if (isPlaying) { setIsPlaying(false); return }
+                    setPlaybackIndex((current) => current >= timepoints.length - 1 ? 0 : current)
+                    setIsPlaying(true)
+                  }}>
+                  {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                </Button>
+                <Button type="button" size="icon" variant="ghost" title="Restart playback" aria-label="Restart playback"
+                  disabled={!playbackAvailable} onClick={() => { setPlaybackIndex(0); setIsPlaying(false) }}><SkipBack size={16} /></Button>
+              </div>
+              {playbackAvailable ? <Slider aria-label="Simulation frame" min={0} max={Math.max(timepoints.length - 1, 0)} step={1}
+                value={[frameIndex]} onValueChange={([value]) => { setPlaybackIndex(value); setIsPlaying(false) }}
+                disabled={timepoints.length < 2} /> : null}
+              {graphNetwork ? <NetworkGraph data={graphNetwork} selectedEntity={selectedEntity}
+                showReactionLabels={pathwayViewMode === 'full'} onSelectionChange={handleGraphSelection} /> : null}
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                {legendItems.map((legend) => <div key={legend.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="inline-block h-0.5 w-3" style={{ background: legend.color }} />{legend.label}
+                </div>)}
+              </div>
+            </div>
 
-              <CardContent className="space-y-4 px-5 py-4">
-                <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-cyan-200/75">Playback controls</p>
-                      <p className="text-sm text-slate-300">{activeSnapshot ? `Frame ${frameIndex + 1}/${timepoints.length}` : 'Static network'}</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setPathwayViewMode('compact')}
-                        className={`gap-2 ${
-                          pathwayViewMode === 'compact'
-                            ? 'border-cyan-300/40 bg-cyan-300/15 text-cyan-50 hover:bg-cyan-300/20'
-                            : 'border-white/10 bg-white/[0.04] text-slate-100 hover:bg-white/[0.08]'
-                        }`}
-                      >
-                        Compact graph
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setPathwayViewMode('full')}
-                        className={`gap-2 ${
-                          pathwayViewMode === 'full'
-                            ? 'border-cyan-300/40 bg-cyan-300/15 text-cyan-50 hover:bg-cyan-300/20'
-                            : 'border-white/10 bg-white/[0.04] text-slate-100 hover:bg-white/[0.08]'
-                        }`}
-                      >
-                        Full model map
-                      </Button>
-                      <Button type="button" size="sm" variant="outline" onClick={() => {
-                        if (!playbackAvailable) return
-                        if (isPlaying) { setIsPlaying(false); return }
-                        setPlaybackIndex((current) => (current >= timepoints.length - 1 ? 0 : current))
-                        setIsPlaying(true)
-                      }} disabled={!playbackAvailable} className="gap-2 border-white/10 bg-white/[0.04] text-slate-100 hover:bg-white/[0.08]">
-                        {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
-                        {isPlaying ? 'Pause' : 'Play'}
-                      </Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => { setPlaybackIndex(0); setIsPlaying(false) }} disabled={!playbackAvailable} className="gap-2 text-slate-300 hover:bg-white/[0.06] hover:text-white">
-                        <SkipBack className="size-4" />
-                        Restart
-                      </Button>
-                      <Button type="button" size="sm" variant="outline" onClick={() => void loadNetwork()} className="gap-2 border-white/10 bg-white/[0.04] text-slate-100 hover:bg-white/[0.08]">
-                        <RefreshCw className="size-4" />
-                        Refresh frame
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Frame</p>
-                      <p className="mt-1 text-sm font-semibold text-white">{playbackAvailable ? `${frameIndex + 1}/${timepoints.length}` : 'Static map'}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Time</p>
-                      <p className="mt-1 text-sm font-semibold text-white">{playbackAvailable && currentTime !== null ? `${formatPlaybackTime(currentTime)} days` : '—'}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-500">Source</p>
-                      <p className="mt-1 truncate text-sm font-semibold text-white">{playbackSourceLabel}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4">
-                    <Slider
-                      min={0}
-                      max={Math.max(timepoints.length - 1, 0)}
-                      step={1}
-                      value={[playbackAvailable ? frameIndex : 0]}
-                      onValueChange={([value]) => { setPlaybackIndex(value); setIsPlaying(false) }}
-                      disabled={!playbackAvailable || timepoints.length < 2}
-                    />
-                    <div className="mt-2 flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-slate-500">
-                      <span>Start</span>
-                      <span>{playbackAvailable ? 'Scrub simulation time' : 'Playback locked until a simulation is available'}</span>
-                      <span>End</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Badge variant="outline" className="border-white/10 bg-white/[0.04] text-slate-200">{playbackFluxAware ? 'Flux-aware playback' : 'Concentration playback'}</Badge>
-                    <Badge variant="outline" className="border-white/10 bg-white/[0.04] text-slate-200">Circles = metabolites</Badge>
-                    <Badge variant="outline" className="border-white/10 bg-white/[0.04] text-slate-200">Diamonds = reactions</Badge>
-                    <Badge variant="outline" className="border-white/10 bg-white/[0.04] text-slate-200">
-                      {activeSnapshot?.capturedAt ? `Captured ${new Date(activeSnapshot.capturedAt).toLocaleString()}` : 'No capture time yet'}
-                    </Badge>
-                    <Badge variant="outline" className="border-white/10 bg-white/[0.04] text-slate-200">{playbackAvailable ? 'Simulation replay ready' : 'Static network snapshot'}</Badge>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-3">
-                  {graphNetwork ? (
-                    <NetworkGraph data={graphNetwork} selectedEntity={selectedEntity} onSelectionChange={setSelectedEntity} />
-                  ) : null}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {legendItems.map((legend) => (
-                    <div key={legend.label} className="flex items-center gap-1.5 text-xs text-slate-400">
-                      <span className="inline-block h-0.5 w-3 rounded" style={{ background: legend.color }} />
-                      {legend.label}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
+            <details id="time-navigation" className="research-disclosure">
+              <summary>Selection & details</summary>
             <Card className="border-white/10 bg-slate-950/70 shadow-[0_20px_60px_-34px_rgba(8,15,40,0.8)]">
               <CardHeader className="border-b border-white/10 bg-white/[0.03] px-5 py-4">
                 <div className="flex items-center gap-2">
@@ -1088,6 +847,7 @@ export function PathwayVisualization() {
                 )}
               </CardContent>
             </Card>
+            </details>
           </div>
         ) : (
           <Card className="border-dashed border-white/10 bg-slate-950/50">
@@ -1100,6 +860,7 @@ export function PathwayVisualization() {
             </CardContent>
           </Card>
         )}
+        {!network ? <details id="time-navigation" className="research-disclosure"><summary>Selection & details</summary><p className="research-empty">No network state available</p></details> : null}
       </section>
     </div>
   )
